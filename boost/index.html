@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>大师期 · Boost库 - C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #8E0E00 0%, #1F1C18 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .header { text-align: center; color: white; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4); }
+  .header p { font-size: 16px; opacity: 0.9; }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .intro-section h2 {
+    color: #8E0E00;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+
+  .section-title {
+    color: white;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #8E0E00, #c62828);
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+  }
+  .card-icon { font-size: 28px; margin-bottom: 8px; }
+  .card-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 6px; }
+  .card-desc { font-size: 12.5px; color: #666; line-height: 1.6; margin-bottom: 12px; }
+  .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.elementary { background: #e0f2f1; color: #00695c; }
+  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
+  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
+  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.expert { background: #ffebee; color: #c62828; }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .feature-section h2 {
+    color: #8E0E00;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: #333; }
+
+  .boost-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #8E0E00, #c62828);
+    color: white;
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 14px;
+  }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .master-section li strong { color: #8E0E00; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section { padding: 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>👑 大师期 · Boost 库</h1>
+    <p>C++ 标准库的试验场 · 工业级组件大全 · 13 个核心库实战</p>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 模块简介</h2>
+    <p>
+      Boost 库是 C++ 社区最著名的开源库集合，被称为"C++ 标准库的试验场"。
+      很多我们今天熟知的标准库组件（智能指针、lambda、filesystem、optional……）
+      最早都来自 Boost。Boost 库质量极高、经过工业界广泛验证，是 C++ 工程师的得力助手。
+    </p>
+    <p style="margin-top: 10px;">
+      本模块精选了 13 个最常用、最有价值的 Boost 库，从智能指针、Asio 网络编程、
+      文件系统、命令行解析，到序列化、Spirit 解析器、信号槽、多索引容器、日志系统等等。
+      每一个都是 Boost 中的精品，学会它们，你的 C++ 工具箱会大大扩充。
+    </p>
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #8E0E00, #c62828); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(142, 14, 0, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(142, 14, 0, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(142, 14, 0, 0.3)';">
+        📖 学习指南
+      </a>
+      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>📂</span> 学习文件列表
+  </div>
+
+  <div class="card-grid">
+    <a href="smart_ptr.cpp" class="card">
+      <div class="card-icon">🛡️</div>
+      <div class="card-title">智能指针深入</div>
+      <div class="card-desc">scoped_ptr、intrusive_ptr、循环引用分析、weak_ptr 的正确用法、指针容器。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="asio_basics.cpp" class="card">
+      <div class="card-icon">🌐</div>
+      <div class="card-title">Asio 异步 IO 与网络编程</div>
+      <div class="card-desc">Boost.Asio 入门：io_context、定时器、TCP 客户端/服务器、异步编程模型。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="filesystem.cpp" class="card">
+      <div class="card-icon">📁</div>
+      <div class="card-title">文件系统操作</div>
+      <div class="card-desc">Boost.Filesystem 路径操作、文件遍历、目录创建删除、文件属性、错误处理。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="program_options.cpp" class="card">
+      <div class="card-icon">⚙️</div>
+      <div class="card-title">命令行参数解析</div>
+      <div class="card-desc">Boost.Program_options：选项定义、配置文件、环境变量、位置参数、帮助信息。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="serialization.cpp" class="card">
+      <div class="card-icon">💾</div>
+      <div class="card-title">对象序列化</div>
+      <div class="card-desc">侵入式/非侵入式序列化、多态序列化、文本/二进制/XML 归档、版本控制。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="spirit_parser.cpp" class="card">
+      <div class="card-icon">🧙</div>
+      <div class="card-title">Spirit X3 解析器与 DSL</div>
+      <div class="card-desc">用模板元编程写解析器：EBNF 直接转 C++ 代码、DSL 设计、编译期生成解析器。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="signals2.cpp" class="card">
+      <div class="card-icon">📡</div>
+      <div class="card-title">信号槽与事件总线</div>
+      <div class="card-desc">Boost.Signals2：线程安全的信号槽、信号组合、连接管理、事件总线实现。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="multi_index.cpp" class="card">
+      <div class="card-icon">🗂️</div>
+      <div class="card-title">多索引容器与 LRU 缓存</div>
+      <div class="card-desc">Multi-Index 多维索引容器：一个数据多种索引方式，LRU 缓存实战。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="log_demo.cpp" class="card">
+      <div class="card-icon">📝</div>
+      <div class="card-title">Boost.Log 工业级日志系统</div>
+      <div class="card-desc">日志源、日志级别、过滤器、格式化器、sink 后端、异步日志、日志轮转。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="property_tree_demo.cpp" class="card">
+      <div class="card-icon">🌳</div>
+      <div class="card-title">配置文件读写</div>
+      <div class="card-desc">Boost.PropertyTree：INI/JSON/XML/INFO 格式配置文件的统一读写接口。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="datetime_demo.cpp" class="card">
+      <div class="card-icon">⏰</div>
+      <div class="card-title">日期时间处理</div>
+      <div class="card-desc">Boost.DateTime：日期计算、时间区间、格式化输出、时区处理、计时器。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="bimap_demo.cpp" class="card">
+      <div class="card-icon">🔄</div>
+      <div class="card-title">双向映射 bimap</div>
+      <div class="card-desc">Boost.Bimap：双向查找的映射表，左右键都能快速查找，多种视图类型。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+
+    <a href="algorithm_demo.cpp" class="card">
+      <div class="card-icon">🔤</div>
+      <div class="card-title">字符串算法与通用算法</div>
+      <div class="card-desc">字符串算法大全：分割/连接/修剪/替换/大小写转换/查找，以及各种通用算法补充。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+  </div>
+
+  <div class="feature-section">
+    <h2>📚 学习建议</h2>
+    <ul>
+      <li><strong>先装 Boost 环境</strong>：学习 Boost 之前先把库装好。Windows 下推荐 vcpkg，Linux 下用包管理器或者源码编译。注意很多 Boost 库是 header-only 的，不需要编译。</li>
+      <li><strong>挑你需要的学</strong>：Boost 有上百个库，不可能也没必要全学。根据你的项目需求和兴趣，挑几个最有用的深入学习。本模块选的 13 个都是应用最广的。</li>
+      <li><strong>对比标准库</strong>：很多 Boost 库后来进入了标准库（比如 smart_ptr → std::shared_ptr、filesystem → std::filesystem）。对比着学，你能理解标准库的设计思路来自哪里。</li>
+      <li><strong>Asio 是重点也是难点</strong>：Asio 是 Boost 中最强大也最难的库之一，是现代 C++ 网络编程的事实标准。值得花时间深入学习。</li>
+      <li><strong>读文档，读示例</strong>：Boost 的文档非常详尽，每个库都有完整的教程和示例。遇到问题先查文档，文档里基本都有答案。</li>
+      <li><strong>注意版本差异</strong>：Boost 版本更新很快，不同版本接口可能有变化。使用时注意你用的是哪个版本，以对应版本文档为准。</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，到了 Boost 这一层，说明你已经不是普通选手了。Boost 是 C++ 世界的"瑞士军刀"，里面的好东西太多了。</p>
+    <p>但师傅要提醒你：<strong>Boost 不是银弹，也不是所有项目都适合用</strong>。Boost 库质量虽高，但也有学习成本、编译成本、依赖成本。用不用、用哪些，要根据项目情况权衡。</p>
+    <p>师傅跟你聊聊 Boost 的"门道"：</p>
+    <ul>
+      <li><strong>Boost 是标准库的"试验田"。</strong> 这话不假。过去 20 年，大量 Boost 组件进入了 C++ 标准：智能指针、tuple、bind、function、regex、filesystem、optional、variant、any、string_view……你学 Boost，其实是在提前学未来的 C++ 标准。</li>
+      <li><strong>header-only 库优先用。</strong> Boost 里很多库是"纯头文件"的，不需要编译链接，包含头文件就能用。这些库引入成本最低，放心用。需要编译的库（如 filesystem、log、thread）就要考虑一下依赖问题。</li>
+      <li><strong>Asio 是网络编程的必修课。</strong> 如果你要做服务端开发、网络编程，Asio 几乎是绕不开的。它的异步编程模型（proactor 模式）非常经典，学会了它，你对异步编程的理解会上一个大台阶。</li>
+      <li><strong>别沉迷于"奇技淫巧"。</strong> Boost 里有一些非常"炫技"的库（比如 MPL、Fusion、Spirit），用模板元编程实现了很多不可思议的功能。这些东西很酷，但实际项目中用得不多。了解一下可以，别陷太深。</li>
+      <li><strong>Boost 的设计哲学值得学习。</strong> 学 Boost 不只是学怎么用库，更要学习它的设计思想：泛型编程、策略模式、零开销抽象、编译期计算……这些才是最有价值的东西。</li>
+    </ul>
+    <p>最后说一句：<strong>能用标准库解决的就别用 Boost</strong>。标准库有的，优先用标准库。标准库没有的，再考虑 Boost。毕竟标准库是"自带"的，没有额外依赖。</p>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>构建系统 · Makefile + CMake - C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.15);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .header { text-align: center; color: white; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4); }
+  .header p { font-size: 16px; opacity: 0.9; }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .intro-section h2 {
+    color: #1a237e;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+
+  .section-title {
+    color: white;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-subtitle {
+    color: #90caf9;
+    font-size: 15px;
+    margin-top: -10px;
+    margin-bottom: 16px;
+    font-weight: 500;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #1a237e, #243B55);
+  }
+  .card.makefile::before { background: linear-gradient(90deg, #455a64, #78909c); }
+  .card.cmake::before { background: linear-gradient(90deg, #1a237e, #3949ab); }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+  }
+  .card-icon { font-size: 28px; margin-bottom: 8px; }
+  .card-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 6px; }
+  .card-desc { font-size: 12.5px; color: #666; line-height: 1.6; margin-bottom: 12px; }
+  .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .card-folder {
+    display: inline-block;
+    font-size: 11px;
+    color: #888;
+    font-family: Consolas, Monaco, monospace;
+    margin-bottom: 8px;
+  }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.elementary { background: #e0f2f1; color: #00695c; }
+  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
+  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
+  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.expert { background: #ffebee; color: #c62828; }
+
+  .tool-compare {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin: 16px 0;
+  }
+  .tool-box {
+    border-radius: 12px;
+    padding: 20px;
+    text-align: center;
+  }
+  .tool-box.makefile {
+    background: linear-gradient(135deg, #eceff1, #cfd8dc);
+  }
+  .tool-box.cmake {
+    background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+  }
+  .tool-box .icon { font-size: 40px; margin-bottom: 10px; }
+  .tool-box h3 { font-size: 20px; margin-bottom: 8px; color: #37474f; }
+  .tool-box.cmake h3 { color: #1a237e; }
+  .tool-box p { font-size: 13px; color: #555; line-height: 1.6; }
+  .tool-box .pros {
+    text-align: left;
+    margin-top: 10px;
+    font-size: 12.5px;
+    color: #555;
+    line-height: 1.8;
+  }
+  .tool-box .pros strong { color: #2e7d32; }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .feature-section h2 {
+    color: #1a237e;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: #333; }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .master-section li strong { color: #1a237e; }
+
+  /* 编译选项速查表 */
+  .cheatsheet-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .cheatsheet-section h2 { color: #1a237e; margin-bottom: 8px; font-size: 22px; }
+  .cheatsheet-section > p { color: #666; margin-bottom: 18px; font-size: 14px; }
+  .cheat-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 14px;
+  }
+  .cheat-card {
+    background: #f8f9fa;
+    border-radius: 10px;
+    padding: 16px;
+    border-top: 3px solid #3f51b5;
+  }
+  .cheat-card h3 { color: #1a237e; margin-bottom: 10px; font-size: 16px; }
+  .cheat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .cheat-table td { padding: 5px 0; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
+  .cheat-table td:first-child { width: 42%; font-family: 'Consolas', monospace; font-size: 12px; color: #c62828; font-weight: 600; padding-right: 8px; }
+  .cheat-table td:last-child { color: #555; line-height: 1.5; }
+  .cheat-table tr:last-child td { border-bottom: none; }
+
+  .tip-box {
+    background: #e8f5e9;
+    border-left: 4px solid #4caf50;
+    padding: 14px 18px;
+    border-radius: 0 8px 8px 0;
+    margin-top: 16px;
+  }
+  .tip-box strong { color: #2e7d32; display: block; margin-bottom: 6px; }
+  .tip-box p { color: #1b5e20; margin: 0; line-height: 1.8; font-size: 13px; }
+  .tip-box code { background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 3px; color: #c62828; font-size: 12px; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section, .cheatsheet-section { padding: 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .tool-compare { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>🛠️ 构建系统</h1>
+    <p>Makefile 与 CMake 双路线 · 从入门到完整项目</p>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 模块简介</h2>
+    <p>
+      不会构建系统的 C++ 程序员不是完整的程序员。不管你代码写得多好，
+      如果不会正确地编译、链接、打包，那项目就没法真正交付。
+      本模块覆盖两大构建体系：传统的 <strong>Makefile</strong> 和现代最流行的 <strong>CMake</strong>，
+      每一条路线都从入门讲起，循序渐进，最后带你搭建一个完整的工业级项目结构。
+    </p>
+    <p style="margin-top: 10px;">
+      建议两条路线都学：Makefile 让你理解构建的本质，CMake 是现在业界的事实标准。
+      两者都掌握，你才能在各种项目中游刃有余。
+    </p>
+  </div>
+
+  <div class="feature-section">
+    <h2>⚖️ Makefile vs CMake</h2>
+    <div class="tool-compare">
+      <div class="tool-box makefile">
+        <div class="icon">📋</div>
+        <h3>Makefile</h3>
+        <p>传统构建工具，直接描述编译规则</p>
+        <div class="pros">
+          <strong>优点：</strong><br>
+          • 简单直接，规则清晰<br>
+          • Unix/Linux 原生支持<br>
+          • 适合中小型项目<br>
+          • 理解构建的底层原理
+        </div>
+      </div>
+      <div class="tool-box cmake">
+        <div class="icon">🏗️</div>
+        <h3>CMake</h3>
+        <p>跨平台构建系统生成器，业界标准</p>
+        <div class="pros">
+          <strong>优点：</strong><br>
+          • 真正的跨平台<br>
+          • 自动查找依赖库<br>
+          • 支持大型项目<br>
+          • 现代 CMake 基于目标，非常优雅
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>📋</span> Makefile 路线
+  </div>
+  <div class="section-subtitle">4 个层级，从单文件到完整项目</div>
+
+  <div class="card-grid">
+    <a href="makefile_01_basic/" class="card makefile">
+      <div class="card-icon">🌱</div>
+      <div class="card-folder">makefile_01_basic/</div>
+      <div class="card-title">01 · Makefile 入门</div>
+      <div class="card-desc">规则与目标、基本语法、第一个 Makefile。理解 make 的工作原理。</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="makefile_02_variables/" class="card makefile">
+      <div class="card-icon">📝</div>
+      <div class="card-folder">makefile_02_variables/</div>
+      <div class="card-title">02 · 变量与伪目标</div>
+      <div class="card-desc">变量定义与使用、自动变量、伪目标（.PHONY）、常用内置变量。</div>
+      <div class="card-meta"><span class="tag elementary">初级</span></div>
+    </a>
+
+    <a href="makefile_03_patterns/" class="card makefile">
+      <div class="card-icon">🔄</div>
+      <div class="card-folder">makefile_03_patterns/</div>
+      <div class="card-title">03 · 模式规则与函数</div>
+      <div class="card-desc">模式规则（%）、隐含规则、常用函数（patsubst/wildcard/foreach）。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="makefile_04_project/" class="card makefile">
+      <div class="card-icon">🏢</div>
+      <div class="card-folder">makefile_04_project/</div>
+      <div class="card-title">04 · 完整项目结构</div>
+      <div class="card-desc">多目录项目、头文件依赖自动生成、递归 make、编译优化、项目工程化。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="makefile_05_library/" class="card makefile">
+      <div class="card-icon">📦</div>
+      <div class="card-folder">makefile_05_library/</div>
+      <div class="card-title">05 · 静态库与动态库</div>
+      <div class="card-desc">ar打包静态库、-fPIC编译动态库、-L/-l链接、运行时路径rpath、完整实战。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+  </div>
+
+  <div class="section-title">
+    <span>🏗️</span> CMake 路线
+  </div>
+  <div class="section-subtitle">6 个层级，从三板斧到工业级项目</div>
+
+  <div class="card-grid">
+    <a href="cmake_01_basic/" class="card cmake">
+      <div class="card-icon">🌱</div>
+      <div class="card-folder">cmake_01_basic/</div>
+      <div class="card-title">01 · CMake 入门三板斧</div>
+      <div class="card-desc">cmake_minimum_required、project、add_executable。第一个 CMake 项目。</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="cmake_02_multi_file/" class="card cmake">
+      <div class="card-icon">📂</div>
+      <div class="card-folder">cmake_02_multi_file/</div>
+      <div class="card-title">02 · 多文件项目</div>
+      <div class="card-desc">多源文件编译、头文件路径、变量与列表、编译选项。</div>
+      <div class="card-meta"><span class="tag elementary">初级</span></div>
+    </a>
+
+    <a href="cmake_03_library/" class="card cmake">
+      <div class="card-icon">📦</div>
+      <div class="card-folder">cmake_03_library/</div>
+      <div class="card-title">03 · 库的构建与链接</div>
+      <div class="card-desc">静态库/动态库创建、target_link_libraries、子目录组织、库依赖管理。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="cmake_04_options/" class="card cmake">
+      <div class="card-icon">⚙️</div>
+      <div class="card-folder">cmake_04_options/</div>
+      <div class="card-title">04 · 选项与配置</div>
+      <div class="card-desc">option 选项、configure_file 配置文件、条件编译、编译特性要求。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="cmake_05_modern/" class="card cmake">
+      <div class="card-icon">🎯</div>
+      <div class="card-folder">cmake_05_modern/</div>
+      <div class="card-title">05 · 现代 CMake（基于目标）</div>
+      <div class="card-desc">target_* 用法、PUBLIC/PRIVATE/INTERFACE、目标属性、导出目标、使用方式要求。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="cmake_06_full_project/" class="card cmake">
+      <div class="card-icon">🏢</div>
+      <div class="card-folder">cmake_06_full_project/</div>
+      <div class="card-title">06 · 完整项目结构</div>
+      <div class="card-desc">工业级项目布局：库/应用/测试分离、版本头文件、编译警告、CTest 单元测试。</div>
+      <div class="card-meta"><span class="tag expert">资深</span></div>
+    </a>
+  </div>
+
+  <div class="feature-section">
+    <h2>📚 学习建议</h2>
+    <ul>
+      <li><strong>先学 Makefile 再学 CMake</strong>：Makefile 让你理解构建的本质（目标→依赖→命令），学完 Makefile 再看 CMake，你会发现 CMake 只是在更高层次上做同样的事。</li>
+      <li><strong>每个例子都亲手跑一遍</strong>：构建系统是动手的学问。光看没用，每个示例都自己 cmake/make 一遍，观察输出，修改参数试试效果。</li>
+      <li><strong>重点掌握现代 CMake</strong>：传统 CMake（用全局变量的那种）已经过时了。学 CMake 一定要学"基于目标"的现代写法——target_* 系列命令、PUBLIC/PRIVATE/INTERFACE 这些概念。</li>
+      <li><strong>完整项目示例是精华</strong>：Makefile 04 和 CMake 06 是集大成的完整项目，里面包含了很多工程化的最佳实践。仔细研究它们的目录结构和构建脚本。</li>
+      <li><strong>实际项目中用 CMake</strong>：除非维护老项目，否则新项目优先选 CMake。跨平台、生态好、IDE 支持好，是现在 C++ 构建的事实标准。</li>
+      <li><strong>别自己瞎造轮子</strong>：构建系统有很多最佳实践和现成的模块，照着做就行了。别自己发明一套奇怪的构建方式，后面维护的人会骂你的。</li>
+    </ul>
+  </div>
+
+  <!-- 编译选项速查表 -->
+  <div class="cheatsheet-section">
+    <h2>📋 编译选项速查表</h2>
+    <p>常用 GCC/Clang 编译选项，建议收藏。MSVC 选项括号内标注。</p>
+
+    <div class="cheat-grid">
+      <div class="cheat-card">
+        <h3>🎯 标准与语言</h3>
+        <table class="cheat-table">
+          <tr><td><code>-std=c++17</code></td><td>使用 C++17 标准（11/14/20/23 同理）</td></tr>
+          <tr><td><code>-std=c17</code></td><td>使用 C17 标准</td></tr>
+          <tr><td><code>-pedantic</code></td><td>严格遵守标准，拒绝扩展语法</td></tr>
+          <tr><td><code>-fno-exceptions</code></td><td>禁用异常（嵌入式常用）</td></tr>
+          <tr><td><code>-fno-rtti</code></td><td>禁用 RTTI（禁用 dynamic_cast/typeid）</td></tr>
+        </table>
+      </div>
+
+      <div class="cheat-card">
+        <h3>⚠️ 警告选项</h3>
+        <table class="cheat-table">
+          <tr><td><code>-Wall</code></td><td>打开常用警告（不是全部！）</td></tr>
+          <tr><td><code>-Wextra</code></td><td>额外的警告（建议和 -Wall 一起开）</td></tr>
+          <tr><td><code>-Wpedantic</code></td><td>标准违规警告</td></tr>
+          <tr><td><code>-Werror</code> (/WX)</td><td>把警告当错误（强制零警告）</td></tr>
+          <tr><td><code>-Wshadow</code></td><td>变量遮蔽警告（同名变量覆盖）</td></tr>
+          <tr><td><code>-Wconversion</code></td><td>隐式类型转换警告</td></tr>
+        </table>
+      </div>
+
+      <div class="cheat-card">
+        <h3>⚡ 优化选项</h3>
+        <table class="cheat-table">
+          <tr><td><code>-O0</code></td><td>不优化（Debug 默认，编译最快）</td></tr>
+          <tr><td><code>-O1</code></td><td>基础优化（性能和编译时间折中）</td></tr>
+          <tr><td><code>-O2</code></td><td>标准优化（Release 常用）</td></tr>
+          <tr><td><code>-O3</code></td><td>最高优化等级（可能更慢，谨慎用）</td></tr>
+          <tr><td><code>-Os</code></td><td>优化体积（减小代码大小）</td></tr>
+          <tr><td><code>-Og</code></td><td>调试友好的优化（gdb 调试用）</td></tr>
+        </table>
+      </div>
+
+      <div class="cheat-card">
+        <h3>🔍 调试与分析</h3>
+        <table class="cheat-table">
+          <tr><td><code>-g</code> (/Zi)</td><td>生成调试信息（gdb 调试需要）</td></tr>
+          <tr><td><code>-g3</code></td><td>更详细的调试信息（含宏定义）</td></tr>
+          <tr><td><code>-fsanitize=address</code></td><td>AddressSanitizer 内存检测</td></tr>
+          <tr><td><code>-fsanitize=undefined</code></td><td>UBSan 未定义行为检测</td></tr>
+          <tr><td><code>-fsanitize=thread</code></td><td>TSan 数据竞争检测</td></tr>
+          <tr><td><code>-pg</code></td><td>生成 gprof 性能分析信息</td></tr>
+        </table>
+      </div>
+
+      <div class="cheat-card">
+        <h3>📦 库与链接</h3>
+        <table class="cheat-table">
+          <tr><td><code>-L/path</code></td><td>库文件搜索路径</td></tr>
+          <tr><td><code>-lxxx</code></td><td>链接 libxxx.so 或 libxxx.a</td></tr>
+          <tr><td><code>-static</code></td><td>静态链接所有库</td></tr>
+          <tr><td><code>-shared</code></td><td>生成动态库</td></tr>
+          <tr><td><code>-fPIC</code></td><td>生成位置无关代码（动态库需要）</td></tr>
+          <tr><td><code>-Wl,-rpath,path</code></td><td>运行时库搜索路径</td></tr>
+        </table>
+      </div>
+
+      <div class="cheat-card">
+        <h3>🔧 预处理与宏</h3>
+        <table class="cheat-table">
+          <tr><td><code>-DNAME=val</code> (/D)</td><td>定义宏 NAME=val</td></tr>
+          <tr><td><code>-DNAME</code></td><td>定义宏 NAME（值为 1）</td></tr>
+          <tr><td><code>-UNAME</code></td><td>取消宏定义</td></tr>
+          <tr><td><code>-I/path</code> (/I)</td><td>头文件搜索路径</td></tr>
+          <tr><td><code>-E</code></td><td>只做预处理，输出到标准输出</td></tr>
+          <tr><td><code>-M / -MM</code></td><td>生成头文件依赖（Makefile 用）</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      <strong>💡 老师傅的推荐组合</strong>
+      <p><strong>Debug 模式：</strong><code>-g -O0 -Wall -Wextra -Wpedantic -DDEBUG</code><br>
+      <strong>Release 模式：</strong><code>-O2 -DNDEBUG -Wall -Wextra</code><br>
+      <strong>开发期强烈推荐：</strong>加上 <code>-fsanitize=address,undefined</code>，虽然慢一点，但能抓出 80% 的 bug。</p>
+    </div>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，构建系统这东西，很多初学者不重视，觉得"代码写好就行了，构建随便搞搞"。等项目一大，构建系统稀烂，编译慢、依赖乱、跨平台编译不了，那时候再收拾就难了。</p>
+    <p>一个好的构建系统，是项目质量的基础。<strong>构建写得好，开发效率高一半</strong>。</p>
+    <p>师傅跟你说几句掏心窝子的：</p>
+    <ul>
+      <li><strong>Makefile 要懂，但不一定要精通。</strong> 理解 Makefile 的原理很重要——目标、依赖、命令、时间戳比较。这是所有构建系统的基础。但复杂的 Makefile 不用太深究，毕竟现在新项目很少直接写 Makefile 了。</li>
+      <li><strong>CMake 是你必须掌握的。</strong> 不管你喜不喜欢，CMake 已经是 C++ 界的事实标准。找工作、做开源项目、用第三方库，到处都是 CMake。把现代 CMake 学扎实，绝对是高回报的投资。</li>
+      <li><strong>学现代 CMake，别学老一套。</strong> 很多老教程（甚至一些书）还在教 include_directories、link_directories 这种全局命令。别学那些！从一开始就学 target_include_directories、target_link_libraries 这种基于目标的写法。思路完全不一样。</li>
+      <li><strong>项目结构很重要。</strong> 好的目录结构让构建系统自然而然就清晰了。头文件和源文件分开、库和应用分开、测试单独放……这些都是常识，但很多人就是做不好。</li>
+      <li><strong>构建系统也是代码，要维护、要 review。</strong> 别把 CMakeLists.txt 当成"配置文件"随便写写。它也是代码的一部分，有逻辑、有风格、有最佳实践。写构建脚本也要像写业务代码一样认真。</li>
+    </ul>
+    <p>最后说一句：<strong>构建系统是为项目服务的，不是反过来。</strong> 别为了炫技把构建搞复杂。简单清晰、易于维护，才是好的构建系统。</p>
+  </div>
+</div>
+</body>
+</html>

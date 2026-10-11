@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>并发编程 - C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #ff6b6b 0%, #ffa751 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .header { text-align: center; color: white; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
+  .header p { font-size: 16px; opacity: 0.95; }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .intro-section h2 {
+    color: #e65100;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+
+  .section-title {
+    color: white;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #ff6b6b, #ffa751);
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+  }
+  .card-icon { font-size: 32px; margin-bottom: 10px; }
+  .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
+  .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.elementary { background: #e0f2f1; color: #00695c; }
+  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
+  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
+  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.expert { background: #ffebee; color: #c62828; }
+
+  .warning-banner {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    border-left: 5px solid #ff6b6b;
+    border-radius: 12px;
+    padding: 18px 22px;
+    margin-bottom: 24px;
+  }
+  .warning-banner strong { color: #bf360c; font-size: 15px; }
+  .warning-banner p { color: #e65100; font-size: 13px; margin-top: 6px; line-height: 1.6; }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .feature-section h2 {
+    color: #e65100;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: #333; }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .master-section li strong { color: #e65100; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section { padding: 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>🔥 并发编程</h1>
+    <p>多线程、同步原语、原子操作、线程池 · 征服并发的世界</p>
+  </div>
+
+  <div class="warning-banner">
+    <strong>⚠️ 并发编程是 C++ 中最难的部分之一</strong>
+    <p>并发 bug 具有随机性、难以复现、调试困难的特点。学习时务必循序渐进，
+    每一个概念都要搞透再往下走。建议配合 ThreadSanitizer 工具来检测数据竞争。</p>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 模块简介</h2>
+    <p>
+      多核时代，并发编程已经成为程序员的必备技能。C++11 首次将线程支持纳入标准库，
+      经过 C++14/17 的持续完善，如今已经形成了一套完整的并发编程体系。
+      本模块从最基础的线程创建讲起，逐步深入到互斥锁、条件变量、原子操作、内存模型，
+      最后带你实现一个完整的线程池，并介绍 future/promise 等高级异步编程工具。
+    </p>
+    <p style="margin-top: 10px;">
+      并发编程难，但也最有价值。掌握了它，你才能写出充分利用多核性能的高性能程序。
+    </p>
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #ff6b6b, #ffa751); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255, 107, 107, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(255, 107, 107, 0.3)';">
+        📖 学习指南
+      </a>
+      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>📂</span> 学习文件列表
+  </div>
+
+  <div class="card-grid">
+    <a href="01_threading_basics.cpp" class="card">
+      <div class="card-icon">🧵</div>
+      <div class="card-title">01 · 线程基础</div>
+      <div class="card-desc">std::thread 创建与管理、join/detach、线程参数传递、线程 ID 与硬件并发数。</div>
+      <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
+    </a>
+
+    <a href="02_synchronization.cpp" class="card">
+      <div class="card-icon">🔒</div>
+      <div class="card-title">02 · 同步原语</div>
+      <div class="card-desc">mutex/recursive_mutex/timed_mutex、条件变量、shared_mutex 读写锁、call_once。</div>
+      <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
+    </a>
+
+    <a href="03_race_deadlock.cpp" class="card">
+      <div class="card-icon">💀</div>
+      <div class="card-title">03 · 竞态与死锁</div>
+      <div class="card-desc">竞态条件演示、数据竞争的危害、死锁的四种必要条件、死锁避免与检测。</div>
+      <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
+    </a>
+
+    <a href="04_atomic_memory.cpp" class="card">
+      <div class="card-icon">⚛️</div>
+      <div class="card-title">04 · 原子操作与内存序（高级）</div>
+      <div class="card-desc">std::atomic 原子类型、六种内存序详解、无锁数据结构实现（无锁栈）。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="05_thread_pool.cpp" class="card">
+      <div class="card-icon">🏊</div>
+      <div class="card-title">05 · 线程池实现</div>
+      <div class="card-desc">从 0 实现一个完整的线程池：任务队列、工作线程、任务提交、优雅关闭、并行计算示例。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="06_async_future.cpp" class="card">
+      <div class="card-icon">🔮</div>
+      <div class="card-title">06 · 异步编程</div>
+      <div class="card-desc">std::async、future/promise、packaged_task、shared_future，高层次异步编程工具。</div>
+      <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
+    </a>
+
+    <a href="07_ipc_shared_memory.cpp" class="card">
+      <div class="card-icon">📡</div>
+      <div class="card-title">07 · 进程间通信（高级）</div>
+      <div class="card-desc">共享内存、消息队列、进程间同步。需要 Boost.Interprocess 库支持。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span><span class="tag expert">需 Boost</span></div>
+    </a>
+  </div>
+
+  <div class="feature-section">
+    <h2>📚 学习建议</h2>
+    <ul>
+      <li><strong>按顺序学，别跳</strong>：并发知识前后依赖很强。线程基础没搞懂就学原子操作，肯定懵。一步一步来，每章的代码都亲手跑一跑。</li>
+      <li><strong>多跑几遍观察现象</strong>：并发程序每次运行结果可能不一样。同一个程序多跑几次，观察竞态条件的不同表现，加深理解。</li>
+      <li><strong>用工具辅助学习</strong>：开 ThreadSanitizer（-fsanitize=thread）来检测数据竞争，开 AddressSanitizer 检测内存问题。工具能帮你发现很多肉眼看不到的 bug。</li>
+      <li><strong>内存序是最难的部分</strong>：04 章的原子操作和内存序是整个模块最难的部分。如果一时理解不了也正常，可以先放一放，等有了更多并发经验再回头看。</li>
+      <li><strong>线程池是集大成者</strong>：05 章线程池综合运用了前面学的所有知识（线程、互斥锁、条件变量、任务队列）。把这个啃下来，你的并发水平就上了一个台阶。</li>
+      <li><strong>能不用并发就不用并发</strong>：这不是开玩笑。并发引入了大量复杂度，能用单线程解决的问题就别搞多线程。真的需要并发时，优先用高层次的工具（async/future），别一上来就裸写线程。</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，并发编程这一块，是区分普通程序员和高级程序员的重要分水岭。很多人工作好几年，对并发的理解还停留在"加个锁"的水平。</p>
+    <p>并发难在哪？难在<strong>你的直觉在并发世界里经常是错的</strong>。你以为代码是按顺序执行的，实际上编译器会重排、CPU 会乱序执行、缓存还会延迟同步。单线程下理所当然的事情，在多线程下全变了。</p>
+    <p>师傅给你几句忠告：</p>
+    <ul>
+      <li><strong>第一条：并发是手段，不是目的。</strong> 不要为了用多线程而用多线程。先问自己：我的任务是不是真的需要并行？单线程能不能满足性能需求？引入并发会增加复杂度，要有足够的收益才值得。</li>
+      <li><strong>第二条：优先用高层次抽象。</strong> 能 async 就别自己创建线程，能用线程池就别自己管理线程。层次越高，出错的概率越低。等你水平够了，再去玩底层的。</li>
+      <li><strong>第三条：锁是双刃剑。</strong> 加锁能解决数据竞争，但锁多了性能差，还容易死锁。设计好你的锁策略：锁的粒度要合适，加锁顺序要一致，尽量减少持有锁的时间。</li>
+      <li><strong>第四条：无锁编程是高手的玩具。</strong> 原子操作、内存序、无锁数据结构……这些东西很酷，但也极其容易出错。99% 的场景下，一个设计良好的锁比无锁更可靠、更容易维护。不要沉迷于"无锁"的炫技。</li>
+      <li><strong>第五条：调试并发 bug 要有耐心。</strong> 并发 bug 复现难、定位难、修复了也难验证。这时候更要沉住气，用工具（TSAN）、加日志、画时序图，一步一步排查。</li>
+    </ul>
+    <p>最后说一句：<strong>并发编程的精髓不是"怎么让多个线程同时跑"，而是"怎么让多个线程正确地协作"</strong>。记住这句话，你就抓住了重点。</p>
+  </div>
+</div>
+</body>
+</html>

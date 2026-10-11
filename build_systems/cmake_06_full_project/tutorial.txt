@@ -1,0 +1,321 @@
+================================================================
+  CMake 入门教程 - 第六讲
+  完整项目结构
+================================================================
+
+
+【一、项目结构一览】
+
+徒弟啊，这是最后一讲了，咱来个大的——完整的项目结构。
+
+先看看目录长啥样：
+
+    cmake_06_full_project/
+    ├── CMakeLists.txt          # 根 CMake 配置
+    ├── tutorial.txt            # 就是你在看的这个
+    │
+    ├── include/                # 公共头文件
+    │   └── myproject/
+    │       └── version.h.in    # 版本头文件模板（由 configure_file 生成）
+    │
+    ├── src/                    # 主程序源码
+    │   ├── main.cpp            # 入口
+    │   └── app/
+    │       ├── app.h
+    │       └── app.cpp
+    │
+    ├── lib/                    # 自己的库
+    │   └── mathutils/
+    │       ├── CMakeLists.txt
+    │       ├── include/        # 对外头文件
+    │       │   └── mathutils/
+    │       │       └── calculator.h
+    │       └── src/            # 内部实现
+    │           ├── calculator.cpp
+    │           └── internal.h
+    │
+    ├── tests/                  # 单元测试
+    │   ├── CMakeLists.txt
+    │   └── test_calculator.cpp
+    │
+    └── cmake/                  # 自定义 CMake 模块
+        └── CompilerWarnings.cmake
+
+这个结构不是唯一的，但算是比较常见、比较合理的一种。
+下面咱一个一个唠。
+
+
+【二、目录结构最佳实践】
+
+【include/ —— 公共头文件】
+  所有对外暴露的头文件都放这儿。
+  头文件要按命名空间/模块名再套一层子目录，比如 include/myproject/。
+  这样用户包含的时候是 #include "myproject/xxx.h"，
+  不会跟别的库的头文件重名。
+
+【src/ —— 主程序源码】
+  主程序（可执行文件）的源码放这儿。
+  如果主程序代码也比较多，可以再分子目录。
+  注意：主程序内部用的头文件，别放到 include/ 里，
+  就放 src/ 下，作为 PRIVATE 的头文件。
+
+【lib/ 或 libraries/ —— 自己的库】
+  项目内部的库放这儿。每个库一个子目录。
+  每个库自己管自己的头文件和实现。
+  公共头文件放 lib/xxx/include/xxx/，
+  内部实现放 lib/xxx/src/。
+
+  为什么每个库都有自己的 include 和 src？
+  因为这样封装性好，库的接口和实现清清楚楚。
+  而且以后如果要把这个库抽出来单独用，也方便。
+
+【tests/ —— 单元测试】
+  测试代码单独放一个目录，跟源码分开。
+  可以用 option 控制要不要编译测试，
+  用户不想跑测试可以关掉，省编译时间。
+
+【cmake/ —— 自定义 CMake 模块】
+  把一些可复用的 CMake 代码封装成 .cmake 文件，放这儿。
+  比如编译警告设置、找第三方库的 FindXXX.cmake 等等。
+  用 list(APPEND CMAKE_MODULE_PATH ...) 把这个目录加进去。
+
+【老师傅提醒】
+  目录结构没有绝对的标准答案，不同项目、不同团队
+  可能有不同的习惯。关键是：
+    1. 清晰——别人一看就知道啥东西在哪
+    2. 一致——全项目遵循同样的规则
+    3. 可扩展——将来加新模块不别扭
+
+
+【三、find_package —— 找第三方库】
+
+find_package 是 CMake 里找第三方库的标准方式。
+
+    find_package(Threads REQUIRED)
+
+啥意思？
+  "帮我找找 Threads 这个库，找不到就报错（REQUIRED）。"
+
+找着之后呢？
+  一般会定义一些 IMPORTED 目标，比如 Threads::Threads。
+  你直接 target_link_libraries 链接它就行，
+  头文件路径啊、库文件路径啊、编译选项啊，
+  CMake 都给你弄好了，你啥都不用管。
+
+比如：
+    target_link_libraries(my_app PRIVATE Threads::Threads)
+
+就这么一行，全搞定。
+
+【find_package 有两种模式】
+
+  1. Module 模式：找 FindXXX.cmake 模块
+     CMake 自带了很多 FindXXX.cmake（比如 FindThreads.cmake），
+     你也可以自己写，放到 cmake/ 目录里。
+
+  2. Config 模式：找 XXXConfig.cmake 配置文件
+     很多现代库（比如 Qt5、Boost 新版本）安装的时候，
+     会把自己的 XXXConfig.cmake 也装上。
+     find_package 找到这个文件，就知道怎么用这个库了。
+
+    Config 模式是现代 CMake 推荐的方式，因为更准确、更完整。
+
+【什么时候用 find_package？】
+  简单说：系统里已经装了的第三方库，都用 find_package。
+  比如：
+    - 系统库：Threads、ZLIB、OpenSSL
+    - 系统装的开发库：Boost、Qt、SDL、OpenCV 等等
+
+  那如果系统里没装呢？或者版本不对呢？
+  那就得考虑用 FetchContent 下载源码自己编，
+  或者用 Conan/vcpkg 这类包管理器。
+  那就超出入门范围了，有兴趣自己研究。
+
+
+【四、测试支持 —— enable_testing + add_test + ctest】
+
+CMake 自带了测试框架，叫 CTest。
+使用起来很简单，三步：
+
+第一步：打开测试
+    enable_testing()
+    （在根 CMakeLists.txt 里写）
+
+第二步：注册测试
+    add_test(NAME 测试名 COMMAND 可执行文件)
+    （每个测试可执行文件注册一个）
+
+第三步：运行测试
+    ctest
+    （在 build 目录里运行）
+
+ctest 会运行所有注册了的测试，然后告诉你通过了几个、失败了几个。
+
+【常用的 ctest 命令】
+
+    ctest                  # 运行所有测试
+    ctest -N               # 列出所有测试，不运行
+    ctest -R 正则          # 只运行名字匹配的测试
+    ctest -V               # 详细输出（显示测试的输出）
+    ctest --output-on-failure  # 失败时才输出
+    ctest -j4              # 4 个线程并行跑测试
+
+【关于测试框架】
+  咱这个例子里没引入第三方测试框架，自己写了个简单的。
+  真实项目里一般用：
+    - Google Test (gtest) —— 最流行，功能全
+    - Catch2 —— 单头文件，方便
+    - doctest —— 轻量，编译快
+
+  这些框架都能跟 CTest 配合使用。
+
+
+【五、安装规则 —— install】
+
+写好了程序，怎么安装到系统里？用 install 命令。
+
+"安装"是啥意思？
+  就是把编译出来的可执行文件、库文件、头文件啥的，
+  复制到系统的标准目录里（比如 /usr/local/bin、/usr/local/lib），
+  这样别的程序就能找到并使用了。
+
+安装的根目录由 CMAKE_INSTALL_PREFIX 控制：
+  cmake .. -DCMAKE_INSTALL_PREFIX=/usr/local  # 默认
+  cmake .. -DCMAKE_INSTALL_PREFIX=~/local     # 装到用户目录
+
+怎么安装？
+  cmake --install .
+  （或者老派的 make install）
+
+【常用的 install 命令】
+
+  1. 安装目标（可执行文件/库）
+     install(TARGETS my_target
+         RUNTIME DESTINATION bin    # 可执行文件 → bin/
+         LIBRARY DESTINATION lib    # 动态库 → lib/
+         ARCHIVE DESTINATION lib    # 静态库 → lib/
+     )
+
+  2. 安装头文件
+     install(FILES header.h DESTINATION include)
+     install(DIRECTORY include/ DESTINATION include)
+
+  3. 安装配置文件、文档啥的
+     install(FILES README.md DESTINATION share/doc/myproject)
+
+【EXPORT 是啥？】
+  install(TARGETS ... EXPORT my-targets ...)
+  加上 EXPORT 之后，CMake 会把目标的信息导出来，
+  生成一个 .cmake 文件。这样别的项目用 find_package
+  找到你的库之后，就能自动链接上所有依赖。
+
+  这就是现代 CMake 库的标准做法——
+  库不只是二进制文件，还带着"怎么使用我"的完整信息。
+
+
+【六、CPack —— 打包】
+
+CPack 是 CMake 自带的打包工具。
+能把你的项目打包成各种格式：
+  - ZIP / TGZ / TBZ2 —— 压缩包
+  - DEB —— Debian/Ubuntu 安装包
+  - RPM —— RedHat/Fedora 安装包
+  - NSIS —— Windows 安装程序
+  - 等等等等
+
+怎么用？很简单：
+
+1. 在 CMakeLists.txt 末尾设置一些变量，然后 include(CPack)
+   （咱例子里已经写了）
+
+2. 配置、编译好之后，运行：
+       cpack
+   就生成安装包了。
+
+3. 指定生成器（打什么格式的包）：
+       cpack -G ZIP
+       cpack -G DEB
+       cpack -G "NSIS;ZIP"
+
+CPack 新手玩玩就行，真要做安装包还有很多细节要调。
+知道有这么个东西就好。
+
+
+【七、怎么玩这个例子？】
+
+基础操作：
+
+    cd cmake_06_full_project
+    mkdir build && cd build
+    cmake ..
+    cmake --build .
+
+运行主程序：
+
+    ./myproject_app            # Linux/macOS
+    ./myproject_app -v         # 看版本信息
+    ./myproject_app -h         # 看帮助
+
+运行测试：
+
+    ctest                      # 运行所有测试
+    ctest -V                   # 详细输出
+
+安装（装到本地目录试试，别往系统里装）：
+
+    cmake .. -DCMAKE_INSTALL_PREFIX=../install_dir
+    cmake --build .
+    cmake --install .
+    # 然后去 install_dir/ 里看看装了些啥
+
+打包：
+
+    cpack                      # 生成 zip 和 tar.gz
+    # 看看生成的包文件
+
+试试不同的选项：
+
+    cmake .. -DBUILD_TESTS=OFF              # 不编测试
+    cmake .. -DBUILD_SHARED_LIBS=ON         # 编动态库
+    cmake .. -DWARNINGS_AS_ERRORS=ON        # 警告当错误
+    cmake .. -DCMAKE_BUILD_TYPE=Release     # Release 模式
+
+
+【八、老师傅的临别赠言】
+
+徒弟啊，6 个例子学完了，你也算入门了。
+
+最后给你几条忠告：
+
+1. 多用现代 CMake 写法
+   target_* 系列命令、PUBLIC/PRIVATE/INTERFACE、
+   基于目标的思维方式。这是正道。
+
+2. 别贪多，file(GLOB) 少用、全局变量少用
+   老老实实列源文件、一个目标一个目标地设置。
+   现在多花两分钟，将来省两小时。
+
+3. 外部构建是底线
+   永远别在源码目录里直接 cmake .。
+   build 目录是你最好的朋友。
+
+4. 官方文档是最好的老师
+   CMake 的官方文档非常全，虽然有点啰嗦，
+   但查起来真的方便。遇到问题先查文档。
+
+5. 多练手
+   看 10 遍不如自己写 1 遍。
+   把这 6 个例子都亲手跑一遍，改改试试，
+   出了错自己排查排查，水平就上来了。
+
+CMake 这东西，说难也难，说简单也简单。
+核心思想就那几条，掌握了就一通百通。
+
+祝你编程愉快，咱江湖再见！
+
+
+================================================================
+  第六讲（完）
+  感谢你跟着老师傅学到这里。
+  加油！
+================================================================

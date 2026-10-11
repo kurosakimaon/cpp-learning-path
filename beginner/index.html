@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>筑基期 · C++入门 - C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .header { text-align: center; color: white; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
+  .header p { font-size: 16px; opacity: 0.95; }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .intro-section h2 {
+    color: #11998e;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p {
+    color: #555;
+    line-height: 1.8;
+    font-size: 14px;
+  }
+
+  .section-title {
+    color: white;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #11998e, #38ef7d);
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+  }
+  .card-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+  }
+  .card-title {
+    font-size: 17px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 8px;
+  }
+  .card-desc {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.6;
+    margin-bottom: 14px;
+  }
+  .card-meta {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.elementary { background: #e0f2f1; color: #00695c; }
+  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
+  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
+  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.expert { background: #ffebee; color: #c62828; }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .feature-section h2 {
+    color: #11998e;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p {
+    color: #555;
+    line-height: 1.8;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  .feature-section ul {
+    padding-left: 22px;
+    color: #555;
+    line-height: 2;
+    font-size: 14px;
+  }
+  .feature-section li strong { color: #333; }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p {
+    color: #555;
+    line-height: 1.8;
+    margin-bottom: 12px;
+    font-size: 14px;
+  }
+  .master-section ul {
+    padding-left: 22px;
+    color: #555;
+    line-height: 2;
+    font-size: 14px;
+  }
+  .master-section li strong { color: #11998e; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section { padding: 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>🌱 筑基期 · C++ 入门</h1>
+    <p>从零开始，打下扎实的 C++ 基础 · 10 个章节循序渐进</p>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 模块简介</h2>
+    <p>
+      欢迎来到 C++ 的世界！本模块是整个学习路线的起点，从最基础的变量、数据类型讲起，
+      逐步深入到函数、数组、指针、结构体，最后迈入面向对象的大门——类、继承、多态、模板。
+      每一章都配有完整的可运行代码和详细注释，让你边学边练，扎实掌握每一个知识点。
+    </p>
+    <p style="margin-top: 10px;">
+      筑基期是最重要的阶段。基础打牢了，后面学什么都快；基础不牢，后面越学越懵。
+      别急着赶进度，<strong>每一个例子都亲手敲一遍、跑一遍、改一遍</strong>，这才是真正的学习。
+    </p>
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #11998e, #38ef7d); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(17, 153, 142, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(17, 153, 142, 0.3)';">
+        📖 学习指南
+      </a>
+      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>📂</span> 学习文件列表
+  </div>
+
+  <div class="card-grid">
+    <a href="01_basics.cpp" class="card">
+      <div class="card-icon">🔤</div>
+      <div class="card-title">01 · 基础语法</div>
+      <div class="card-desc">变量、数据类型、运算符、流程控制（if/switch/for/while）。C++ 的 ABC，一切的起点。</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="02_functions.cpp" class="card">
+      <div class="card-icon">🔧</div>
+      <div class="card-title">02 · 函数</div>
+      <div class="card-desc">函数定义、参数传递（值/指针/引用）、函数重载、递归。学会把代码拆成一块块的。</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="03_array_string.cpp" class="card">
+      <div class="card-icon">📋</div>
+      <div class="card-title">03 · 数组与字符串</div>
+      <div class="card-desc">数组、C 风格字符串、std::string 用法大全。处理批量数据的基础工具。</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="04_pointer_reference.cpp" class="card">
+      <div class="card-icon">🎯</div>
+      <div class="card-title">04 · 指针与引用（重点）</div>
+      <div class="card-desc">指针是什么、怎么用、和引用的区别。C/C++ 的灵魂，也是新手最懵的地方，务必搞懂！</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="05_struct.cpp" class="card">
+      <div class="card-icon">🏗️</div>
+      <div class="card-title">05 · 结构体实战</div>
+      <div class="card-desc">结构体定义 + 学生管理系统完整实战。把前面学的全串起来，做一个小项目。</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="06_file_io.cpp" class="card">
+      <div class="card-icon">📁</div>
+      <div class="card-title">06 · 文件读写</div>
+      <div class="card-desc">文件读写、流操作（ifstream/ofstream/fstream）、RAII 初体验。数据持久化的第一步。</div>
+      <div class="card-meta"><span class="tag beginner">入门</span></div>
+    </a>
+
+    <a href="07_class_basics.cpp" class="card">
+      <div class="card-icon">📦</div>
+      <div class="card-title">07 · 类与对象基础</div>
+      <div class="card-desc">类与对象、封装、构造函数、析构函数、深浅拷贝。面向对象编程的第一堂课。</div>
+      <div class="card-meta"><span class="tag elementary">初级</span></div>
+    </a>
+
+    <a href="08_inheritance_polymorphism.cpp" class="card">
+      <div class="card-icon">🔄</div>
+      <div class="card-title">08 · 继承与多态（核心）</div>
+      <div class="card-desc">继承、虚函数、多态、纯虚函数与抽象类。OOP 三大特性中最重要的一个，务必吃透。</div>
+      <div class="card-meta"><span class="tag elementary">初级</span></div>
+    </a>
+
+    <a href="09_operator_overload.cpp" class="card">
+      <div class="card-icon">➕</div>
+      <div class="card-title">09 · 运算符重载</div>
+      <div class="card-desc">运算符重载、友元函数、仿函数（函数对象）。让你的类用起来像内置类型一样自然。</div>
+      <div class="card-meta"><span class="tag elementary">初级</span></div>
+    </a>
+
+    <a href="10_template_intro.cpp" class="card">
+      <div class="card-icon">🧩</div>
+      <div class="card-title">10 · 模板入门 + STL 初步</div>
+      <div class="card-desc">函数模板、类模板、STL 容器初步认识（vector/string）。泛型编程的起点。</div>
+      <div class="card-meta"><span class="tag elementary">初级</span></div>
+    </a>
+  </div>
+
+  <div class="feature-section">
+    <h2>📚 学习建议</h2>
+    <ul>
+      <li><strong>按顺序学</strong>：前面的知识是后面的基础，不要跳着学。遇到看不懂的先记下来，继续往下看，很多时候看完全章就懂了。</li>
+      <li><strong>动手敲代码</strong>：不要只看不动手。每个例子都自己敲一遍，编译运行，改改参数看看效果。敲代码的时候脑子才会转。</li>
+      <li><strong>多做小练习</strong>：每学完一章，找几个小题目练练手。比如学完数组就写个排序，学完结构体就写个通讯录。</li>
+      <li><strong>理解而不是死记</strong>：C++ 语法很多，但背后都有道理。搞懂"为什么要这么设计"，比记住语法本身更重要。</li>
+      <li><strong>善用编译错误</strong>：报错不是坏事，是编译器在教你写代码。认真读错误信息，90% 的问题报错里已经告诉你答案了。</li>
+      <li><strong>指针是分水岭</strong>：04 章指针和引用是入门期最大的坎。跨过去了，后面一马平川；跨不过去，就会一直懵。务必搞透！</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，欢迎踏入 C++ 的大门。既然选择了这条路，就得有点心理准备——C++ 不是那种一周就能精通的语言，它需要时间和耐心。</p>
+    <p>但你也别被吓到了。C++ 虽然内容多，但<strong>核心思想其实就那么几条</strong>：怎么存数据、怎么操作数据、怎么组织代码、怎么管理内存。把这几条主线抓住，学起来就不会乱。</p>
+    <p>师傅给你几条入门忠告：</p>
+    <ul>
+      <li><strong>第一条：别怕报错。</strong> 新手写代码十有八九编不过，这太正常了。报错是好事，说明编译器在帮你找问题。认真读每一条错误信息，这是你进步最快的方式。</li>
+      <li><strong>第二条：指针一定要搞懂。</strong> 很多人学 C++ 学到指针就放弃了，觉得太绕。其实指针就是个存地址的变量而已，画个图、多调试，很快就懂了。</li>
+      <li><strong>第三条：写代码是练出来的，不是看出来的。</strong> 你看十遍代码，不如自己写一遍。写不出来、编译不过、调试半天，这些都是学习的一部分。</li>
+      <li><strong>第四条：基础打牢比赶进度重要一万倍。</strong> 别跟别人比谁学得多、学得多快。你把基础打扎实了，后面学 STL、学现代 C++、学设计模式，都是水到渠成的事。</li>
+    </ul>
+    <p>慢慢来，不急。筑基期嘛，就是要稳扎稳打。等你把这 10 章都啃下来了，就可以进入蜕变期，去见识 C++ 真正的威力了。</p>
+  </div>
+</div>
+</body>
+</html>

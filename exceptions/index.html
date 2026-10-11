@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>异常与错误处理 - C++ 学习路线图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            min-height: 100vh;
+            color: #3e2723;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 25px;
+            color: #e64a19;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(230, 74, 25, 0.15);
+            margin-bottom: 30px;
+        }
+
+        .back-btn:hover {
+            background: #e64a19;
+            color: white;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(230, 74, 25, 0.3);
+        }
+
+        /* 模块标题 */
+        .module-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .module-icon {
+            font-size: 72px;
+            margin-bottom: 16px;
+        }
+
+        .module-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: #bf360c;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .module-subtitle {
+            font-size: 18px;
+            color: #e64a19;
+            font-weight: 400;
+        }
+
+        .module-intro {
+            max-width: 600px;
+            margin: 20px auto 0;
+            font-size: 15px;
+            color: #5d4037;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px 24px;
+            border-radius: 12px;
+            border-left: 4px solid #ff5722;
+        }
+
+        /* 文件卡片 */
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(230, 74, 25, 0.12);
+            border-top: 4px solid #ff5722;
+            position: relative;
+            overflow: hidden;
+            display: block;
+            margin-bottom: 50px;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #ff5722, #e64a19, #bf360c);
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 28px rgba(230, 74, 25, 0.2);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-number {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            background: #fff3e0;
+            color: #e64a19;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 18px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #bf360c;
+        }
+
+        .card-desc {
+            font-size: 15px;
+            color: #6d4c41;
+            line-height: 1.8;
+            margin-bottom: 20px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 5px 12px;
+            background: #fff3e0;
+            color: #e64a19;
+            border-radius: 14px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 28px;
+            right: 32px;
+            font-size: 22px;
+            color: #ff5722;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-arrow {
+            transform: translateX(4px);
+        }
+
+        /* 学习指南按钮 */
+        .guide-section {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .guide-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            background: linear-gradient(135deg, #ff5722 0%, #e64a19 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+        }
+
+        .guide-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(255, 87, 34, 0.5);
+        }
+
+        .guide-btn-icon {
+            font-size: 18px;
+        }
+
+        /* 学习建议 */
+        .tips-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 50px;
+            box-shadow: 0 4px 16px rgba(230, 74, 25, 0.12);
+        }
+
+        .tips-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #bf360c;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tips-title::before {
+            content: '💡';
+            font-size: 24px;
+        }
+
+        .tips-list {
+            list-style: none;
+        }
+
+        .tips-list li {
+            padding: 10px 0 10px 28px;
+            position: relative;
+            color: #5d4037;
+            font-size: 15px;
+            border-bottom: 1px dashed #ffe0b2;
+        }
+
+        .tips-list li:last-child {
+            border-bottom: none;
+        }
+
+        .tips-list li::before {
+            content: '⚠';
+            position: absolute;
+            left: 0;
+            color: #ff5722;
+            font-weight: 700;
+        }
+
+        /* 老师傅的话 */
+        .master-section {
+            background: linear-gradient(135deg, #bf360c 0%, #8d2a0a 100%);
+            border-radius: 16px;
+            padding: 32px;
+            color: white;
+            box-shadow: 0 6px 24px rgba(191, 54, 12, 0.35);
+        }
+
+        .master-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .master-title::before {
+            content: '👴';
+            font-size: 24px;
+        }
+
+        .master-quote {
+            font-size: 15px;
+            line-height: 1.8;
+            opacity: 0.95;
+            font-style: italic;
+            position: relative;
+            padding-left: 16px;
+            border-left: 3px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .master-quote p {
+            margin-bottom: 12px;
+        }
+
+        .master-quote p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 底部 */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(230, 74, 25, 0.2);
+            color: #e64a19;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 600px) {
+            .module-title {
+                font-size: 32px;
+            }
+
+            .container {
+                padding: 24px 16px;
+            }
+
+            .card {
+                padding: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 返回按钮 -->
+        <a href="../学习路线图.html" class="back-btn">
+            <span>←</span>
+            <span>返回路线图</span>
+        </a>
+
+        <!-- 模块标题 -->
+        <header class="module-header">
+            <div class="module-icon">🔥</div>
+            <h1 class="module-title">异常与错误处理</h1>
+            <p class="module-subtitle">Exceptions · 写出健壮可靠的代码</p>
+            <p class="module-intro">
+                异常是 C++ 中最容易被误解的特性之一。
+                用好了，你的代码清晰又健壮；用不好，到处是坑。
+                本模块从基础语法讲到异常安全、RAII 思想、最佳实践，
+                帮你真正掌握 C++ 的错误处理之道。
+            </p>
+        </header>
+
+        <!-- 文件卡片 -->
+        <a href="exception_basics.cpp" class="card">
+            <div class="card-header">
+                <span class="card-number">01</span>
+                <h3 class="card-title">异常基础与异常安全</h3>
+            </div>
+            <p class="card-desc">
+                从 throw/try/catch 基本语法开始，深入标准异常层次、自定义异常。
+                重点讲解 RAII 思想与异常安全的三个级别，
+                分析 noexcept 关键字、异常 vs 错误码的取舍，
+                以及构造函数、析构函数中异常的经典陷阱。
+            </p>
+            <div class="card-tags">
+                <span class="tag">try/catch</span>
+                <span class="tag">标准异常</span>
+                <span class="tag">自定义异常</span>
+                <span class="tag">RAII</span>
+                <span class="tag">异常安全</span>
+                <span class="tag">noexcept</span>
+            </div>
+            <span class="card-arrow">→</span>
+        </a>
+
+        <!-- 学习指南按钮 -->
+        <div class="guide-section">
+            <a href="tutorial.txt" class="guide-btn">
+                <span class="guide-btn-icon">📖</span>
+                <span>学习指南</span>
+            </a>
+        </div>
+
+        <!-- 学习建议 -->
+        <section class="tips-section">
+            <h2 class="tips-title">学习建议</h2>
+            <ul class="tips-list">
+                <li>先过一遍 exception_basics.cpp，对异常体系建立整体认知</li>
+                <li>重点理解 RAII 思想——这是 C++ 异常安全的基石</li>
+                <li>每个反例都要搞懂：为什么错、怎么改、后果是什么</li>
+                <li>配合 tutorial.txt 深入理解异常的设计哲学与争议</li>
+                <li>做完小练习，尤其是 RAII 类和异常安全的练习</li>
+                <li>在自己的项目里实践：用智能指针代替裸 new，用 lock_guard 管理锁</li>
+            </ul>
+        </section>
+
+        <!-- 老师傅的话 -->
+        <section class="master-section">
+            <h2 class="master-title">老师傅的话</h2>
+            <div class="master-quote">
+                <p>
+                    很多人学 C++ 只学语法，觉得异常不就是 try/catch 嘛，有啥难的。
+                    真到了项目里，内存泄漏了、死锁了、数据错乱了，
+                    查半天发现就是某个异常路径没处理好。
+                </p>
+                <p>
+                    异常安全这东西，光看不练没用。
+                    你得真踩过几个坑，吃过几回亏，
+                    才能真正明白"为什么要这么写"。
+                    但别怕，踩坑的过程就是成长的过程。
+                </p>
+                <p>
+                    记住 RAII 这四个字母。
+                    在 C++ 里，手动管理资源是低级操作，
+                    能用对象管的就别自己操心。
+                    RAII 用好了，你的代码不仅异常安全，
+                    还更简洁、更不容易出 bug。
+                </p>
+            </div>
+        </section>
+
+        <!-- 底部 -->
+        <footer class="footer">
+            C++ 学习路线图 · 异常与错误处理
+        </footer>
+    </div>
+</body>
+</html>

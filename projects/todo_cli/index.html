@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Todo CLI 综合实战项目 · C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #fff;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .header { text-align: center; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 10px rgba(0,0,0,0.3); }
+  .header p { font-size: 16px; opacity: 0.9; }
+
+  .badge {
+    display: inline-block;
+    background: linear-gradient(135deg, #d4af37, #f4e4a6);
+    color: #4a3c0a;
+    padding: 4px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-top: 8px;
+  }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    color: #333;
+  }
+  .intro-section h2 {
+    color: #1b5e20;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+
+  .section-title {
+    color: #fff;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+  }
+
+  .terminal-box {
+    background: #1a1a2e;
+    border-radius: 12px;
+    padding: 20px;
+    margin: 16px 0;
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 13px;
+    line-height: 1.6;
+    color: #e0e0e0;
+    overflow-x: auto;
+  }
+  .terminal-box .prompt { color: #4ade80; }
+  .terminal-box .cmd { color: #fbbf24; }
+  .terminal-box .comment { color: #6b7280; }
+  .terminal-box .highlight { color: #60a5fa; }
+
+  .arch-diagram {
+    background: #f0fdf4;
+    border-radius: 12px;
+    padding: 24px;
+    margin: 16px 0;
+    text-align: center;
+  }
+  .arch-layer {
+    margin: 8px auto;
+    padding: 14px 20px;
+    border-radius: 8px;
+    color: white;
+    font-weight: 600;
+    max-width: 500px;
+    position: relative;
+  }
+  .arch-layer::after {
+    content: '';
+    position: absolute;
+    bottom: -8px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2px;
+    height: 8px;
+    background: #888;
+  }
+  .arch-layer:last-child::after { display: none; }
+  .arch-layer.ui { background: linear-gradient(90deg, #2563eb, #3b82f6); }
+  .arch-layer.cmd { background: linear-gradient(90deg, #7c3aed, #8b5cf6); }
+  .arch-layer.biz { background: linear-gradient(90deg, #059669, #10b981); }
+  .arch-layer.data { background: linear-gradient(90deg, #d97706, #f59e0b); }
+  .arch-layer .subtitle {
+    font-size: 11px;
+    font-weight: 400;
+    opacity: 0.85;
+    margin-top: 2px;
+  }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    color: #333;
+  }
+  .feature-section h2 {
+    color: #1b5e20;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: #1b5e20; }
+
+  .file-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 12px;
+    margin: 16px 0;
+  }
+  .file-item {
+    background: #f0fdf4;
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-family: 'Consolas', monospace;
+    font-size: 13px;
+    color: #1b5e20;
+    border-left: 4px solid #10b981;
+  }
+  .file-item .desc {
+    font-family: 'Microsoft YaHei', sans-serif;
+    font-size: 12px;
+    color: #666;
+    margin-top: 4px;
+  }
+
+  .pattern-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .pattern-card {
+    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    border-radius: 12px;
+    padding: 16px;
+    text-align: center;
+    border: 1px solid #fcd34d;
+  }
+  .pattern-card .icon { font-size: 28px; margin-bottom: 8px; }
+  .pattern-card .name { font-weight: 700; color: #92400e; font-size: 15px; margin-bottom: 4px; }
+  .pattern-card .desc { font-size: 12px; color: #78350f; line-height: 1.5; }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    color: #333;
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .master-section li strong { color: #1b5e20; }
+
+  .gold-quote {
+    background: linear-gradient(135deg, #134e5e, #0d3d4a);
+    color: #f4e4a6;
+    padding: 20px 24px;
+    border-radius: 12px;
+    margin: 16px 0;
+    font-size: 15px;
+    line-height: 1.8;
+    text-align: center;
+    border-left: 4px solid #d4af37;
+  }
+
+  .tutorial-btn {
+    display: inline-block;
+    padding: 14px 32px;
+    background: linear-gradient(135deg, #d4af37, #b8941f);
+    color: #4a3c0a;
+    text-decoration: none;
+    border-radius: 30px;
+    font-weight: 700;
+    font-size: 15px;
+    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    transition: all 0.3s ease;
+  }
+  .tutorial-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+  }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section { padding: 20px; }
+    .file-grid { grid-template-columns: 1fr; }
+    .pattern-grid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>📋 Todo CLI 综合实战项目</h1>
+    <p>把 OOP · STL · 设计模式 · 文件I/O · 智能指针全部串起来</p>
+    <div class="badge">🏆 综合项目 · 学以致用</div>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 项目简介</h2>
+    <p>
+      这是一个完整的命令行待办事项（Todo）管理工具。麻雀虽小，五脏俱全——
+      它涵盖了面向对象编程、STL 容器与算法、文件 I/O、智能指针、
+      设计模式、错误处理等多个核心知识点。
+    </p>
+    <p style="margin-top: 10px;">
+      通过这个项目，你将学会如何<strong>把零散的知识点串成一个完整的应用</strong>，
+      理解真实项目中的代码分层、架构设计和设计模式应用。
+      做项目比看 10 个 demo 都管用！
+    </p>
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <a href="tutorial.txt" target="_blank" class="tutorial-btn">
+        📖 项目学习指南
+      </a>
+      <span style="color: #777; font-size: 13px;">老师傅带你拆解整个项目</span>
+    </div>
+  </div>
+
+  <div class="feature-section">
+    <h2>🎮 功能演示</h2>
+    <p>来看看这个工具长什么样、怎么用：</p>
+    <div class="terminal-box">
+<span class="prompt">===============================================================</span>
+  欢迎使用 Todo CLI - 命令行待办事项工具
+  输入 help 查看帮助，输入 exit 退出
+<span class="prompt">===============================================================</span>
+<span class="prompt">&gt;</span> <span class="cmd">add 完成 C++ 作业 -p high -d 2024-12-31 -t 学习,重要</span>
+已添加任务 #1: 完成 C++ 作业
+
+<span class="prompt">&gt;</span> <span class="cmd">add 买牛奶 -p low -t 生活</span>
+已添加任务 #2: 买牛奶
+
+<span class="prompt">&gt;</span> <span class="cmd">add 写项目文档 -p medium -t 工作</span>
+已添加任务 #3: 写项目文档
+
+<span class="prompt">&gt;</span> <span class="cmd">list -sort priority</span>
+  [ ] #1 完成 C++ 作业 ⭐ (截止: 2024-12-31) [#学习, #重要]
+  [ ] #3 写项目文档 [#工作]
+  [ ] #2 买牛奶 · [#生活]
+
+共 3 个任务（已完成 0，待完成 3）
+
+<span class="prompt">&gt;</span> <span class="cmd">complete 1</span>
+已完成任务 #1: 完成 C++ 作业
+
+<span class="prompt">&gt;</span> <span class="cmd">list -pending</span>
+  [ ] #2 买牛奶 · [#生活]
+  [ ] #3 写项目文档 [#工作]
+
+共 2 个任务（已完成 0，待完成 2）
+
+<span class="prompt">&gt;</span> <span class="cmd">exit</span>
+再见！
+    </div>
+  </div>
+
+  <div class="feature-section">
+    <h2>🏗️ 架构设计</h2>
+    <p>项目采用经典的四层架构，每层职责清晰：</p>
+    <div class="arch-diagram">
+      <div class="arch-layer ui">
+        界面层（ConsoleUI）
+        <div class="subtitle">负责显示和用户交互</div>
+      </div>
+      <div class="arch-layer cmd">
+        命令层（Command + Factory）
+        <div class="subtitle">封装操作、解析输入</div>
+      </div>
+      <div class="arch-layer biz">
+        业务层（TaskList + Task）
+        <div class="subtitle">核心业务逻辑、数据模型</div>
+      </div>
+      <div class="arch-layer data">
+        持久化层（Storage + FileStorage）
+        <div class="subtitle">数据存取、文件 I/O</div>
+      </div>
+    </div>
+    <p style="margin-top: 12px; font-size: 13px; color: #666;">
+      <strong>分层原则：</strong>上层依赖下层，每层只关心自己的职责。
+      层与层之间通过接口通信，修改一层不影响其他层。
+    </p>
+  </div>
+
+  <div class="feature-section">
+    <h2>🎨 设计模式应用</h2>
+    <p>项目中运用了多种经典设计模式，学以致用：</p>
+    <div class="pattern-grid">
+      <div class="pattern-card">
+        <div class="icon">📝</div>
+        <div class="name">命令模式</div>
+        <div class="desc">每个操作封装为命令对象，支持扩展与撤销</div>
+      </div>
+      <div class="pattern-card">
+        <div class="icon">🏭</div>
+        <div class="name">工厂模式</div>
+        <div class="desc">根据输入创建命令，调用者与具体类解耦</div>
+      </div>
+      <div class="pattern-card">
+        <div class="icon">🎯</div>
+        <div class="name">策略模式</div>
+        <div class="desc">排序和筛选可灵活替换算法</div>
+      </div>
+      <div class="pattern-card">
+        <div class="icon">🔒</div>
+        <div class="name">RAII</div>
+        <div class="desc">文件操作、智能指针自动管理资源</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>📂</span> 项目文件结构
+  </div>
+
+  <div class="feature-section">
+    <h2>📁 核心文件</h2>
+    <div class="file-grid">
+      <div class="file-item">
+        include/Task.h / src/Task.cpp
+        <div class="desc">任务数据模型（属性 + 序列化）</div>
+      </div>
+      <div class="file-item">
+        include/TaskList.h / src/TaskList.cpp
+        <div class="desc">任务列表管理（增删改查 + 排序筛选）</div>
+      </div>
+      <div class="file-item">
+        include/Storage.h
+        <div class="desc">持久化抽象接口</div>
+      </div>
+      <div class="file-item">
+        include/FileStorage.h / src/FileStorage.cpp
+        <div class="desc">文件存储实现</div>
+      </div>
+      <div class="file-item">
+        include/Command.h / src/Command.cpp
+        <div class="desc">命令模式：各操作命令类</div>
+      </div>
+      <div class="file-item">
+        include/CommandFactory.h / src/CommandFactory.cpp
+        <div class="desc">命令工厂：解析输入创建命令</div>
+      </div>
+      <div class="file-item">
+        include/ConsoleUI.h / src/ConsoleUI.cpp
+        <div class="desc">控制台用户界面</div>
+      </div>
+      <div class="file-item">
+        include/Utils.h / src/Utils.cpp
+        <div class="desc">通用工具函数</div>
+      </div>
+      <div class="file-item">
+        src/main.cpp
+        <div class="desc">程序入口（组装各模块）</div>
+      </div>
+      <div class="file-item">
+        CMakeLists.txt
+        <div class="desc">CMake 构建配置</div>
+      </div>
+      <div class="file-item">
+        tests/test_task.cpp
+        <div class="desc">单元测试（assert 实现）</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="feature-section">
+    <h2>💡 学习建议</h2>
+    <ul>
+      <li><strong>先跑起来，再读代码</strong>：先编译运行，对功能有整体认识，再深入代码细节。</li>
+      <li><strong>从数据模型开始读</strong>：Task → TaskList → Storage → Command → ConsoleUI，从底向上读最顺。</li>
+      <li><strong>关注设计，不只是语法</strong>：重点理解"为什么这么分层"、"为什么用这个模式"，而不是某行代码怎么写。</li>
+      <li><strong>亲手改一改</strong>：照着 tutorial.txt 里的扩展练习，自己动手加功能。改代码比读代码学的多。</li>
+      <li><strong>对照设计模式学习</strong>：思考每个模式的适用场景，不用死记硬背，理解了自然就会用。</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <div class="gold-quote">
+      做项目比看 10 个 demo 都管用。纸上得来终觉浅，绝知此事要躬行。
+    </div>
+    <p>徒弟啊，这个项目虽然不大，但它是你从"会写代码"到"会做项目"的第一步。</p>
+    <p>师傅当年学编程的时候，也走过弯路——看了很多书，学了很多语法，觉得自己什么都懂了。但真要写个东西的时候，发现根本不知道从哪下手。文件怎么分？类怎么设计？代码怎么组织？</p>
+    <p>这些东西，看书学不会，必须亲手做。</p>
+    <p>这个项目，师傅建议你这么学：</p>
+    <ul>
+      <li><strong>第一遍：跑起来，用一用。</strong> 感受一下功能，知道它能干啥。</li>
+      <li><strong>第二遍：读代码，理解架构。</strong> 跟着 tutorial.txt 的指导，把每个文件都读懂。重点理解设计思想。</li>
+      <li><strong>第三遍：动手改，加功能。</strong> 选几个扩展练习自己做。改坏了没关系，重来就是。改代码的过程中，你才会真正理解为什么要这么设计。</li>
+    </ul>
+    <p>最后师傅说一句：<strong>编程是手艺活，熟能生巧。</strong> 你写的代码越多，踩的坑越多，进步就越快。别害怕犯错，每个 bug 都是成长的机会。</p>
+  </div>
+</div>
+</body>
+</html>

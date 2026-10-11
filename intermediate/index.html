@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>蜕变期 · STL与内存 - C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.2);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.3); }
+
+  .header { text-align: center; color: white; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
+  .header p { font-size: 16px; opacity: 0.95; }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .intro-section h2 {
+    color: #667eea;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p {
+    color: #555;
+    line-height: 1.8;
+    font-size: 14px;
+  }
+
+  .section-title {
+    color: white;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #667eea, #764ba2);
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+  }
+  .card-icon { font-size: 32px; margin-bottom: 10px; }
+  .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
+  .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.elementary { background: #e0f2f1; color: #00695c; }
+  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
+  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
+  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.expert { background: #ffebee; color: #c62828; }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .feature-section h2 {
+    color: #667eea;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: #333; }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .master-section li strong { color: #667eea; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section { padding: 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>🦋 蜕变期 · STL 与内存</h1>
+    <p>从 C 式编程迈向 C++ 式编程 · RAII 思想 + STL 三板斧</p>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 模块简介</h2>
+    <p>
+      度过了筑基期，你已经掌握了 C++ 的基本语法。但如果你还在用 C 的方式写 C++ 代码（手动 new/delete、自己写链表），
+      那你还没真正体会到 C++ 的威力。本模块将带你完成一次<strong>蜕变</strong>——理解 C++ 的内存模型和 RAII 思想，
+      熟练使用 STL 容器和算法，学会用智能指针管理内存。
+    </p>
+    <p style="margin-top: 10px;">
+      这是一个重要的转折点。学完本模块，你的代码质量会有质的飞跃：更安全、更简洁、更符合 C++ 的"道"。
+    </p>
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)';">
+        📖 学习指南
+      </a>
+      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>📂</span> 学习文件列表
+  </div>
+
+  <div class="card-grid">
+    <a href="memory_model_raii.cpp" class="card">
+      <div class="card-icon">🧠</div>
+      <div class="card-title">内存模型与 RAII（C++灵魂）</div>
+      <div class="card-desc">堆/栈/全局区、对象生命周期、RAII 思想详解。理解了 RAII，才算真正入门了 C++。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="stl_containers.cpp" class="card">
+      <div class="card-icon">📦</div>
+      <div class="card-title">STL 容器详解与底层原理</div>
+      <div class="card-desc">vector/list/deque/map/set/unordered_map 等容器的用法、区别、底层实现和适用场景。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="stl_algorithms.cpp" class="card">
+      <div class="card-icon">⚡</div>
+      <div class="card-title">STL 算法与迭代器深入</div>
+      <div class="card-desc">常用算法（排序/查找/遍历/变换）、迭代器分类、仿函数与 lambda 结合使用。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="smart_ptr_deep.cpp" class="card">
+      <div class="card-icon">🛡️</div>
+      <div class="card-title">智能指针深入与常见陷阱</div>
+      <div class="card-desc">unique_ptr/shared_ptr/weak_ptr 原理、用法、循环引用问题、线程安全性分析。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="coding_practices.cpp" class="card">
+      <div class="card-icon">📏</div>
+      <div class="card-title">编程规范与最佳实践</div>
+      <div class="card-desc">命名规范、代码组织、异常安全、const 正确性、Google C++ Style 精华解读。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+  </div>
+
+  <div class="feature-section">
+    <h2>📚 学习建议</h2>
+    <ul>
+      <li><strong>先搞懂 RAII</strong>：RAII 是 C++ 一切优雅特性的基石。智能指针、容器、锁守卫，全都是 RAII 的应用。把这一章吃透，后面学什么都一通百通。</li>
+      <li><strong>STL 容器要"知其然更知其所以然"</strong>：不光要会用 vector、map，还要理解它们的底层实现（动态数组、红黑树、哈希表），这样才能根据场景选对容器。</li>
+      <li><strong>多用算法，少手写循环</strong>：STL 算法已经帮你实现了最常见的操作，而且经过高度优化。学会用 std::sort、std::find、std::for_each 等，代码会更简洁更不容易错。</li>
+      <li><strong>彻底告别裸 new/delete</strong>：学完智能指针后，你的代码里应该尽量不再出现裸 new/delete。用 unique_ptr 和 shared_ptr 管理内存，从源头上杜绝内存泄漏。</li>
+      <li><strong>编程规范越早养成越好</strong>：代码是写给人看的，顺便给机器执行。好的编码习惯让你和你的同事都受益。从现在开始就按规范写代码。</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，恭喜你来到蜕变期。这一关过了，你就从"会写 C++ 代码"变成了"会用 C++ 写代码"。这中间的区别，可大了去了。</p>
+    <p>很多人学 C++ 学了好几年，还停留在 C with class 的水平。手动管理内存、自己造轮子、到处是裸指针。
+      不是说这样不行，而是这样写出来的代码<strong>容易出 bug，而且维护成本高</strong>。</p>
+    <p>师傅跟你说几句掏心窝子的话：</p>
+    <ul>
+      <li><strong>RAII 是 C++ 的灵魂。</strong> 这句话你可能听很多人说过，但只有真正理解了它，你才会知道它有多厉害。资源获取即初始化，一句话道尽了 C++ 的哲学。构造函数获取资源，析构函数释放资源，对象出作用域自动清理。就这么简单的一个思想，解决了多少内存泄漏、资源泄漏的问题。</li>
+      <li><strong>STL 是前人给你铺好的路。</strong> 别自己写链表、自己写排序、自己写哈希表了。STL 里的东西，都是全世界最聪明的人写的，经过了几十年的检验。你写的大概率没它好，也没它快。</li>
+      <li><strong>智能指针不是银弹，但没有它万万不能。</strong> 该用 unique_ptr 就别用 shared_ptr，后者有开销。weak_ptr 是解决循环引用的钥匙，务必搞懂。</li>
+      <li><strong>好代码是改出来的。</strong> 写完一版代码，回头看看能不能用 STL 算法替换手写循环，能不能用智能指针替换裸指针，能不能用 const 修饰更多地方。这个打磨的过程，就是你进步的过程。</li>
+    </ul>
+    <p>加油吧，蜕变期过了，你就可以去学现代 C++ 的那些酷炫特性了。但在那之前，先把基本功练扎实。</p>
+  </div>
+</div>
+</body>
+</html>

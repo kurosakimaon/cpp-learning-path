@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>化境期 · 设计模式 - C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.25);
+    color: #5d4037;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.4); }
+
+  .header { text-align: center; color: #5d4037; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(255,255,255,0.3); }
+  .header p { font-size: 16px; opacity: 0.9; }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .intro-section h2 {
+    color: #e65100;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+
+  .section-title {
+    color: #5d4037;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .category-label {
+    display: inline-block;
+    padding: 4px 14px;
+    background: rgba(255,255,255,0.3);
+    color: #5d4037;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    margin-bottom: 12px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #f7971e, #ffd200);
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+  }
+  .card-icon { font-size: 28px; margin-bottom: 8px; }
+  .card-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 6px; }
+  .card-desc { font-size: 12.5px; color: #666; line-height: 1.6; margin-bottom: 12px; }
+  .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.elementary { background: #e0f2f1; color: #00695c; }
+  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
+  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
+  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.expert { background: #ffebee; color: #c62828; }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .feature-section h2 {
+    color: #e65100;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: #333; }
+
+  .pattern-types {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 16px;
+    margin: 16px 0;
+  }
+  .pattern-type {
+    background: #fff8e1;
+    border-radius: 12px;
+    padding: 16px;
+    border-left: 4px solid #f7971e;
+  }
+  .pattern-type h4 { color: #e65100; margin-bottom: 8px; font-size: 15px; }
+  .pattern-type p { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .master-section li strong { color: #e65100; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section { padding: 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>🏆 化境期 · 设计模式</h1>
+    <p>11 种经典设计模式的 C++ 现代实现 · 从入门到精通</p>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 模块简介</h2>
+    <p>
+      设计模式是软件设计中常见问题的经典解决方案，是前辈们总结出来的"最佳实践"。
+      本模块精选了 11 种最常用、最有价值的设计模式，每一种都提供多种 C++ 实现方式对比，
+      从经典的 GoF 写法，到现代 C++ 的模板、lambda、function 等新式写法，
+      让你不仅理解模式的思想，更能写出符合现代 C++ 风格的优雅实现。
+    </p>
+    <p style="margin-top: 10px;">
+      学设计模式不是为了在面试时背诵，而是为了<strong>面对复杂问题时，能快速找到合适的设计思路</strong>。
+    </p>
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #f7971e, #ffd200); color: #5d4037; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(247, 151, 30, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(247, 151, 30, 0.3)';">
+        📖 学习指南
+      </a>
+      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+    </div>
+  </div>
+
+  <div class="feature-section">
+    <h2>🗂️ 三大类型模式</h2>
+    <div class="pattern-types">
+      <div class="pattern-type">
+        <h4>🏗️ 创建型模式</h4>
+        <p>处理对象创建机制，根据情况用合适的方式创建对象，增加已有代码的灵活性和可复用性。</p>
+      </div>
+      <div class="pattern-type">
+        <h4>🔌 结构型模式</h4>
+        <p>处理类或对象的组合，将不同的类/对象组装成更大的结构，同时保持结构的灵活和高效。</p>
+      </div>
+      <div class="pattern-type">
+        <h4>🎭 行为型模式</h4>
+        <p>处理对象之间的通信和职责分配，让对象之间能够高效、灵活地协作完成任务。</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>🏗️</span> 创建型模式
+  </div>
+
+  <div class="card-grid">
+    <a href="singleton.cpp" class="card">
+      <div class="card-icon">1️⃣</div>
+      <div class="card-title">单例模式</div>
+      <div class="card-desc">5 种实现方式对比：饿汉式、懒汉式、双检锁、Meyers 单例、call_once。线程安全分析。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="factory_abstract.cpp" class="card">
+      <div class="card-icon">🏭</div>
+      <div class="card-title">工厂方法 + 抽象工厂</div>
+      <div class="card-desc">简单工厂、工厂方法、抽象工厂三级进阶，再加反射式工厂的现代 C++ 实现。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="builder.cpp" class="card">
+      <div class="card-icon">🔨</div>
+      <div class="card-title">建造者模式</div>
+      <div class="card-desc">Fluent 链式调用 + 模板建造者。创建复杂对象的利器，参数再多也不怕乱。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+  </div>
+
+  <div class="section-title">
+    <span>🔌</span> 结构型模式
+  </div>
+
+  <div class="card-grid">
+    <a href="adapter.cpp" class="card">
+      <div class="card-icon">🔌</div>
+      <div class="card-title">适配器模式</div>
+      <div class="card-desc">对象适配器、类适配器、接口适配、双向适配。让不兼容的接口也能一起工作。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="decorator.cpp" class="card">
+      <div class="card-icon">🎨</div>
+      <div class="card-title">装饰器模式</div>
+      <div class="card-desc">数据流装饰、CRTP 静态装饰、函数装饰器。动态给对象添加功能，比继承更灵活。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="proxy.cpp" class="card">
+      <div class="card-icon">🎭</div>
+      <div class="card-title">代理模式</div>
+      <div class="card-desc">虚拟代理、保护代理、缓存代理、智能指针代理。控制对对象的访问，隐藏真实细节。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+  </div>
+
+  <div class="section-title">
+    <span>🎭</span> 行为型模式
+  </div>
+
+  <div class="card-grid">
+    <a href="observer.cpp" class="card">
+      <div class="card-icon">👀</div>
+      <div class="card-title">观察者模式</div>
+      <div class="card-desc">推模型/拉模型、信号槽实现、线程安全版本。一对多通知的经典方案。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="strategy.cpp" class="card">
+      <div class="card-icon">♟️</div>
+      <div class="card-title">策略模式</div>
+      <div class="card-desc">经典实现、function 版本、模板策略、策略组合。封装算法，灵活切换。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="visitor.cpp" class="card">
+      <div class="card-icon">🚪</div>
+      <div class="card-title">访问者模式</div>
+      <div class="card-desc">经典访问者、Acyclic Visitor、std::variant 替代方案。双分派的艺术。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="state.cpp" class="card">
+      <div class="card-icon">🔄</div>
+      <div class="card-title">状态模式</div>
+      <div class="card-desc">状态机完整实现，状态转换、状态行为封装。消除大量 if-else 的神器。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+
+    <a href="command.cpp" class="card">
+      <div class="card-icon">📜</div>
+      <div class="card-title">命令模式</div>
+      <div class="card-desc">撤销重做、命令队列、宏命令。把请求封装成对象，玩法超多。</div>
+      <div class="card-meta"><span class="tag advanced">高级</span></div>
+    </a>
+  </div>
+
+  <div class="feature-section">
+    <h2>📚 学习建议</h2>
+    <ul>
+      <li><strong>先理解思想，再看实现</strong>：每个模式先搞清楚它解决什么问题、核心思想是什么。代码实现只是思想的载体，理解了思想，你自己也能写出来。</li>
+      <li><strong>对比不同实现方式</strong>：每个模式都有多种写法。对比一下，看看各种写法的优缺点分别是什么，分别适合什么场景。</li>
+      <li><strong>在真实代码中寻找模式</strong>：读完一个模式，去你项目的代码里找找，看看有没有地方已经在用这个模式（不管是有意还是无意的）。在真实场景中识别模式，比死记硬背有用得多。</li>
+      <li><strong>不要为了用模式而用模式</strong>：这是初学者最容易犯的错。手里拿着锤子，看什么都是钉子。设计模式是工具箱，不是万能药。简单的问题就用简单的解法，别搞复杂了。</li>
+      <li><strong>模式是可以组合的</strong>：真实项目中，往往是多个模式组合使用。比如观察者+策略、工厂+模板方法、装饰器+策略……学多了你自然会融会贯通。</li>
+      <li><strong>现代 C++ 让模式变得不同</strong>：很多 GoF 时代的模式，在现代 C++ 中有了更简洁的实现方式（比如用 function/lambda 替代策略模式的继承体系）。保持开放的心态，与时俱进。</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，设计模式这东西，说重要也重要，说不重要也不重要。</p>
+    <p>重要在哪？<strong>它是一种"共同语言"</strong>。你跟另一个程序员说"这里用观察者模式"，对方马上就明白你的设计思路了，不用解释一大堆。这大大降低了沟通成本。</p>
+    <p>不重要在哪？<strong>真正的高手，手里无剑心中有剑</strong>。他们不会刻意去想"我要用什么模式"，而是根据问题自然地设计，回头一看，哦，这不就是某某模式嘛。模式已经内化了。</p>
+    <p>师傅给你几句经验之谈：</p>
+    <ul>
+      <li><strong>别拿模式当教条。</strong> GoF 的 23 种模式是 90 年代总结的，那时候还是 Smalltalk 和 C++ 的天下。这么多年过去了，语言特性变了很多，有些模式已经有了更好的替代方案。学模式学的是思想，不是死记 UML 图。</li>
+      <li><strong>简单永远是第一位的。</strong> 如果一个简单的函数就能解决问题，就别搞什么类、继承、模式。为了用模式而用模式，是最愚蠢的。</li>
+      <li><strong>模式的名字只是标签。</strong> 关键是理解它解决了什么问题、在什么场景下用。你不知道某个模式的名字没关系，只要你知道遇到类似问题该怎么设计就行。</li>
+      <li><strong>多读好代码。</strong> 去看看 STL、Boost、Qt 这些优秀库的源码，你会发现设计模式无处不在，但它们从来不会写着"这里用了 XX 模式"。好的设计是润物细无声的。</li>
+      <li><strong>重构中学习模式。</strong> 先写一个能用的版本，然后回头看：哪里重复了？哪里不够灵活？哪里以后可能要扩展？在重构的过程中，你会自然而然地用到设计模式。</li>
+    </ul>
+    <p>设计模式的最高境界，是<strong>忘记所有模式的名字，但写出的代码处处符合模式的思想</strong>。慢慢修炼吧。</p>
+  </div>
+</div>
+</body>
+</html>

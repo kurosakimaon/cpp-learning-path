@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>单元测试专题 - C++ 学习路线图</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            min-height: 100vh;
+            color: #263238;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border: none;
+            border-radius: 25px;
+            color: #00695c;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 105, 92, 0.15);
+            margin-bottom: 30px;
+        }
+
+        .back-btn:hover {
+            background: #00695c;
+            color: white;
+            transform: translateX(-3px);
+            box-shadow: 0 4px 12px rgba(0, 105, 92, 0.3);
+        }
+
+        /* 模块标题 */
+        .module-header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .module-icon {
+            font-size: 72px;
+            margin-bottom: 16px;
+        }
+
+        .module-title {
+            font-size: 42px;
+            font-weight: 700;
+            color: #004d40;
+            margin-bottom: 12px;
+            letter-spacing: 2px;
+        }
+
+        .module-subtitle {
+            font-size: 18px;
+            color: #00796b;
+            font-weight: 400;
+        }
+
+        .module-intro {
+            max-width: 600px;
+            margin: 20px auto 0;
+            font-size: 15px;
+            color: #546e7a;
+            background: rgba(255, 255, 255, 0.6);
+            padding: 20px 24px;
+            border-radius: 12px;
+            border-left: 4px solid #26a69a;
+        }
+
+        /* 文件卡片网格 */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 16px;
+            padding: 28px;
+            text-decoration: none;
+            color: inherit;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 16px rgba(0, 105, 92, 0.1);
+            border-top: 4px solid #26a69a;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #26a69a, #00897b, #00695c);
+        }
+
+        .card:hover {
+            transform: translateY(-6px);
+            box-shadow: 0 12px 28px rgba(0, 105, 92, 0.2);
+        }
+
+        .card-number {
+            display: inline-block;
+            width: 36px;
+            height: 36px;
+            line-height: 36px;
+            text-align: center;
+            background: #e0f2f1;
+            color: #00695c;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 16px;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #004d40;
+            margin-bottom: 10px;
+        }
+
+        .card-desc {
+            font-size: 14px;
+            color: #78909c;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+
+        .card-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            background: #e0f2f1;
+            color: #00695c;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .card-arrow {
+            position: absolute;
+            bottom: 20px;
+            right: 24px;
+            font-size: 20px;
+            color: #26a69a;
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover .card-arrow {
+            transform: translateX(4px);
+        }
+
+        /* 学习指南按钮 */
+        .guide-section {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        .guide-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            padding: 16px 36px;
+            background: linear-gradient(135deg, #26a69a 0%, #00897b 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 30px;
+            font-size: 16px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(38, 166, 154, 0.4);
+        }
+
+        .guide-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 24px rgba(38, 166, 154, 0.5);
+        }
+
+        .guide-btn-icon {
+            font-size: 18px;
+        }
+
+        /* 学习建议 */
+        .tips-section {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 50px;
+            box-shadow: 0 4px 16px rgba(0, 105, 92, 0.1);
+        }
+
+        .tips-title {
+            font-size: 20px;
+            font-weight: 600;
+            color: #004d40;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .tips-title::before {
+            content: '💡';
+            font-size: 24px;
+        }
+
+        .tips-list {
+            list-style: none;
+        }
+
+        .tips-list li {
+            padding: 10px 0 10px 28px;
+            position: relative;
+            color: #455a64;
+            font-size: 15px;
+            border-bottom: 1px dashed #e0f2f1;
+        }
+
+        .tips-list li:last-child {
+            border-bottom: none;
+        }
+
+        .tips-list li::before {
+            content: '✓';
+            position: absolute;
+            left: 0;
+            color: #26a69a;
+            font-weight: 700;
+        }
+
+        /* 老师傅的话 */
+        .master-section {
+            background: linear-gradient(135deg, #00695c 0%, #004d40 100%);
+            border-radius: 16px;
+            padding: 32px;
+            color: white;
+            box-shadow: 0 6px 24px rgba(0, 77, 64, 0.3);
+        }
+
+        .master-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .master-title::before {
+            content: '👴';
+            font-size: 24px;
+        }
+
+        .master-quote {
+            font-size: 15px;
+            line-height: 1.8;
+            opacity: 0.95;
+            font-style: italic;
+            position: relative;
+            padding-left: 16px;
+            border-left: 3px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .master-quote p {
+            margin-bottom: 12px;
+        }
+
+        .master-quote p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* 底部 */
+        .footer {
+            text-align: center;
+            margin-top: 50px;
+            padding-top: 24px;
+            border-top: 1px solid rgba(0, 105, 92, 0.2);
+            color: #00796b;
+            font-size: 13px;
+            opacity: 0.8;
+        }
+
+        @media (max-width: 600px) {
+            .module-title {
+                font-size: 32px;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .container {
+                padding: 24px 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- 返回按钮 -->
+        <a href="../学习路线图.html" class="back-btn">
+            <span>←</span>
+            <span>返回路线图</span>
+        </a>
+
+        <!-- 模块标题 -->
+        <header class="module-header">
+            <div class="module-icon">🧪</div>
+            <h1 class="module-title">单元测试专题</h1>
+            <p class="module-subtitle">Testing · 测试是工程化的基础</p>
+            <p class="module-intro">
+                单元测试是程序员的"安全网"。写好测试，你才能放心改代码、大胆重构。
+                本模块带你从 GTest 入门开始，掌握参数化测试、Mock、TDD 等核心技能，
+                让你的代码质量上一个台阶。
+            </p>
+        </header>
+
+        <!-- 文件卡片 -->
+        <div class="cards-grid">
+            <a href="01_gtest_basics.cpp" class="card">
+                <span class="card-number">01</span>
+                <h3 class="card-title">Google Test 入门</h3>
+                <p class="card-desc">
+                    从 TEST 宏开始，学习断言类型、测试夹具、ASSERT 与 EXPECT 的区别。
+                    用 StringUtils 类作为练习对象，打下扎实的测试基础。
+                </p>
+                <div class="card-tags">
+                    <span class="tag">TEST 宏</span>
+                    <span class="tag">断言</span>
+                    <span class="tag">测试夹具</span>
+                </div>
+                <span class="card-arrow">→</span>
+            </a>
+
+            <a href="02_gtest_advanced.cpp" class="card">
+                <span class="card-number">02</span>
+                <h3 class="card-title">Google Test 进阶</h3>
+                <p class="card-desc">
+                    参数化测试、死亡测试、SCOPED_TRACE 调试技巧。
+                    手动实现 Mock 理解原理，体验 TDD 测试驱动开发的思路。
+                </p>
+                <div class="card-tags">
+                    <span class="tag">参数化测试</span>
+                    <span class="tag">Mock</span>
+                    <span class="tag">TDD</span>
+                </div>
+                <span class="card-arrow">→</span>
+            </a>
+        </div>
+
+        <!-- 学习指南按钮 -->
+        <div class="guide-section">
+            <a href="tutorial.txt" class="guide-btn">
+                <span class="guide-btn-icon">📖</span>
+                <span>学习指南</span>
+            </a>
+        </div>
+
+        <!-- 学习建议 -->
+        <section class="tips-section">
+            <h2 class="tips-title">学习建议</h2>
+            <ul class="tips-list">
+                <li>按顺序学习：先学 01 基础，再学 02 进阶，不要跳着来</li>
+                <li>动手编译运行：光看没用，每个例子都编译跑一遍，改改参数试试</li>
+                <li>做小练习：每个文件末尾的小练习一定要做，巩固知识</li>
+                <li>结合学习指南：遇到困惑时翻看 tutorial.txt，理解背后的思想</li>
+                <li>学以致用：学完后给自己项目里的代码补几个单元测试</li>
+                <li>进阶方向：掌握 GTest 后可以学 Google Mock、测试覆盖率工具</li>
+            </ul>
+        </section>
+
+        <!-- 老师傅的话 -->
+        <section class="master-section">
+            <h2 class="master-title">老师傅的话</h2>
+            <div class="master-quote">
+                <p>
+                    很多年轻人觉得"写测试是浪费时间"，老师傅我当年也这么想。
+                    直到有一次改了一行代码，搞崩了三个地方，查了整整一天——
+                    那时候才明白，测试不是浪费时间，是省时间。
+                </p>
+                <p>
+                    好的测试像一张安全网。有了它，你重构的时候敢大刀阔斧，
+                    改需求的时候心里有底。没有测试的代码，就像走钢丝没系安全带，
+                    走一步看一步，生怕摔下去。
+                </p>
+                <p>
+                    别等项目大了再补测试——那时候你更不会写。
+                    从今天起，写新函数的时候顺手写两个测试，习惯了就好。
+                </p>
+            </div>
+        </section>
+
+        <!-- 底部 -->
+        <footer class="footer">
+            C++ 学习路线图 · 单元测试专题
+        </footer>
+    </div>
+</body>
+</html>

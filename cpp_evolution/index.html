@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>版本演进 · C++11→14→17 - C++ 学习路线</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(255,255,255,0.25);
+    color: #006064;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.4); }
+
+  .header { text-align: center; color: #006064; margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(255,255,255,0.3); }
+  .header p { font-size: 16px; opacity: 0.9; }
+
+  .intro-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 24px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .intro-section h2 {
+    color: #0097a7;
+    margin-bottom: 12px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+
+  .section-title {
+    color: #006064;
+    font-size: 22px;
+    margin: 30px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 20px;
+  }
+  .card {
+    background: white;
+    border-radius: 16px;
+    padding: 22px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: inherit;
+    display: block;
+    position: relative;
+    overflow: hidden;
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 4px;
+    background: linear-gradient(90deg, #00c9ff, #00bcd4);
+  }
+  .card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+  }
+  .card-icon { font-size: 32px; margin-bottom: 10px; }
+  .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
+  .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .tag {
+    padding: 3px 10px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.elementary { background: #e0f2f1; color: #00695c; }
+  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
+  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
+  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.expert { background: #ffebee; color: #c62828; }
+  .tag.introductory { background: #f3e5f5; color: #7b1fa2; }
+
+  .feature-section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .feature-section h2 {
+    color: #0097a7;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: #333; }
+
+  .timeline {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+  }
+  .timeline-item {
+    flex: 1;
+    min-width: 200px;
+    background: #f0fdfa;
+    border-radius: 12px;
+    padding: 18px;
+    border-top: 4px solid #00bcd4;
+    text-align: center;
+  }
+  .timeline-item .year {
+    font-size: 28px;
+    font-weight: 700;
+    color: #0097a7;
+    margin-bottom: 6px;
+  }
+  .timeline-item .label {
+    font-size: 13px;
+    color: #555;
+    margin-bottom: 10px;
+  }
+  .timeline-item .highlights {
+    text-align: left;
+    font-size: 12px;
+    color: #666;
+    line-height: 1.8;
+  }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 28px 32px;
+    margin-bottom: 20px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+  }
+  .master-section h2 {
+    color: #333;
+    margin-bottom: 16px;
+    font-size: 22px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
+  .master-section li strong { color: #0097a7; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 26px; }
+    .intro-section, .feature-section, .master-section { padding: 20px; }
+    .card-grid { grid-template-columns: 1fr; }
+    .timeline { flex-direction: column; }
+    .timeline-item { min-width: 100%; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
+
+  <div class="header">
+    <h1>📜 版本演进 · C++11 → 14 → 17</h1>
+    <p>理解每个版本的核心变化 · 掌握 C++ 现代化的脉络</p>
+  </div>
+
+  <div class="intro-section">
+    <h2>📖 模块简介</h2>
+    <p>
+      C++ 是一门不断演进的语言。从 C++11 的"革命性更新"，到 C++14 的"小步快跑"，
+      再到 C++17 的"实用至上"，每个版本都带来了新特性和新的编程范式。
+      本模块带你纵览这三个版本的演进历程，理解每个特性出现的背景和意义，
+      以及它们是如何一步步让 C++ 变得更强大、更优雅的。
+    </p>
+    <p style="margin-top: 10px;">
+      了解版本演进，不仅能帮你在不同编译器环境下写出兼容的代码，
+      更能让你<strong>站在设计者的角度理解 C++ 的发展方向</strong>。
+    </p>
+    <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #00c9ff, #00bcd4); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0, 188, 212, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(0, 188, 212, 0.3)';">
+        📖 学习指南
+      </a>
+      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+    </div>
+  </div>
+
+  <div class="feature-section">
+    <h2>🗓️ 版本演进时间线</h2>
+    <div class="timeline">
+      <div class="timeline-item">
+        <div class="year">C++11</div>
+        <div class="label">划时代的革命</div>
+        <div class="highlights">
+          • 移动语义 & 右值引用<br>
+          • auto / decltype<br>
+          • lambda 表达式<br>
+          • 智能指针<br>
+          • 范围 for 循环<br>
+          • 线程支持库<br>
+          • constexpr 初版
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">C++14</div>
+        <div class="label">完善与补充</div>
+        <div class="highlights">
+          • 函数返回值推导<br>
+          • 泛型 lambda<br>
+          • 变量模板<br>
+          • 二进制字面量<br>
+          • 数字分隔符<br>
+          • make_unique<br>
+          • 共享的互斥量
+        </div>
+      </div>
+      <div class="timeline-item">
+        <div class="year">C++17</div>
+        <div class="label">实用主义</div>
+        <div class="highlights">
+          • 结构化绑定<br>
+          • if constexpr<br>
+          • 折叠表达式<br>
+          • std::optional<br>
+          • std::variant<br>
+          • std::any<br>
+          • string_view<br>
+          • filesystem<br>
+          • 并行算法
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-title">
+    <span>📂</span> 学习文件列表
+  </div>
+
+  <div class="card-grid">
+    <a href="cpp11_core_features.cpp" class="card">
+      <div class="card-icon">🚀</div>
+      <div class="card-title">C++11 核心特性深度解析</div>
+      <div class="card-desc">移动语义、lambda、智能指针、auto/decltype、范围for、constexpr 等 C++11 最重要特性的原理与实战。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="cpp14_features.cpp" class="card">
+      <div class="card-icon">🔧</div>
+      <div class="card-title">C++14 特性详解</div>
+      <div class="card-desc">函数返回值推导、泛型 lambda、变量模板、二进制字面量、make_unique 等 C++14 新特性全解析。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="evolution_comparison.cpp" class="card">
+      <div class="card-icon">📊</div>
+      <div class="card-title">跨版本演进对比（10 个主题）</div>
+      <div class="card-desc">按主题横向对比 C++98→11→14→17 的变化。同一个问题在不同版本中的不同解法，一目了然。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
+    <a href="cpp20_overview.cpp" class="card">
+      <div class="card-icon">🚀</div>
+      <div class="card-title">C++20/23 速览</div>
+      <div class="card-desc">Concepts、Ranges、协程、模块、std::expected、std::print、mdspan……快速了解现代 C++ 的最新特性，知道有这么回事就行。</div>
+      <div class="card-meta"><span class="tag introductory">了解</span></div>
+    </a>
+  </div>
+
+  <div class="feature-section">
+    <h2>📚 学习建议</h2>
+    <ul>
+      <li><strong>先掌握 C++11</strong>：C++11 是现代 C++ 的基石。把 C++11 的核心特性吃透了，C++14 和 C++17 都是在此基础上的增量更新。</li>
+      <li><strong>横向对比学习效果最好</strong>：推荐重点看"跨版本演进对比"，同一个主题（比如遍历、类型推导、初始化）在不同版本中的写法对比，能让你对 C++ 的发展脉络有非常清晰的认识。</li>
+      <li><strong>关注"为什么加入这个特性"</strong>：每个新特性都不是拍脑袋加的。了解它解决了什么痛点，你才能真正理解它的价值，也知道什么时候该用它。</li>
+      <li><strong>注意编译器兼容性</strong>：实际工作中可能遇到各种版本的编译器。知道哪些特性是哪个版本加的，写出的代码才能在目标环境下编译通过。</li>
+      <li><strong>用最新标准，但理解旧写法</strong>：新项目建议直接用最新标准（C++17 或 C++20），但也要看懂老式 C++ 代码——毕竟维护老项目是程序员的日常。</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，学 C++ 不能只学语法，还要了解它的历史。知道它是怎么一步步走到今天的，你才能理解很多设计背后的考量。</p>
+    <p>C++ 这门语言很有意思，它是<strong>一边发展，一边背上历史包袱</strong>的。很多看似奇怪的语法规则，追溯到源头，都是为了兼容老代码。这是 C++ 的优点，也是它的"原罪"。</p>
+    <p>师傅跟你聊聊这几个版本的故事：</p>
+    <ul>
+      <li><strong>C++11 是一个分水岭。</strong> 在那之前，C++ 停留在 98 标准快 13 年了。很多人说 C++ 老了、不行了。结果 C++11 一出，直接把 C++ 变成了一门几乎全新的语言。移动语义、lambda、智能指针、auto……每一个都是杀手锏。从那以后，C++ 迎来了"第二春"。</li>
+      <li><strong>C++14 是个"小版本"但很实用。</strong> 它没有 C++11 那么多革命性的东西，但每个特性都很实用——返回值推导、泛型 lambda、make_unique，都是那种"用了就回不去"的好东西。</li>
+      <li><strong>C++17 是"实用主义"的胜利。</strong> 很多原本计划进 C++17 的大特性（比如概念、模块）都推迟了，反而加了一堆"小而美"的特性：结构化绑定、if constexpr、optional、variant、string_view、filesystem……每一个都特别实用，学了马上就能用上。</li>
+    </ul>
+    <p>最后师傅说一句：<strong>语言是工具，不是宗教。</strong> 不用纠结哪个版本最好，根据你的项目环境、团队情况选择合适的标准。能用 C++17 就别用 C++11，能用 C++11 就别用 C++98。越新的标准，写起来越舒服，代码也越安全。</p>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,35 @@
+// ============================================================
+//  config.h.in - 配置头文件模板
+// ============================================================
+//  徒弟你看，这不是普通的头文件，这是个"模板"。
+//  CMake 会根据 CMakeLists.txt 里的设置，
+//  把里面的 @XXX@ 替换成实际的值，生成真正的 config.h。
+//
+//  这就是 configure_file 的魔力——让 CMake 的变量
+//  能够"传递"到 C++ 代码里。
+// ============================================================
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+// 项目名称——CMake 会把 @PROJECT_NAME@ 替换成实际的项目名
+#define PROJECT_NAME "@PROJECT_NAME@"
+
+// 项目版本
+#define PROJECT_VERSION "@PROJECT_VERSION@"
+
+// 是否启用了调试输出功能
+// CMake 会根据 ENABLE_DEBUG_OUTPUT 的值，
+// 把 #cmakedefine 换成 #define 或者 /* #undef ... */
+#cmakedefine ENABLE_DEBUG_OUTPUT
+
+// 是否启用了实验性功能
+#cmakedefine ENABLE_EXPERIMENTAL_FEATURES
+
+// 构建类型（Debug / Release）
+#define BUILD_TYPE "@CMAKE_BUILD_TYPE@"
+
+// 作者名字（我们自己定义的变量）
+#define AUTHOR_NAME "@AUTHOR_NAME@"
+
+#endif // CONFIG_H
