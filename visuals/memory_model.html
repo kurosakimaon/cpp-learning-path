@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>栈、堆与 RAII：谁负责释放？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 内存管理</div>
+    <h1>🧠 栈、堆与 RAII：谁负责释放？</h1>
+    <p>从一块栈内存和一块堆内存开始，看清作用域、析构函数、异常展开和智能指针之间的关系。用左右方向键也可以翻页。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 7</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>intermediate/memory_model_raii.cpp</code> ·
+    相关教程：<a href="../intermediate/tutorial.md">intermediate/tutorial.md</a> ·
+    图中的地址都是示意值，不是真实内存地址。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '栈和堆',
+    title: '1. 变量住在哪：栈还是堆？',
+    caption: '局部变量和指针变量本身通常在<strong>栈</strong>上，函数返回时自动回收；用 <code>new</code> 申请的对象在<strong>堆</strong>上，生命周期由你控制，不会随作用域自动结束。',
+    code: 'int local = 42;        // 值在栈上\nint* p = new int(7);   // 指针在栈，对象在堆',
+    highlight: [0, 1],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="局部变量在栈上，new 出来的对象在堆上">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-small">栈（自动管理，函数返回即回收）</text>
+  <rect x="30" y="54" width="320" height="180" rx="12" class="svg-box-accent"/>
+  <text x="48" y="82" class="svg-title">函数栈帧</text>
+  <rect x="48" y="98" width="284" height="50" rx="6" class="svg-field"/>
+  <text x="62" y="118" class="svg-mono">local</text>
+  <text x="62" y="138" class="svg-small">值 42 · 随栈帧自动释放</text>
+  <rect x="48" y="160" width="284" height="60" rx="6" class="svg-field"/>
+  <text x="62" y="182" class="svg-mono">p = 0x2000</text>
+  <text x="62" y="204" class="svg-small">指针变量本身只占 8 字节</text>
+
+  <text x="470" y="34" class="svg-small">堆（手动管理，生命周期由你控制）</text>
+  <rect x="450" y="104" width="280" height="130" rx="12" class="svg-box-warn"/>
+  <text x="468" y="132" class="svg-title">new int(7)</text>
+  <rect x="468" y="148" width="90" height="60" rx="6" class="svg-box"/>
+  <text x="513" y="185" text-anchor="middle" class="svg-mono">7</text>
+  <text x="572" y="170" class="svg-mono">0x2000</text>
+  <text x="572" y="192" class="svg-small">堆上的对象</text>
+
+  <line x1="332" y1="188" x2="446" y2="188" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="344" y="174" class="svg-small">p 指向</text>
+
+  <rect x="30" y="286" width="700" height="114" rx="12" class="svg-box"/>
+  <text x="50" y="314" class="svg-title">关键区别</text>
+  <text x="50" y="342" class="svg-text">• 栈：自动分配、自动回收，速度快，容量有限，适合普通局部变量。</text>
+  <text x="50" y="366" class="svg-text">• 堆：new / malloc 手动申请，容量大，生命周期跨作用域，但必须有人负责释放。</text>
+  <text x="50" y="390" class="svg-small">对象放在栈上还是堆上，取决于你怎么创建它，而不是它的类型。</text>
+</svg>`
+  },
+  {
+    nav: '作用域结束',
+    title: '2. 离开作用域：栈回收了，堆还在',
+    caption: '作用域结束时，栈上的 <code>p</code> 被销毁，但它指向的堆内存<strong>不会</strong>跟着释放。此时没有任何指针指向那块内存，也没人 <code>delete</code>，这就是内存泄漏。',
+    code: '{\n  int* p = new int(7);\n}   // p 没了，堆上的 7 还在',
+    highlight: [1, 2],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="作用域结束后栈变量消失，堆内存仍然存在造成泄漏">
+  <defs>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-small">作用域结束后</text>
+  <rect x="30" y="54" width="300" height="170" rx="12" class="svg-box-ghost"/>
+  <text x="48" y="82" class="svg-title">栈帧已销毁</text>
+  <rect x="48" y="98" width="264" height="44" rx="6" class="svg-field"/>
+  <text x="62" y="126" class="svg-small">local：已回收</text>
+  <rect x="48" y="152" width="264" height="52" rx="6" class="svg-field"/>
+  <text x="62" y="174" class="svg-small">p：已回收</text>
+  <text x="62" y="194" class="svg-small">指向关系随之消失</text>
+
+  <text x="470" y="34" class="svg-small">堆</text>
+  <rect x="450" y="80" width="280" height="144" rx="12" class="svg-box-bad"/>
+  <text x="468" y="108" class="svg-title">0x2000</text>
+  <rect x="468" y="122" width="90" height="58" rx="6" class="svg-box"/>
+  <text x="513" y="158" text-anchor="middle" class="svg-mono">7</text>
+  <text x="572" y="146" class="svg-mono">没人指向它</text>
+  <text x="572" y="168" class="svg-bad-text">没人 delete</text>
+  <text x="468" y="204" class="svg-small">这块内存会一直被占用，直到进程结束</text>
+
+  <line x1="334" y1="178" x2="446" y2="160" class="svg-arrow-bad" marker-end="url(#ahb)"/>
+  <text x="344" y="146" class="svg-small">指针没了</text>
+
+  <rect x="30" y="266" width="700" height="144" rx="12" class="svg-box-bad"/>
+  <text x="50" y="296" class="svg-bad-text">内存泄漏</text>
+  <text x="50" y="324" class="svg-text">new 出来的内存不属于任何作用域，作用域结束不会触发释放。</text>
+  <text x="50" y="350" class="svg-text">如果这段代码在循环或长期运行的服务里反复执行，占用会不断增长。</text>
+  <text x="50" y="378" class="svg-small">地址 0x2000 只是示意；真实泄漏往往更难发现，因为程序不会立刻崩溃。</text>
+</svg>`
+  },
+  {
+    nav: '手动 delete',
+    title: '3. 手动 delete 能解决，但很容易踩坑',
+    caption: '正确做法是 <code>delete p;</code> 之后把 <code>p</code> 置空。但手动管理有三种典型事故：忘记释放、重复释放、释放后继续使用。只要控制流里多一个 <code>return</code> 或异常，就很容易漏掉释放。',
+    code: 'int* p = new int(7);\ndelete p;      // 释放堆对象\np = nullptr;   // 防止悬空指针再被 delete',
+    highlight: [1, 2],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="手动 delete 的三种典型问题与正确写法">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect x="30" y="30" width="220" height="152" rx="12" class="svg-box-bad"/>
+  <text x="48" y="60" class="svg-bad-text">① 忘记 delete</text>
+  <text x="48" y="88" class="svg-text">指针离开作用域，</text>
+  <text x="48" y="112" class="svg-text">堆内存没人释放。</text>
+  <text x="48" y="144" class="svg-small">结果：内存泄漏</text>
+
+  <rect x="270" y="30" width="220" height="152" rx="12" class="svg-box-bad"/>
+  <text x="288" y="60" class="svg-bad-text">② delete 两次</text>
+  <text x="288" y="88" class="svg-text">两次释放同一块</text>
+  <text x="288" y="112" class="svg-text">内存，属于未定义行为。</text>
+  <text x="288" y="144" class="svg-small">结果：崩溃或堆损坏</text>
+
+  <rect x="510" y="30" width="220" height="152" rx="12" class="svg-box-warn"/>
+  <text x="528" y="60" class="svg-title">③ 释放后继续用</text>
+  <text x="528" y="88" class="svg-text">delete 之后指针</text>
+  <text x="528" y="112" class="svg-text">仍保存旧地址，变成悬空指针。</text>
+  <text x="528" y="144" class="svg-small">结果：读脏数据 / 崩溃</text>
+
+  <text x="30" y="230" class="svg-title">正确的两步</text>
+  <rect x="30" y="248" width="180" height="64" rx="10" class="svg-box-accent"/>
+  <text x="120" y="286" text-anchor="middle" class="svg-mono">p = new int(7)</text>
+  <line x1="212" y1="280" x2="258" y2="280" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <rect x="262" y="248" width="150" height="64" rx="10" class="svg-box-good"/>
+  <text x="337" y="286" text-anchor="middle" class="svg-mono">delete p</text>
+  <line x1="414" y1="280" x2="460" y2="280" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <rect x="464" y="248" width="180" height="64" rx="10" class="svg-box-good"/>
+  <text x="554" y="286" text-anchor="middle" class="svg-mono">p = nullptr</text>
+  <text x="30" y="340" class="svg-small">注意：delete 只释放堆对象，不会自动把指针本身置空。</text>
+
+  <rect x="30" y="362" width="700" height="60" rx="10" class="svg-box-warn"/>
+  <text x="50" y="390" class="svg-text">new 配 delete，new[] 配 delete[]；数组用了 new[]，却用 delete 释放也是未定义行为。</text>
+  <text x="50" y="412" class="svg-small">手动 delete 的风险不在于“会不会写”，而在于每一条提前返回和异常路径都要记得写。</text>
+</svg>`
+  },
+  {
+    nav: 'RAII 对象',
+    title: '4. RAII：让析构函数负责释放',
+    caption: 'RAII 的核心只有一句话：<strong>构造函数获取资源，析构函数释放资源</strong>。对象放在栈上，只要对象被销毁，析构函数就一定执行，释放逻辑不再散落在每一条返回路径上。',
+    code: 'class IntArray {\n  int* data;\n  size_t n;\npublic:\n  IntArray(size_t n)\n    : data(new int[n]), n(n) {}   // 获取\n  ~IntArray() { delete[] data; }  // 释放\n};',
+    highlight: [5, 6],
+    stage: `
+<svg viewBox="0 0 760 460" role="img" aria-label="RAII 对象的构造函数获取堆数组，析构函数释放它">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-small">栈</text>
+  <rect x="30" y="54" width="300" height="170" rx="12" class="svg-box-accent"/>
+  <text x="48" y="82" class="svg-title">IntArray arr(4)</text>
+  <rect x="48" y="96" width="264" height="44" rx="6" class="svg-field"/>
+  <text x="62" y="124" class="svg-mono">data = 0x2000</text>
+  <rect x="48" y="150" width="264" height="44" rx="6" class="svg-field"/>
+  <text x="62" y="178" class="svg-mono">n = 4</text>
+  <text x="48" y="214" class="svg-small">对象离开作用域 → 析构函数自动执行</text>
+
+  <text x="470" y="34" class="svg-small">堆</text>
+  <rect x="440" y="82" width="290" height="130" rx="12" class="svg-box-warn"/>
+  <text x="458" y="108" class="svg-title">new int[4] · 0x2000</text>
+  <rect x="458" y="122" width="58" height="54" rx="5" class="svg-box"/><text x="487" y="154" text-anchor="middle" class="svg-mono">?</text>
+  <rect x="516" y="122" width="58" height="54" rx="5" class="svg-box"/><text x="545" y="154" text-anchor="middle" class="svg-mono">?</text>
+  <rect x="574" y="122" width="58" height="54" rx="5" class="svg-box"/><text x="603" y="154" text-anchor="middle" class="svg-mono">?</text>
+  <rect x="632" y="122" width="58" height="54" rx="5" class="svg-box"/><text x="661" y="154" text-anchor="middle" class="svg-mono">?</text>
+  <text x="458" y="198" class="svg-small">4 个 int 的连续空间</text>
+
+  <line x1="330" y1="118" x2="436" y2="118" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="336" y="104" class="svg-small">构造时 new</text>
+
+  <rect x="30" y="268" width="320" height="150" rx="12" class="svg-box-good"/>
+  <text x="48" y="296" class="svg-good-text">构造函数：获取资源</text>
+  <text x="48" y="324" class="svg-mono">IntArray(size_t n)</text>
+  <text x="48" y="348" class="svg-mono">  : data(new int[n])</text>
+  <text x="48" y="378" class="svg-small">构造失败会抛异常，不会留下半成品对象。</text>
+
+  <rect x="390" y="268" width="340" height="150" rx="12" class="svg-box-bad"/>
+  <text x="408" y="296" class="svg-bad-text">析构函数：释放资源</text>
+  <text x="408" y="324" class="svg-mono">~IntArray() { delete[] data; }</text>
+  <text x="408" y="352" class="svg-small">无论正常返回、提前 return，</text>
+  <text x="408" y="374" class="svg-small">还是抛异常，只要对象构造完成，析构就会执行。</text>
+</svg>`
+  },
+  {
+    nav: '异常安全',
+    title: '5. 抛异常时，RAII 仍然会释放',
+    caption: '异常抛出后会发生<strong>栈展开</strong>：所有已构造完成的局部对象按逆序析构，然后异常继续向外传播。裸指针的 <code>delete</code> 写在后面就会被跳过；RAII 对象则不受影响。',
+    code: 'void f() {\n  IntArray a(10);\n  if (fail) throw std::runtime_error("boom");\n}   // 栈展开，a.~IntArray() 自动执行',
+    highlight: [1, 2, 3],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="异常发生时栈展开，RAII 对象仍会析构释放资源">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <rect x="30" y="30" width="330" height="180" rx="12" class="svg-box-good"/>
+  <text x="48" y="58" class="svg-good-text">RAII：两条路径都安全</text>
+  <rect x="48" y="74" width="140" height="46" rx="8" class="svg-box"/>
+  <text x="118" y="102" text-anchor="middle" class="svg-text">正常 return</text>
+  <rect x="208" y="74" width="132" height="46" rx="8" class="svg-box"/>
+  <text x="274" y="102" text-anchor="middle" class="svg-text">抛出异常</text>
+  <line x1="118" y1="124" x2="118" y2="146" class="svg-arrow-accent" marker-end="url(#aha)"/>
+  <line x1="274" y1="124" x2="274" y2="146" class="svg-arrow-accent" marker-end="url(#aha)"/>
+  <rect x="48" y="150" width="292" height="44" rx="8" class="svg-box-good"/>
+  <text x="194" y="177" text-anchor="middle" class="svg-text">析构函数都会执行 → 释放内存</text>
+
+  <rect x="400" y="30" width="330" height="180" rx="12" class="svg-box-bad"/>
+  <text x="418" y="58" class="svg-bad-text">裸指针：异常路径会漏掉 delete</text>
+  <rect x="418" y="74" width="120" height="46" rx="8" class="svg-box"/>
+  <text x="478" y="102" text-anchor="middle" class="svg-text">new int[10]</text>
+  <rect x="558" y="74" width="154" height="46" rx="8" class="svg-box"/>
+  <text x="635" y="102" text-anchor="middle" class="svg-text">throw …</text>
+  <line x1="478" y1="124" x2="478" y2="146" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="635" y1="124" x2="635" y2="146" class="svg-arrow-bad" marker-end="url(#ahb)"/>
+  <rect x="418" y="150" width="120" height="44" rx="8" class="svg-box-bad"/>
+  <text x="478" y="177" text-anchor="middle" class="svg-bad-text">delete[] 被跳过</text>
+  <rect x="558" y="150" width="154" height="44" rx="8" class="svg-box-bad"/>
+  <text x="635" y="177" text-anchor="middle" class="svg-bad-text">异常向上传播</text>
+
+  <rect x="30" y="246" width="700" height="164" rx="12" class="svg-box-accent"/>
+  <text x="50" y="276" class="svg-title">栈展开（stack unwinding）做了什么？</text>
+  <text x="50" y="306" class="svg-text">函数因异常退出时，编译器保证已构造完成的自动对象全部析构，顺序与构造相反。</text>
+  <text x="50" y="334" class="svg-text">所以 RAII 不只是“少写 delete”，它把释放逻辑绑定到了对象生命周期上：</text>
+  <text x="50" y="362" class="svg-mono">资源在手 → 对象在；对象亡 → 资源释放</text>
+  <text x="50" y="390" class="svg-small">析构函数里不要再抛异常，否则栈展开期间会触发 std::terminate。</text>
+</svg>`
+  },
+  {
+    nav: '智能指针',
+    title: '6. 智能指针：把 RAII 用在资源所有权上',
+    caption: '<code>unique_ptr</code> 独占所有权，不能拷贝、只能移动；<code>shared_ptr</code> 通过引用计数共享所有权，最后一个持有者销毁时才释放对象；<code>weak_ptr</code> 只观察不拥有，用来打破循环引用。',
+    code: 'auto p = std::make_unique<int>(7);\n// auto q = p;              // ✗ unique_ptr 不能拷贝\nauto q = std::move(p);      // ✓ 转移独占所有权\n\nauto a = std::make_shared<int>(7);\nauto b = a;                 // ✓ 引用计数 +1',
+    highlight: [0, 2, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="unique_ptr 独占所有权，shared_ptr 用引用计数共享所有权">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-small">unique_ptr：独占</text>
+  <rect x="30" y="50" width="180" height="58" rx="10" class="svg-box-accent"/>
+  <text x="120" y="84" text-anchor="middle" class="svg-mono">unique_ptr p</text>
+  <rect x="270" y="50" width="120" height="80" rx="8" class="svg-box-warn"/>
+  <text x="330" y="82" text-anchor="middle" class="svg-mono">int 7</text>
+  <text x="330" y="106" text-anchor="middle" class="svg-small">0x2000</text>
+  <line x1="212" y1="78" x2="266" y2="86" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="30" y="136" class="svg-small">不能拷贝；用 std::move 转移后，原指针变空。</text>
+
+  <text x="430" y="32" class="svg-small">shared_ptr：共享</text>
+  <rect x="430" y="50" width="140" height="40" rx="8" class="svg-box-accent"/>
+  <text x="500" y="76" text-anchor="middle" class="svg-mono">shared_ptr a</text>
+  <rect x="430" y="100" width="140" height="40" rx="8" class="svg-box-accent"/>
+  <text x="500" y="126" text-anchor="middle" class="svg-mono">shared_ptr b</text>
+  <rect x="620" y="42" width="110" height="70" rx="8" class="svg-box-warn"/>
+  <text x="675" y="70" text-anchor="middle" class="svg-mono">int 7</text>
+  <text x="675" y="94" text-anchor="middle" class="svg-small">对象</text>
+  <rect x="620" y="118" width="110" height="60" rx="8" class="svg-box"/>
+  <text x="675" y="142" text-anchor="middle" class="svg-small">控制块</text>
+  <text x="675" y="164" text-anchor="middle" class="svg-mono">strong = 2</text>
+  <line x1="572" y1="72" x2="616" y2="72" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="572" y1="120" x2="616" y2="108" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="30" y="190" width="700" height="100" rx="12" class="svg-box-good"/>
+  <text x="50" y="220" class="svg-good-text">引用计数什么时候释放？</text>
+  <text x="50" y="248" class="svg-text">strong 从 2 减到 1：对象还活着。最后一个 shared_ptr 销毁，strong 归零 → 释放对象和控制块。</text>
+  <text x="50" y="274" class="svg-small">weak_ptr 不增加 strong；它只观察对象是否还活着（lock() 返回 shared_ptr 或空）。</text>
+
+  <rect x="30" y="306" width="700" height="112" rx="12" class="svg-box-warn"/>
+  <text x="50" y="336" class="svg-title">选择顺序</text>
+  <text x="50" y="364" class="svg-text">默认用 unique_ptr：零额外开销、所有权清晰。</text>
+  <text x="50" y="390" class="svg-text">确实需要共享所有权时才用 shared_ptr；环状引用的一侧改用 weak_ptr。</text>
+  <text x="50" y="412" class="svg-small">优先 make_unique / make_shared，避免显式 new。</text>
+</svg>`
+  },
+  {
+    nav: '构造析构顺序',
+    title: '7. 构造与析构，顺序正好相反',
+    caption: '构造顺序：基类 → 成员（按声明顺序）→ 派生类构造函数体。析构顺序严格相反：派生类析构体 → 成员（逆序）→ 基类。局部对象之间也按声明的逆序销毁。这决定了依赖关系该由谁持有谁。',
+    code: 'struct Base   { Base()  { /* 1 */ } ~Base()  { /* 6 */ } };\nstruct Member { Member(){ /* 2 */ } ~Member(){ /* 5 */ } };\nstruct Derived : Base {\n  Member m;\n  Derived() { /* 3 */ }   // 4：对象可用\n  ~Derived(){ /* 3 */ }   // 从这里开始销毁\n};',
+    highlight: [0, 1, 4],
+    stage: `
+<svg viewBox="0 0 760 460" role="img" aria-label="构造顺序为基类、成员、派生类，析构顺序完全相反">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="36" class="svg-title">构造顺序</text>
+  <rect x="30" y="52" width="200" height="58" rx="9" class="svg-box-accent"/>
+  <text x="130" y="78" text-anchor="middle" class="svg-text">① Base 构造</text>
+  <text x="130" y="98" text-anchor="middle" class="svg-small">先有基类子对象</text>
+  <line x1="232" y1="81" x2="276" y2="81" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <rect x="280" y="52" width="200" height="58" rx="9" class="svg-box-accent"/>
+  <text x="380" y="78" text-anchor="middle" class="svg-text">② Member 构造</text>
+  <text x="380" y="98" text-anchor="middle" class="svg-small">按声明顺序</text>
+  <line x1="482" y1="81" x2="526" y2="81" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <rect x="530" y="52" width="200" height="58" rx="9" class="svg-box-accent"/>
+  <text x="630" y="78" text-anchor="middle" class="svg-text">③ Derived 函数体</text>
+  <text x="630" y="98" text-anchor="middle" class="svg-small">最后才轮到它</text>
+
+  <text x="30" y="158" class="svg-title">析构顺序（严格相反）</text>
+  <rect x="30" y="174" width="200" height="58" rx="9" class="svg-box-bad"/>
+  <text x="130" y="200" text-anchor="middle" class="svg-text">③ Derived 析构体</text>
+  <text x="130" y="220" text-anchor="middle" class="svg-small">先清理自己的逻辑</text>
+  <line x1="232" y1="203" x2="276" y2="203" class="svg-arrow-bad" marker-end="url(#ahb)"/>
+  <rect x="280" y="174" width="200" height="58" rx="9" class="svg-box-bad"/>
+  <text x="380" y="200" text-anchor="middle" class="svg-text">② Member 析构</text>
+  <text x="380" y="220" text-anchor="middle" class="svg-small">按声明逆序</text>
+  <line x1="482" y1="203" x2="526" y2="203" class="svg-arrow-bad" marker-end="url(#ahb)"/>
+  <rect x="530" y="174" width="200" height="58" rx="9" class="svg-box-bad"/>
+  <text x="630" y="200" text-anchor="middle" class="svg-text">① Base 析构</text>
+  <text x="630" y="220" text-anchor="middle" class="svg-small">最后才拆基类</text>
+
+  <rect x="30" y="262" width="700" height="82" rx="10" class="svg-box"/>
+  <text x="50" y="290" class="svg-title">成员之间：按声明顺序构造，按逆序析构</text>
+  <text x="50" y="316" class="svg-mono">class X { A a; B b; C c; };   // 构造 a → b → c，析构 c → b → a</text>
+  <text x="50" y="338" class="svg-small">所以后面的成员可以安全地依赖前面的成员；反过来不行。</text>
+
+  <rect x="30" y="368" width="700" height="66" rx="10" class="svg-box-warn"/>
+  <text x="50" y="396" class="svg-text">局部对象同理：{ A a; B b; C c; } 销毁顺序是 c → b → a，与声明相反。</text>
+  <text x="50" y="418" class="svg-small">这也是为什么容器元素析构、栈展开都遵循“后构造的先销毁”。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

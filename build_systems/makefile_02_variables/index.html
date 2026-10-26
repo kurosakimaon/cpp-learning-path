@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<!-- 本页由同目录 tutorial.md 渲染生成；内容以 tutorial.md 为准。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 · 变量与伪目标 - 构建系统 · C++ 学习路线</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+  min-height: 100vh;
+  padding: 28px 18px 48px;
+  color: #333;
+  line-height: 1.85;
+}
+.container { max-width: 960px; margin: 0 auto; }
+.back-btn {
+  display: inline-block; padding: 8px 16px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  text-decoration: none; border-radius: 8px; margin-bottom: 18px;
+  font-size: 13px; transition: background .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.page-header { color: #fff; margin-bottom: 22px; }
+.crumb { font-size: 12.5px; color: #90caf9; letter-spacing: .04em; margin-bottom: 8px; }
+.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,.35); }
+.page-header .desc { font-size: 14.5px; opacity: .92; max-width: 760px; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.tag.beginner { background: #e8f5e9; color: #2e7d32; }
+.tag.elementary { background: #e0f2f1; color: #00695c; }
+.tag.intermediate { background: #e3f2fd; color: #1565c0; }
+.tag.advanced { background: #fff3e0; color: #e65100; }
+.tag.expert { background: #f3e5f5; color: #6a1b9a; }
+.meta .raw {
+  font-size: 12.5px; color: #bbdefb; text-decoration: none;
+  border-bottom: 1px dashed rgba(187,222,251,.6);
+}
+.meta .raw:hover { color: #fff; }
+.content {
+  background: #fff; border-radius: 18px; padding: 38px 44px 42px;
+  box-shadow: 0 16px 46px rgba(0,0,0,.28);
+  overflow-wrap: break-word;
+}
+.content > :first-child { margin-top: 0; }
+.content h1 { display: none; }
+.content h2 {
+  font-size: 22px; color: #1a237e; line-height: 1.45;
+  margin: 34px 0 14px; padding-left: 12px;
+  border-left: 5px solid #3949ab;
+}
+.content h3 { font-size: 18px; color: #283593; margin: 26px 0 10px; }
+.content h4 { font-size: 16px; color: #37474f; margin: 20px 0 8px; }
+.content p { margin: 10px 0; font-size: 15px; color: #37474f; }
+.content ul, .content ol { margin: 10px 0 14px; padding-left: 26px; }
+.content li { margin: 6px 0; font-size: 15px; color: #37474f; }
+.content li > p { margin: 6px 0; }
+.content strong { color: #1a237e; }
+.content a { color: #1565c0; }
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  background: #eef2ff; color: #c62828;
+  padding: 1px 5px; border-radius: 4px; font-size: 13.5px;
+}
+.content pre {
+  background: #1e293b; color: #e2e8f0;
+  padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 14px 0 18px;
+  line-height: 1.6;
+}
+.content pre code {
+  background: none; color: inherit; padding: 0;
+  font-size: 13.5px; white-space: pre;
+}
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px;
+  border-left: 4px solid #7986cb; background: #f4f6ff;
+  color: #455a64; border-radius: 0 8px 8px 0;
+}
+.content blockquote p { margin: 4px 0; }
+.content table {
+  width: 100%; border-collapse: collapse; margin: 16px 0 20px;
+  font-size: 14px; display: block; overflow-x: auto;
+}
+.content th, .content td { border: 1px solid #dfe3f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+.content th { background: #eef2ff; color: #1a237e; white-space: nowrap; }
+.content tbody tr:nth-child(even) { background: #fafbff; }
+.content hr { border: 0; border-top: 1px solid #e0e4f0; margin: 26px 0; }
+.files {
+  background: rgba(255,255,255,.96); border-radius: 16px;
+  padding: 22px 26px; margin-top: 22px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
+.files h2 { font-size: 16px; color: #1a237e; margin-bottom: 10px; }
+.files ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.files li { font-size: 13.5px; }
+.files a { color: #1565c0; text-decoration: none; font-family: Consolas, monospace; }
+.files a:hover { text-decoration: underline; }
+.files .dir { color: #78909c; font-family: Consolas, monospace; }
+.files .hint { margin-top: 10px; font-size: 12px; color: #90a4ae; }
+@media (max-width: 640px) {
+  body { padding: 18px 10px 36px; }
+  .page-header h1 { font-size: 23px; }
+  .content { padding: 26px 20px 30px; border-radius: 14px; }
+  .content h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-btn" href="../index.html">← 返回构建系统总览</a>
+
+  <header class="page-header">
+    <div class="crumb">构建系统 / Makefile 路线 / makefile_02_variables</div>
+    <h1>📝 02 · 变量与伪目标</h1>
+    <p class="desc">变量定义与使用、自动变量、伪目标（.PHONY）、常用内置变量。</p>
+    <div class="meta">
+      <span class="tag elementary">初级</span>
+      <a class="raw" href="tutorial.md">查看 Markdown 原文</a>
+    </div>
+  </header>
+
+  <main class="content">
+<h1>示例 2：变量与伪目标 —— 老师傅的第二课</h1>
+<p>徒弟，上一节课咱学了最基础的规则，一个目标一条命令。这节课啊，咱要把 Makefile 写得&quot;像样儿&quot;了。工欲善其事，必先利其器。变量和伪目标，就是咱的利器。</p>
+<h2>一、这节课学什么？</h2>
+<ol>
+<li>
+<p>变量的定义和使用</p>
+<ul>
+<li>为什么要用变量？（DRY 原则：Don't Repeat Yourself）</li>
+<li>常用变量命名惯例（<code>CC</code>, <code>CXX</code>, <code>CFLAGS</code>, <code>OBJS</code>, <code>TARGET</code>...）</li>
+<li>怎么定义变量，怎么引用变量（<code>$(变量名)</code>）</li>
+</ul>
+</li>
+<li>
+<p>自动变量</p>
+<ul>
+<li><code>$@</code>  目标名</li>
+<li><code>$^</code>  所有依赖</li>
+<li><code>$&lt;</code>  第一个依赖</li>
+</ul>
+<p>这三个是最常用的，必须背下来！</p>
+</li>
+<li>
+<p>伪目标 <code>.PHONY</code></p>
+<ul>
+<li>什么是伪目标</li>
+<li>为什么需要伪目标（避免和同名文件冲突）</li>
+<li>常用的伪目标：<code>all</code>, <code>clean</code>, <code>install</code>, <code>run</code></li>
+</ul>
+</li>
+<li>
+<p>多文件编译</p>
+<ul>
+<li>先把每个 <code>.cpp</code> 编译成 <code>.o</code>（目标文件）</li>
+<li>再把所有 <code>.o</code> 链接成可执行文件</li>
+<li>这样改了一个文件，只需要重编对应的 <code>.o</code></li>
+</ul>
+</li>
+</ol>
+<h2>二、怎么用这个示例？</h2>
+<p>进入 <code>makefile_02_variables</code> 目录，然后试试：</p>
+<ol>
+<li>
+<p>编译</p>
+<pre><code class="language-bash">$ make
+</code></pre>
+<p>或者</p>
+<pre><code class="language-bash">$ make all
+</code></pre>
+<p>你会看到：</p>
+<pre><code class="language-text">g++ -Wall -g -std=c++11 -c main.cpp -o main.o
+g++ -Wall -g -std=c++11 -c utils.cpp -o utils.o
+g++ -Wall -g -std=c++11 -o app main.o utils.o
+========== 编译完成！==========
+</code></pre>
+<p>（Windows 上最后一条是 <code>-o app.exe</code>；运行用 <code>./app.exe</code>）</p>
+</li>
+<li>
+<p>运行</p>
+<pre><code class="language-bash">$ make run
+</code></pre>
+<p>它会先检查要不要重新编译，然后直接运行程序</p>
+</li>
+<li>
+<p>清理</p>
+<pre><code class="language-bash">$ make clean
+</code></pre>
+<p>所有 <code>.o</code> 文件和可执行文件都删掉了</p>
+</li>
+<li>
+<p>试试增量编译</p>
+<pre><code class="language-bash">$ make          # 先编译一次
+# 改一下 utils.cpp
+$ make          # 再编译
+</code></pre>
+<p>你会发现：只重新编译了 <code>utils.o</code>，然后重新链接
+<code>main.o</code> 没变，就不重编了——这就是 <code>make</code> 的核心价值！</p>
+</li>
+</ol>
+<h2>三、老师傅的经验之谈</h2>
+<h3>经验 1：变量名用大写，这是行业惯例</h3>
+<p>就像 C 语言里的宏定义用大写一样，<code>Makefile</code> 里的变量也习惯大写。不是必须的，但大家都这么写，你写小写别人看着别扭。</p>
+<h3>经验 2：常用变量名别乱改</h3>
+<p><code>CC</code>、<code>CFLAGS</code>、<code>LDFLAGS</code> 这些名字，是有&quot;约定俗成&quot;的含义的。你把编译器变量叫 <code>MY_COMPILER</code> 也行，但别人读你的 <code>Makefile</code> 就得愣一下。用标准名字，大家都省心。</p>
+<h3>经验 3：<code>.PHONY</code> 一定要加</h3>
+<p>新手最容易忘的就是 <code>.PHONY</code>。忘了会怎么样？平时可能没事，哪天目录下冒出来个叫 <code>clean</code> 的文件，你 <code>make clean</code> 就不好使了，而且你还不知道为啥。记住：不生成文件的目标，一律 <code>.PHONY</code> 伺候。</p>
+<h3>经验 4：@ 符号的妙用</h3>
+<p>命令前面加 <code>@</code>，<code>make</code> 就不会把命令本身打印出来。适合用在 <code>echo</code> 这种&quot;输出提示信息&quot;的命令上。不加 <code>@</code> 的话，先打印一遍 <code>echo &quot;xxx&quot;</code>，再输出 <code>xxx</code>，啰嗦。</p>
+<h3>坑 1：变量引用要加 <code>$()</code></h3>
+<ul>
+<li>定义变量直接写：<code>VAR = value</code></li>
+<li>引用变量必须写：<code>$(VAR)</code> 或者 <code>${VAR}</code></li>
+</ul>
+<p>忘了加括号，写成 <code>$VAR</code>，<code>make</code> 会把 <code>$V</code> 当成变量名，然后剩下的 <code>AR</code> 原样输出——结果就错了！</p>
+<h3>坑 2：<code>=</code> 和 <code>:=</code> 的区别</h3>
+<p>这个咱先提一嘴，后面再细讲。</p>
+<ul>
+<li><code>=</code> 是&quot;延迟展开&quot;——用到的时候才展开</li>
+<li><code>:=</code> 是&quot;立即展开&quot;——定义的时候就展开</li>
+</ul>
+<p>新手先用 <code>=</code> 就行，等你遇到问题了再研究 <code>:=</code></p>
+<h2>四、头文件依赖的问题（提前预告）</h2>
+<p>徒弟你细心的话可能发现了：咱手动写了 <code>main.o</code> 依赖 <code>utils.h</code>。那如果 <code>utils.h</code> 又 <code>include</code> 了别的头文件呢？项目大了，头文件依赖关系错综复杂，手动写根本不现实。</p>
+<p>别担心，后面的示例咱会学&quot;自动生成依赖&quot;的高级技巧。饭一口一口吃，路一步一步走。</p>
+<h2>五、课后小练习</h2>
+<ol>
+<li>
+<p>把 <code>CXX</code> 改成 <code>clang++</code>，看看能不能用 clang 编译。
+（装了 clang 的话可以试试，没装就算了）</p>
+</li>
+<li>
+<p>在 <code>CXXFLAGS</code> 里加个 <code>-O2</code>（优化选项），再编译看看。</p>
+</li>
+<li>
+<p>试试故意不加 <code>.PHONY</code>，然后 <code>touch</code> 一个叫 <code>clean</code> 的文件，看看 <code>make clean</code> 会怎么样。（试完记得删掉 <code>clean</code> 文件哈）</p>
+</li>
+<li>
+<p>加一个新的 <code>.cpp</code> 文件（比如 <code>debug.cpp</code>），手动修改 <code>Makefile</code> 让它也参与编译。
+——你会发现每个 <code>.o</code> 都要写一条规则，好麻烦！
+别急，下节课咱就学&quot;模式规则&quot;，一下就解决了。</p>
+</li>
+</ol>
+<p>好，这节课就到这儿。变量和伪目标是 <code>Makefile</code> 的基本功，务必练熟了再往下走。</p>
+
+  </main>
+
+  <footer class="files">
+    <h2>📁 本讲文件</h2>
+    <ul>
+      <li><a href="Makefile">Makefile</a></li>
+      <li><a href="main.cpp">main.cpp</a></li>
+      <li><a href="tutorial.md">tutorial.md</a></li>
+      <li><a href="utils.cpp">utils.cpp</a></li>
+      <li><a href="utils.h">utils.h</a></li>
+    </ul>
+    <p class="hint">直接打开源文件可以查看完整示例；Markdown 原文保留在本目录的 tutorial.md。</p>
+  </footer>
+</div>
+</body>
+</html>

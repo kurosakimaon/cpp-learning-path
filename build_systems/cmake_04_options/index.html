@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<!-- 本页由同目录 tutorial.md 渲染生成；内容以 tutorial.md 为准。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>04 · 选项与配置 - 构建系统 · C++ 学习路线</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+  min-height: 100vh;
+  padding: 28px 18px 48px;
+  color: #333;
+  line-height: 1.85;
+}
+.container { max-width: 960px; margin: 0 auto; }
+.back-btn {
+  display: inline-block; padding: 8px 16px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  text-decoration: none; border-radius: 8px; margin-bottom: 18px;
+  font-size: 13px; transition: background .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.page-header { color: #fff; margin-bottom: 22px; }
+.crumb { font-size: 12.5px; color: #90caf9; letter-spacing: .04em; margin-bottom: 8px; }
+.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,.35); }
+.page-header .desc { font-size: 14.5px; opacity: .92; max-width: 760px; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.tag.beginner { background: #e8f5e9; color: #2e7d32; }
+.tag.elementary { background: #e0f2f1; color: #00695c; }
+.tag.intermediate { background: #e3f2fd; color: #1565c0; }
+.tag.advanced { background: #fff3e0; color: #e65100; }
+.tag.expert { background: #f3e5f5; color: #6a1b9a; }
+.meta .raw {
+  font-size: 12.5px; color: #bbdefb; text-decoration: none;
+  border-bottom: 1px dashed rgba(187,222,251,.6);
+}
+.meta .raw:hover { color: #fff; }
+.content {
+  background: #fff; border-radius: 18px; padding: 38px 44px 42px;
+  box-shadow: 0 16px 46px rgba(0,0,0,.28);
+  overflow-wrap: break-word;
+}
+.content > :first-child { margin-top: 0; }
+.content h1 { display: none; }
+.content h2 {
+  font-size: 22px; color: #1a237e; line-height: 1.45;
+  margin: 34px 0 14px; padding-left: 12px;
+  border-left: 5px solid #3949ab;
+}
+.content h3 { font-size: 18px; color: #283593; margin: 26px 0 10px; }
+.content h4 { font-size: 16px; color: #37474f; margin: 20px 0 8px; }
+.content p { margin: 10px 0; font-size: 15px; color: #37474f; }
+.content ul, .content ol { margin: 10px 0 14px; padding-left: 26px; }
+.content li { margin: 6px 0; font-size: 15px; color: #37474f; }
+.content li > p { margin: 6px 0; }
+.content strong { color: #1a237e; }
+.content a { color: #1565c0; }
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  background: #eef2ff; color: #c62828;
+  padding: 1px 5px; border-radius: 4px; font-size: 13.5px;
+}
+.content pre {
+  background: #1e293b; color: #e2e8f0;
+  padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 14px 0 18px;
+  line-height: 1.6;
+}
+.content pre code {
+  background: none; color: inherit; padding: 0;
+  font-size: 13.5px; white-space: pre;
+}
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px;
+  border-left: 4px solid #7986cb; background: #f4f6ff;
+  color: #455a64; border-radius: 0 8px 8px 0;
+}
+.content blockquote p { margin: 4px 0; }
+.content table {
+  width: 100%; border-collapse: collapse; margin: 16px 0 20px;
+  font-size: 14px; display: block; overflow-x: auto;
+}
+.content th, .content td { border: 1px solid #dfe3f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+.content th { background: #eef2ff; color: #1a237e; white-space: nowrap; }
+.content tbody tr:nth-child(even) { background: #fafbff; }
+.content hr { border: 0; border-top: 1px solid #e0e4f0; margin: 26px 0; }
+.files {
+  background: rgba(255,255,255,.96); border-radius: 16px;
+  padding: 22px 26px; margin-top: 22px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
+.files h2 { font-size: 16px; color: #1a237e; margin-bottom: 10px; }
+.files ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.files li { font-size: 13.5px; }
+.files a { color: #1565c0; text-decoration: none; font-family: Consolas, monospace; }
+.files a:hover { text-decoration: underline; }
+.files .dir { color: #78909c; font-family: Consolas, monospace; }
+.files .hint { margin-top: 10px; font-size: 12px; color: #90a4ae; }
+@media (max-width: 640px) {
+  body { padding: 18px 10px 36px; }
+  .page-header h1 { font-size: 23px; }
+  .content { padding: 26px 20px 30px; border-radius: 14px; }
+  .content h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-btn" href="../index.html">← 返回构建系统总览</a>
+
+  <header class="page-header">
+    <div class="crumb">构建系统 / CMake 路线 / cmake_04_options</div>
+    <h1>⚙️ 04 · 选项与配置</h1>
+    <p class="desc">option 选项、configure_file 配置文件、条件编译、编译特性要求。</p>
+    <div class="meta">
+      <span class="tag intermediate">中级</span>
+      <a class="raw" href="tutorial.md">查看 Markdown 原文</a>
+    </div>
+  </header>
+
+  <main class="content">
+<h1>CMake 入门教程 - 第四讲</h1>
+<blockquote>
+<p>选项与配置</p>
+</blockquote>
+<h2>一、这一讲学啥？</h2>
+<p>徒弟啊，前面咱学了怎么编译、怎么搞多文件、怎么搞库。但真实项目里，需求是多变的：</p>
+<ul>
+<li>有时候要 Debug 版，有时候要 Release 版</li>
+<li>有些功能想做成可选的，用户想关就关</li>
+<li>不同平台编译器不一样，编译选项也不一样</li>
+</ul>
+<p>这一讲咱就学学怎么让 CMake 项目更灵活、更可配置。</p>
+<h2>二、option - 编译开关</h2>
+<p><code>option</code> 是最简单也最常用的配置方式：</p>
+<pre><code class="language-cmake">option(ENABLE_DEBUG_OUTPUT &quot;是否启用调试输出&quot; OFF)
+</code></pre>
+<p>格式：<code>option(变量名 &quot;说明文字&quot; 默认值)</code></p>
+<p>值只有两种：<code>ON</code> 或 <code>OFF</code>。</p>
+<p>用户怎么改？<code>cmake</code> 的时候加 <code>-D</code> 参数：</p>
+<pre><code class="language-bash">cmake .. -DENABLE_DEBUG_OUTPUT=ON
+cmake .. -DENABLE_DEBUG_OUTPUT=OFF
+</code></pre>
+<p>多个选项一起设也行：</p>
+<pre><code class="language-bash">cmake .. -DENABLE_DEBUG_OUTPUT=ON -DENABLE_EXPERIMENTAL_FEATURES=ON
+</code></pre>
+<blockquote>
+<p><strong>老师傅提醒</strong></p>
+<p><code>-D</code> 后面的值不写 ON/OFF，写 1/0、TRUE/FALSE 也行，但推荐用 ON/OFF，可读性好。</p>
+</blockquote>
+<p><code>option</code> 只能传布尔值。如果要传字符串或者数字呢？直接用 <code>-D</code> 就行，不用提前声明：</p>
+<pre><code class="language-bash">cmake .. -DMY_CUSTOM_VALUE=42
+cmake .. -DMY_NAME=&quot;张三&quot;
+</code></pre>
+<p>在 <code>CMakeLists.txt</code> 里直接用 <code>${MY_CUSTOM_VALUE}</code> 就能引用。</p>
+<h2>三、configure_file - 生成配置头文件</h2>
+<p>这个命令太有用了，徒弟你得好好掌握。</p>
+<p>它能干啥？把 CMake 里的变量值，&quot;传递&quot;到 C++ 代码里。</p>
+<p>怎么用？两步：</p>
+<p><strong>第一步：写一个 <code>.in</code> 模板文件（比如 <code>config.h.in</code>）</strong></p>
+<pre><code class="language-c">#define PROJECT_NAME &quot;@PROJECT_NAME@&quot;
+#cmakedefine ENABLE_DEBUG_OUTPUT
+</code></pre>
+<p><strong>第二步：在 <code>CMakeLists.txt</code> 里调用 <code>configure_file</code></strong></p>
+<pre><code class="language-cmake">configure_file(config.h.in config.h)
+</code></pre>
+<p>CMake 会做这些替换：</p>
+<ul>
+<li><code>@VAR@</code> → 替换成变量 <code>VAR</code> 的值</li>
+<li><code>${VAR}</code> → 也会替换（不推荐用这个，容易搞混）</li>
+<li><code>#cmakedefine VAR</code>
+→ 如果 <code>VAR</code> 为真，变成 <code>#define VAR</code>
+→ 如果 <code>VAR</code> 为假，变成 <code>/* #undef VAR */</code></li>
+</ul>
+<p>生成的 <code>config.h</code> 在哪？一般放在构建目录里（<code>CMAKE_CURRENT_BINARY_DIR</code>），所以别忘了把构建目录加到 include 路径里。</p>
+<h3>为什么要用这个？</h3>
+<p>你想啊，如果不用 <code>configure_file</code>，你要在 C++ 里判断 <code>ENABLE_DEBUG_OUTPUT</code> 开没开，你得用 <code>target_compile_definitions</code> 一个个加宏定义。少的话还行，多了就麻烦了。用 <code>configure_file</code> 的话，所有配置都在 <code>config.h</code> 里，代码里只要 <code>#include &quot;config.h&quot;</code> 就行，整齐划一。</p>
+<h2>四、CMAKE_BUILD_TYPE - Debug vs Release</h2>
+<p>CMake 内置了几种构建类型：</p>
+<ul>
+<li>Debug —— 调试模式
+<ul>
+<li>有调试信息（<code>-g</code>）</li>
+<li>不优化（<code>-O0</code>）</li>
+<li>没有 <code>NDEBUG</code>（MSVC 的 Debug 配置还会定义 <code>_DEBUG</code>；GCC/Clang 不定义 <code>_DEBUG</code>）</li>
+<li>适合开发调试用</li>
+</ul>
+</li>
+<li>Release —— 发布模式
+<ul>
+<li>没有调试信息</li>
+<li>优化级别高（<code>-O3</code> 或 <code>-O2</code>）</li>
+<li>定义了 <code>NDEBUG</code>（断言 <code>assert</code> 会被关掉）</li>
+<li>适合发布给用户用</li>
+</ul>
+</li>
+<li>RelWithDebInfo —— 带调试信息的发布版
+<ul>
+<li>有优化，也有调试信息</li>
+<li>适合做性能分析的时候用</li>
+</ul>
+</li>
+<li>MinSizeRel —— 最小体积发布版
+<ul>
+<li>优化偏向于减小体积而不是速度</li>
+<li>适合嵌入式或者空间有限的场景</li>
+</ul>
+</li>
+</ul>
+<h3>说明</h3>
+<p>上面列的是 GCC/Clang 的典型选项；MSVC 对应的是 <code>/Zi</code>（调试信息）、<code>/Od</code>（不优化）、<code>/O2</code>（优化）。<code>RelWithDebInfo</code> 和 <code>MinSizeRel</code> 也会定义 <code>NDEBUG</code>。</p>
+<p>怎么设置？</p>
+<pre><code class="language-bash">cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Release
+</code></pre>
+<h3>老师傅踩过的坑</h3>
+<ol>
+<li>
+<p>对于 Visual Studio 这种多配置生成器，<code>CMAKE_BUILD_TYPE</code> 没用！因为 VS 一个解决方案里同时有 Debug 和 Release 配置。编译的时候用 <code>--config</code> 指定：</p>
+<pre><code class="language-bash">cmake --build . --config Debug
+cmake --build . --config Release
+</code></pre>
+</li>
+<li>
+<p>Makefile 和 Ninja 是单配置生成器，<code>CMAKE_BUILD_TYPE</code> 才管用。</p>
+</li>
+<li>
+<p>不设置的话，<code>CMAKE_BUILD_TYPE</code> 是空的，既不是 Debug 也不是 Release，没有优化也没有调试信息。所以一般项目里都会给个默认值：</p>
+<pre><code class="language-cmake">if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING &quot;构建类型&quot; FORCE)
+endif()
+</code></pre>
+</li>
+</ol>
+<h2>五、if/else/endif - 条件判断</h2>
+<p>CMake 的条件判断语法有点怪，没有花括号，用 <code>endif</code> 结尾。</p>
+<p>基本格式：</p>
+<pre><code class="language-cmake">if(条件)
+    ... 命令 ...
+elseif(条件)
+    ... 命令 ...
+else()
+    ... 命令 ...
+endif()
+</code></pre>
+<p>常用判断：</p>
+<pre><code class="language-cmake">if(VAR)              # VAR 为真
+if(NOT VAR)          # VAR 为假
+if(VAR1 AND VAR2)    # 逻辑与
+if(VAR1 OR VAR2)     # 逻辑或
+if(DEFINED VAR)      # 变量是否被定义
+if(EXISTS &quot;path&quot;)    # 文件/目录是否存在
+if(str1 STREQUAL str2)   # 字符串相等（操作符写在两个参数中间）
+if(v1 VERSION_LESS v2)   # 版本号比较
+</code></pre>
+<h3>注意</h3>
+<p>CMake 里真假的判断规则有点复杂：</p>
+<ul>
+<li><code>ON</code>, <code>TRUE</code>, <code>1</code>, <code>YES</code>, <code>Y</code> → 真</li>
+<li><code>OFF</code>, <code>FALSE</code>, <code>0</code>, <code>NO</code>, <code>N</code>, <code>NOTFOUND</code>, 空字符串 → 假</li>
+<li>其他的……看情况，总之别搞太花哨，老老实实 ON/OFF。</li>
+</ul>
+<h2>六、target_compile_options - 编译选项</h2>
+<p>给目标加编译选项，现代写法：</p>
+<pre><code class="language-cmake">target_compile_options(my_target PRIVATE -Wall -Wextra)
+</code></pre>
+<p>对应老派写法是修改全局变量 <code>CMAKE_CXX_FLAGS</code>：</p>
+<pre><code class="language-cmake">set(CMAKE_CXX_FLAGS &quot;${CMAKE_CXX_FLAGS} -Wall -Wextra&quot;)
+</code></pre>
+<p>为什么 target 写法更好？</p>
+<ol>
+<li>只影响指定目标，不污染全局</li>
+<li>可以有 <code>PUBLIC</code>/<code>PRIVATE</code>/<code>INTERFACE</code> 的传递关系</li>
+<li>代码更清晰，看目标定义就知道它有啥选项</li>
+</ol>
+<p>不同编译器选项不一样怎么办？用 <code>if</code> 判断编译器：</p>
+<pre><code class="language-cmake">if(CMAKE_CXX_COMPILER_ID STREQUAL &quot;GNU&quot;)
+    # GCC 特有的选项
+elseif(MSVC)
+    # MSVC 特有的选项
+endif()
+</code></pre>
+<p><code>CMAKE_CXX_COMPILER_ID</code> 常见值：</p>
+<ul>
+<li><code>GNU</code> —— GCC</li>
+<li><code>Clang</code> —— Clang</li>
+<li><code>AppleClang</code> —— macOS 自带的 Clang</li>
+<li><code>MSVC</code> —— Visual Studio</li>
+</ul>
+<h2>七、target_compile_definitions - 宏定义</h2>
+<p>给目标加宏定义，相当于 <code>-D</code> 选项：</p>
+<pre><code class="language-cmake">target_compile_definitions(my_target PRIVATE MY_MACRO=1)
+</code></pre>
+<p>跟 <code>target_compile_options</code> 类似，也是现代 CMake 推荐的写法。老派写法是 <code>add_definitions(-DMY_MACRO=1)</code>，但那个是全局的。</p>
+<h2>八、怎么玩这个例子？</h2>
+<p>你可以试试下面这些组合，看看输出有什么不一样：</p>
+<ol>
+<li>
+<p>默认构建（Debug，功能都关）</p>
+<pre><code class="language-bash">mkdir build &amp;&amp; cd build
+cmake ..
+cmake --build .
+./options_demo
+# Windows + MinGW/Ninja：options_demo.exe
+# Windows + Visual Studio：Debug\options_demo.exe
+</code></pre>
+</li>
+<li>
+<p>打开调试输出</p>
+<pre><code class="language-bash">cmake .. -DENABLE_DEBUG_OUTPUT=ON
+cmake --build .
+./options_demo
+</code></pre>
+</li>
+<li>
+<p>打开实验功能，Release 模式</p>
+<pre><code class="language-bash">cmake .. -DENABLE_EXPERIMENTAL_FEATURES=ON -DCMAKE_BUILD_TYPE=Release
+cmake --build .
+./options_demo
+</code></pre>
+</li>
+<li>
+<p>两个功能都开</p>
+<pre><code class="language-bash">cmake .. -DENABLE_DEBUG_OUTPUT=ON -DENABLE_EXPERIMENTAL_FEATURES=ON
+cmake --build .
+./options_demo
+</code></pre>
+</li>
+</ol>
+<p>注意：每次改了选项，重新 <code>cmake ..</code> 就行，不用删 <code>build</code> 目录。CMake 会自动检测变化，重新生成构建文件。</p>
+<h2>九、老师傅的经验之谈</h2>
+<ol>
+<li><code>configure_file</code> + <code>config.h.in</code> 是个非常好用的模式，大型项目里几乎都用。建议你也养成这个习惯。</li>
+<li><code>option</code> 的默认值要设得合理。比如调试功能默认关，这样用户拿到手编译出来的是干净的发布版。</li>
+<li>编译警告一定要开（<code>-Wall -Wextra</code> 或 <code>/W4</code>）。警告是编译器在给你提个醒，别不当回事。甚至可以加上 <code>-Werror</code>，把警告当错误处理，强制你写出没有警告的代码。</li>
+<li><code>CMAKE_BUILD_TYPE</code> 记得给个默认值，不然空的构建类型不优化也没调试信息，很尴尬。</li>
+<li>能用 <code>target_*</code> 命令就别用全局变量。这是现代 CMake 的核心思想之一。</li>
+</ol>
+<hr />
+<p>第四讲就到这儿。选项和配置的玩法很多，先掌握这些常用的就够应付大部分场景了。下一讲咱深入讲讲现代 CMake 的基于目标的写法。</p>
+
+  </main>
+
+  <footer class="files">
+    <h2>📁 本讲文件</h2>
+    <ul>
+      <li><a href="CMakeLists.txt">CMakeLists.txt</a></li>
+      <li><a href="config.h.in">config.h.in</a></li>
+      <li><a href="main.cpp">main.cpp</a></li>
+      <li><a href="tutorial.md">tutorial.md</a></li>
+    </ul>
+    <p class="hint">直接打开源文件可以查看完整示例；Markdown 原文保留在本目录的 tutorial.md。</p>
+  </footer>
+</div>
+</body>
+</html>

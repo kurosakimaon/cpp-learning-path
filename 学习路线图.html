@@ -425,7 +425,7 @@
     <div class="meta-item"><strong>6</strong> 个阶段</div>
     <div class="meta-item"><strong>55</strong> 个代码 Demo<br><span style="font-size:12px;opacity:0.7">含Boost共68个</span></div>
     <div class="meta-item"><strong>11</strong> 个构建示例</div>
-    <div class="meta-item"><strong>2</strong> 个可视化页面</div>
+    <div class="meta-item"><strong>9</strong> 个可视化页面<br><span style="font-size:12px;opacity:0.7">7 个分步图解 + 2 个算法演示</span></div>
   </div>
 </div>
 
@@ -629,6 +629,71 @@
 
 <!-- ============================================================ -->
 <section>
+<h2>🎬 图解专区</h2>
+<p style="color: var(--ink-muted); margin-bottom: 8px;">
+  有些机制只看文字容易似懂非懂：所有权怎么就转移了？对象到底住在哪？虚函数调用怎么找到正确实现？运行时又去哪找动态库？两个线程凭什么会互相卡死？一个线程又怎么扛住上万连接？
+  下面七组分步图解把一次操作拆成若干帧，左边画内存或流程，右边给代码对照，可以逐步翻页，也可以点「自动播放」让它自己走。
+</p>
+
+<div class="skills-grid">
+  <a class="skill-card" href="visuals/move_semantics.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🧩</div>
+    <div class="skill-title">移动语义：所有权怎么转移？</div>
+    <div class="skill-desc">拷贝、std::move、移动构造与移动赋值，以及 noexcept 为什么会影响 vector 扩容。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">现代 C++ · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/memory_model.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🧠</div>
+    <div class="skill-title">栈、堆与 RAII：谁负责释放？</div>
+    <div class="skill-desc">栈帧与堆对象、内存泄漏、悬空指针、异常展开，最后落到 unique_ptr 和 shared_ptr。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/vtable.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🎭</div>
+    <div class="skill-title">虚函数表：p-&gt;speak() 调用了谁？</div>
+    <div class="skill-desc">静态绑定、vptr / vtable、动态派发、override 签名检查、对象切片与虚析构。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">面向对象 · 6 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/linking.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🔗</div>
+    <div class="skill-title">静态库与动态库：程序怎么找到它？</div>
+    <div class="skill-desc">编译与链接、.a 与 .so、-L 与运行期搜索、rpath / $ORIGIN，以及排查工具。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">构建系统 · 6 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/concurrency.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🧵</div>
+    <div class="skill-title">并发时序：counter++ 为什么丢更新？</div>
+    <div class="skill-desc">线程共享内存、竞态窗口、互斥锁、死锁、条件变量、假唤醒与线程池，按时间线演示。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">并发编程 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/ipc.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🔀</div>
+    <div class="skill-title">进程间通信：两个进程怎么共享数据？</div>
+    <div class="skill-desc">地址空间隔离、共享内存映射、跨进程锁、消息队列，以及选型和生命周期管理。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">系统编程 · 6 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/asio.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🔌</div>
+    <div class="skill-title">Asio 事件循环：一个线程怎么扛住一万连接？</div>
+    <div class="skill-desc">io_context 任务队列、同步与异步、完成回调、异步调用链、单线程并发和 strand 串行化。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">网络编程 · 6 步</div>
+  </a>
+</div>
+
+<p style="margin-top: 18px; color: var(--ink-dim); font-size: 0.88rem;">
+  全部页面都可离线打开，支持左右方向键翻页、地址栏 <code>#step-N</code> 直接定位，右上角「自动播放」可连续演示；系统开启“减少动态效果”时会自动停用动画。
+  也可以从<a href="visuals/index.html">图解专区首页</a>统一进入。
+</p>
+</section>
+
+<!-- ============================================================ -->
+<section>
 <h2>💪 六大核心能力</h2>
 <p style="color: var(--ink-muted); margin-bottom: 16px;">
   作为一名资深 C++ 工程师，以下六项能力缺一不可：
@@ -718,7 +783,7 @@
   <tbody>
     <tr>
       <td rowspan="10">筑基期 + 进阶期</td>
-      <td rowspan="6"><a href="beginner/" style="color: var(--accent);"><code>beginner/</code></a></td>
+      <td rowspan="6"><a href="beginner/index.html" style="color: var(--accent);"><code>beginner/</code></a></td>
       <td><a href="beginner/01_basics.cpp" style="color: var(--ink);"><code>01_basics.cpp</code></a></td>
       <td><span class="level-badge lv-beginner">入门</span></td>
       <td>变量、数据类型、运算符、流程控制</td>
@@ -749,7 +814,7 @@
       <td>文件读写、文本/二进制、流操作</td>
     </tr>
     <tr>
-      <td rowspan="4"><a href="beginner/" style="color: var(--accent);"><code>beginner/</code></a><br><a href="intermediate/" style="color: var(--accent);"><code>intermediate/</code></a></td>
+      <td rowspan="4"><a href="beginner/index.html" style="color: var(--accent);"><code>beginner/</code></a><br><a href="intermediate/index.html" style="color: var(--accent);"><code>intermediate/</code></a></td>
       <td><a href="beginner/07_class_basics.cpp" style="color: var(--ink);"><code>07_class_basics.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">初级</span></td>
       <td>类与对象、封装、构造/析构</td>
@@ -772,7 +837,7 @@
 
     <tr>
       <td rowspan="7">蜕变期</td>
-      <td rowspan="5"><a href="intermediate/" style="color: var(--accent);"><code>intermediate/</code></a></td>
+      <td rowspan="5"><a href="intermediate/index.html" style="color: var(--accent);"><code>intermediate/</code></a></td>
       <td><a href="intermediate/memory_model_raii.cpp" style="color: var(--ink);"><code>memory_model_raii.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>内存模型、堆/栈、RAII、智能指针深入</td>
@@ -798,7 +863,7 @@
       <td>编程规范与最佳实践</td>
     </tr>
     <tr>
-      <td rowspan="2"><a href="algorithms/" style="color: var(--accent);"><code>algorithms/</code></a></td>
+      <td rowspan="2"><a href="algorithms/index.html" style="color: var(--accent);"><code>algorithms/</code></a></td>
       <td><a href="algorithms/sorting_visualizer.html" style="color: var(--accent);">🎮 排序可视化</a><br><a href="algorithms/sorting_algorithms.cpp" style="color: var(--ink);"><code>sorting_algorithms.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>8种排序算法 + 交互式动画 + 性能对比</td>
@@ -811,7 +876,7 @@
 
     <tr>
       <td rowspan="9">内功期</td>
-      <td rowspan="8"><a href="cpp17/" style="color: var(--accent);"><code>cpp17/</code></a></td>
+      <td rowspan="8"><a href="cpp17/index.html" style="color: var(--accent);"><code>cpp17/</code></a></td>
       <td><a href="cpp17/type_deduction.cpp" style="color: var(--ink);"><code>type_deduction.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">中高级</span></td>
       <td>auto/decltype/CTAD/推导指引</td>
@@ -852,13 +917,13 @@
       <td>移动语义深入与完美转发</td>
     </tr>
     <tr>
-      <td><a href="cpp_evolution/" style="color: var(--accent);"><code>cpp_evolution/</code></a></td>
+      <td><a href="cpp_evolution/index.html" style="color: var(--accent);"><code>cpp_evolution/</code></a></td>
       <td colspan="2"><a href="cpp_evolution/cpp11_core_features.cpp" style="color: var(--ink);">cpp11核心</a> · <a href="cpp_evolution/cpp14_features.cpp" style="color: var(--ink);">cpp14特性</a> · <a href="cpp_evolution/evolution_comparison.cpp" style="color: var(--ink);">演进对比</a> · <a href="cpp_evolution/cpp20_overview.cpp" style="color: var(--ink);">C++20 概览</a></td>
       <td>C++11→14→17→20 版本演进与写法对比（C++20 示例需 C++20 编译器）</td>
     </tr>
     <tr>
       <td rowspan="7">并发编程</td>
-      <td rowspan="7"><a href="concurrency/" style="color: var(--accent);"><code>concurrency/</code></a></td>
+      <td rowspan="7"><a href="concurrency/index.html" style="color: var(--accent);"><code>concurrency/</code></a></td>
       <td><a href="concurrency/01_threading_basics.cpp" style="color: var(--ink);"><code>01_threading_basics.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">中高级</span></td>
       <td>线程基础、join/detach、参数传递</td>
@@ -896,7 +961,7 @@
 
     <tr>
       <td rowspan="11">化境期</td>
-      <td rowspan="11"><a href="patterns/" style="color: var(--accent);"><code>patterns/</code></a></td>
+      <td rowspan="11"><a href="patterns/index.html" style="color: var(--accent);"><code>patterns/</code></a></td>
       <td><a href="patterns/singleton.cpp" style="color: var(--ink);"><code>singleton.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>单例模式（5种实现方式对比）</td>
@@ -954,7 +1019,7 @@
 
     <tr>
       <td rowspan="3">调试专题</td>
-      <td rowspan="3"><a href="debugging/" style="color: var(--accent);"><code>debugging/</code></a></td>
+      <td rowspan="3"><a href="debugging/index.html" style="color: var(--accent);"><code>debugging/</code></a></td>
       <td><a href="debugging/01_print_debugging.cpp" style="color: var(--ink);"><code>01_print_debugging.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>printf 调试大法、日志分级、断言、二分法</td>
@@ -972,7 +1037,7 @@
 
     <tr>
       <td rowspan="2">单元测试</td>
-      <td rowspan="2"><a href="testing/" style="color: var(--accent);"><code>testing/</code></a></td>
+      <td rowspan="2"><a href="testing/index.html" style="color: var(--accent);"><code>testing/</code></a></td>
       <td><a href="testing/01_gtest_basics.cpp" style="color: var(--ink);"><code>01_gtest_basics.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>Google Test 入门、断言、测试夹具</td>
@@ -985,7 +1050,7 @@
 
     <tr>
       <td rowspan="1">异常与错误处理</td>
-      <td rowspan="1"><a href="exceptions/" style="color: var(--accent);"><code>exceptions/</code></a></td>
+      <td rowspan="1"><a href="exceptions/index.html" style="color: var(--accent);"><code>exceptions/</code></a></td>
       <td><a href="exceptions/exception_basics.cpp" style="color: var(--ink);"><code>exception_basics.cpp</code></a> · <a href="exceptions/index.html" style="color: var(--accent);">📖 指南</a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>异常机制、RAII与异常安全、noexcept、错误码vs异常</td>
@@ -993,20 +1058,20 @@
 
     <tr>
       <td rowspan="2">构建系统</td>
-      <td rowspan="2"><a href="build_systems/" style="color: var(--accent);"><code>build_systems/</code></a></td>
-      <td><strong>Makefile</strong>：<a href="build_systems/makefile_01_basic/" style="color: var(--ink);">01基础</a> · <a href="build_systems/makefile_02_variables/" style="color: var(--ink);">02变量</a> · <a href="build_systems/makefile_03_patterns/" style="color: var(--ink);">03模式</a> · <a href="build_systems/makefile_04_project/" style="color: var(--ink);">04项目</a> · <a href="build_systems/makefile_05_library/" style="color: var(--ink);">05库</a></td>
+      <td rowspan="2"><a href="build_systems/index.html" style="color: var(--accent);"><code>build_systems/</code></a></td>
+      <td><strong>Makefile</strong>：<a href="build_systems/makefile_01_basic/index.html" style="color: var(--ink);">01基础</a> · <a href="build_systems/makefile_02_variables/index.html" style="color: var(--ink);">02变量</a> · <a href="build_systems/makefile_03_patterns/index.html" style="color: var(--ink);">03模式</a> · <a href="build_systems/makefile_04_project/index.html" style="color: var(--ink);">04项目</a> · <a href="build_systems/makefile_05_library/index.html" style="color: var(--ink);">05库</a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>5个渐进式 Makefile 学习示例（静态库/动态库/链接）</td>
     </tr>
     <tr>
-      <td><strong>CMake</strong>：<a href="build_systems/cmake_01_basic/" style="color: var(--ink);">01入门</a> · <a href="build_systems/cmake_02_multi_file/" style="color: var(--ink);">02多文件</a> · <a href="build_systems/cmake_03_library/" style="color: var(--ink);">03库</a> · <a href="build_systems/cmake_04_options/" style="color: var(--ink);">04选项</a> · <a href="build_systems/cmake_05_modern/" style="color: var(--ink);">05现代</a> · <a href="build_systems/cmake_06_full_project/" style="color: var(--ink);">06完整项目</a></td>
+      <td><strong>CMake</strong>：<a href="build_systems/cmake_01_basic/index.html" style="color: var(--ink);">01入门</a> · <a href="build_systems/cmake_02_multi_file/index.html" style="color: var(--ink);">02多文件</a> · <a href="build_systems/cmake_03_library/index.html" style="color: var(--ink);">03库</a> · <a href="build_systems/cmake_04_options/index.html" style="color: var(--ink);">04选项</a> · <a href="build_systems/cmake_05_modern/index.html" style="color: var(--ink);">05现代</a> · <a href="build_systems/cmake_06_full_project/index.html" style="color: var(--ink);">06完整项目</a></td>
       <td><span class="level-badge lv-expert">高级</span></td>
       <td>6个渐进式 CMake 学习示例</td>
     </tr>
 
     <tr>
       <td rowspan="15">大师期</td>
-      <td rowspan="13"><a href="boost/" style="color: var(--accent);"><code>boost/</code></a></td>
+      <td rowspan="13"><a href="boost/index.html" style="color: var(--accent);"><code>boost/</code></a></td>
       <td><a href="boost/smart_ptr.cpp" style="color: var(--ink);"><code>smart_ptr.cpp</code></a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>智能指针深入（scoped/intrusive/循环引用）</td>
@@ -1072,7 +1137,7 @@
       <td>字符串算法与通用算法补充</td>
     </tr>
     <tr>
-      <td rowspan="2"><a href="performance/" style="color: var(--accent);"><code>performance/</code></a></td>
+      <td rowspan="2"><a href="performance/index.html" style="color: var(--accent);"><code>performance/</code></a></td>
       <td><a href="performance/01_cache_optimization.cpp" style="color: var(--ink);"><code>01_cache_optimization.cpp</code></a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>CPU缓存原理、局部性、对齐、AOS vs SOA</td>
@@ -1097,7 +1162,7 @@
   <tbody>
     <tr>
       <td rowspan="1">实战项目</td>
-      <td rowspan="1"><a href="projects/todo_cli/" style="color: var(--accent);"><code>projects/todo_cli/</code></a></td>
+      <td rowspan="1"><a href="projects/todo_cli/index.html" style="color: var(--accent);"><code>projects/todo_cli/</code></a></td>
       <td><a href="projects/todo_cli/index.html" style="color: var(--ink);">🏗️ Todo CLI 待办管理系统</a> · <a href="projects/todo_cli/tutorial.md" style="color: var(--accent);">📖 指南</a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>综合项目：命令模式+工厂+策略+RAII+文件持久化，把知识串起来</td>

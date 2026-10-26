@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<!-- 本页由同目录 tutorial.md 渲染生成；内容以 tutorial.md 为准。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>04 · 完整项目结构 - 构建系统 · C++ 学习路线</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+  min-height: 100vh;
+  padding: 28px 18px 48px;
+  color: #333;
+  line-height: 1.85;
+}
+.container { max-width: 960px; margin: 0 auto; }
+.back-btn {
+  display: inline-block; padding: 8px 16px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  text-decoration: none; border-radius: 8px; margin-bottom: 18px;
+  font-size: 13px; transition: background .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.page-header { color: #fff; margin-bottom: 22px; }
+.crumb { font-size: 12.5px; color: #90caf9; letter-spacing: .04em; margin-bottom: 8px; }
+.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,.35); }
+.page-header .desc { font-size: 14.5px; opacity: .92; max-width: 760px; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.tag.beginner { background: #e8f5e9; color: #2e7d32; }
+.tag.elementary { background: #e0f2f1; color: #00695c; }
+.tag.intermediate { background: #e3f2fd; color: #1565c0; }
+.tag.advanced { background: #fff3e0; color: #e65100; }
+.tag.expert { background: #f3e5f5; color: #6a1b9a; }
+.meta .raw {
+  font-size: 12.5px; color: #bbdefb; text-decoration: none;
+  border-bottom: 1px dashed rgba(187,222,251,.6);
+}
+.meta .raw:hover { color: #fff; }
+.content {
+  background: #fff; border-radius: 18px; padding: 38px 44px 42px;
+  box-shadow: 0 16px 46px rgba(0,0,0,.28);
+  overflow-wrap: break-word;
+}
+.content > :first-child { margin-top: 0; }
+.content h1 { display: none; }
+.content h2 {
+  font-size: 22px; color: #1a237e; line-height: 1.45;
+  margin: 34px 0 14px; padding-left: 12px;
+  border-left: 5px solid #3949ab;
+}
+.content h3 { font-size: 18px; color: #283593; margin: 26px 0 10px; }
+.content h4 { font-size: 16px; color: #37474f; margin: 20px 0 8px; }
+.content p { margin: 10px 0; font-size: 15px; color: #37474f; }
+.content ul, .content ol { margin: 10px 0 14px; padding-left: 26px; }
+.content li { margin: 6px 0; font-size: 15px; color: #37474f; }
+.content li > p { margin: 6px 0; }
+.content strong { color: #1a237e; }
+.content a { color: #1565c0; }
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  background: #eef2ff; color: #c62828;
+  padding: 1px 5px; border-radius: 4px; font-size: 13.5px;
+}
+.content pre {
+  background: #1e293b; color: #e2e8f0;
+  padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 14px 0 18px;
+  line-height: 1.6;
+}
+.content pre code {
+  background: none; color: inherit; padding: 0;
+  font-size: 13.5px; white-space: pre;
+}
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px;
+  border-left: 4px solid #7986cb; background: #f4f6ff;
+  color: #455a64; border-radius: 0 8px 8px 0;
+}
+.content blockquote p { margin: 4px 0; }
+.content table {
+  width: 100%; border-collapse: collapse; margin: 16px 0 20px;
+  font-size: 14px; display: block; overflow-x: auto;
+}
+.content th, .content td { border: 1px solid #dfe3f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+.content th { background: #eef2ff; color: #1a237e; white-space: nowrap; }
+.content tbody tr:nth-child(even) { background: #fafbff; }
+.content hr { border: 0; border-top: 1px solid #e0e4f0; margin: 26px 0; }
+.files {
+  background: rgba(255,255,255,.96); border-radius: 16px;
+  padding: 22px 26px; margin-top: 22px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
+.files h2 { font-size: 16px; color: #1a237e; margin-bottom: 10px; }
+.files ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.files li { font-size: 13.5px; }
+.files a { color: #1565c0; text-decoration: none; font-family: Consolas, monospace; }
+.files a:hover { text-decoration: underline; }
+.files .dir { color: #78909c; font-family: Consolas, monospace; }
+.files .hint { margin-top: 10px; font-size: 12px; color: #90a4ae; }
+@media (max-width: 640px) {
+  body { padding: 18px 10px 36px; }
+  .page-header h1 { font-size: 23px; }
+  .content { padding: 26px 20px 30px; border-radius: 14px; }
+  .content h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-btn" href="../index.html">← 返回构建系统总览</a>
+
+  <header class="page-header">
+    <div class="crumb">构建系统 / Makefile 路线 / makefile_04_project</div>
+    <h1>🏢 04 · 完整项目结构</h1>
+    <p class="desc">多目录项目、用 find 递归发现源文件、头文件依赖自动生成（-MMD -MP）、Debug/Release 切换、项目工程化。</p>
+    <div class="meta">
+      <span class="tag advanced">高级</span>
+      <a class="raw" href="tutorial.md">查看 Markdown 原文</a>
+    </div>
+  </header>
+
+  <main class="content">
+<h1>示例 4：完整项目结构 —— 老师傅的结业课</h1>
+<p>徒弟，恭喜你走到了最后一节课。这节课啊，咱把前面学的所有东西串起来，做一个真正能用在项目上的 <code>Makefile</code> 模板。</p>
+<p>这个 <code>Makefile</code> 你可以直接拿去用，以后做新项目，改改目录和目标名就行。</p>
+<h2>一、这节课学什么？</h2>
+<ol>
+<li>
+<p>标准项目目录结构</p>
+<pre><code class="language-text">src/     源文件
+include/ 头文件
+obj/     中间文件
+bin/     可执行文件
+lib/     库文件
+</code></pre>
+<p>源码和生成物分离，干净整洁。</p>
+</li>
+<li>
+<p>递归发现源文件</p>
+<p>用 <code>$(shell find ...)</code> 递归找出所有 <code>.cpp</code> 子目录再多也不怕。</p>
+</li>
+<li>
+<p>自动依赖生成（重头戏！）</p>
+<ul>
+<li><code>-MMD -MP</code> 编译器选项，编译的时候顺手生成 <code>.d</code> 依赖文件</li>
+<li>改了头文件，<code>make</code> 自动知道哪些文件需要重编</li>
+<li>这是专业 <code>Makefile</code> 的标配。</li>
+</ul>
+</li>
+<li>
+<p>顺序依赖（order-only prerequisite）</p>
+<p>目录用 <code>|</code> 隔开的顺序依赖，目录变了不触发重编。</p>
+</li>
+<li>
+<p>完整的目标集合</p>
+<p><code>all</code> / <code>clean</code> / <code>run</code> / <code>debug</code> / <code>rebuild</code> / <code>install</code> / <code>dist</code> / <code>info</code> / <code>help</code>
+一个正经项目该有的目标都有了。</p>
+</li>
+<li>
+<p>Debug / Release 模式切换</p>
+<pre><code class="language-text">make MODE=debug    调试版
+make MODE=release  发布版
+</code></pre>
+</li>
+<li>
+<p>静态库和动态库的概念</p>
+<p>什么是 <code>.a</code> 什么是 <code>.so</code>，怎么生成怎么用。</p>
+</li>
+</ol>
+<h2>二、项目目录结构</h2>
+<pre><code class="language-text">makefile_04_project/
+├── Makefile              ← 就是它
+├── tutorial.md          ← 你正在看的这个
+├── include/              ← 头文件（对外暴露的接口）
+│   ├── calculator.h
+│   ├── logger.h
+│   ├── string_helper.h
+│   └── application.h
+├── src/                  ← 源文件（实现细节）
+│   ├── main.cpp          ← 程序入口
+│   ├── app/
+│   │   └── application.cpp
+│   ├── math/
+│   │   └── calculator.cpp
+│   └── utils/
+│       ├── logger.cpp
+│       └── string_helper.cpp
+├── obj/                  ← 编译中间文件（自动生成）
+│   ├── main.o
+│   ├── main.d            ← 自动生成的依赖文件
+│   ├── app/
+│   │   ├── application.o
+│   │   └── application.d
+│   └── ...
+└── bin/
+    └── myapp             ← 最终可执行文件（Windows 下是 myapp.exe）
+</code></pre>
+<h3>为什么要这样组织？</h3>
+<ul>
+<li>源码和生成物分离：清理的时候直接删 <code>obj/</code> 和 <code>bin/</code> 就行</li>
+<li>头文件和源文件分离：<code>include/</code> 是对外的接口，<code>src/</code> 是内部实现</li>
+<li>分模块：按功能分子目录（<code>app</code>, <code>math</code>, <code>utils</code>），大项目也不乱</li>
+</ul>
+<h2>三、怎么用这个示例？</h2>
+<p>进入 <code>makefile_04_project</code> 目录，然后试试：</p>
+<ol>
+<li>
+<p>看看有哪些可用目标</p>
+<pre><code class="language-bash">$ make help
+</code></pre>
+</li>
+<li>
+<p>看看构建信息（变量都啥值）</p>
+<pre><code class="language-bash">$ make info
+</code></pre>
+<p>—— 这招对理解 <code>Makefile</code> 特别有帮助，建议多看看</p>
+</li>
+<li>
+<p>编译（Debug 模式，默认）</p>
+<pre><code class="language-bash">$ make
+</code></pre>
+<p>看看 <code>obj/</code> 目录和 <code>bin/</code> 目录是不是都生成了？
+看看 <code>obj/</code> 下是不是有 <code>.o</code> 和 <code>.d</code> 文件？</p>
+</li>
+<li>
+<p>运行</p>
+<pre><code class="language-bash">$ make run
+</code></pre>
+<p>实际运行的是 <code>bin/myapp</code>（Windows 上是 <code>bin/myapp.exe</code>）。</p>
+</li>
+<li>
+<p>试试增量编译</p>
+<pre><code class="language-bash">$ make          # 先编一次
+# 改一下 include/logger.h（比如加个空行）
+$ make
+</code></pre>
+<p>看看哪些 <code>.o</code> 被重新编译了？
+—— 自动依赖生成在起作用！只有包含了 <code>logger.h</code> 的才重编</p>
+<p>再试试改 <code>include/calculator.h</code>，看看哪些重编？</p>
+</li>
+<li>
+<p>Release 模式编译</p>
+<pre><code class="language-bash">$ make clean
+$ make MODE=release
+$ make MODE=release info
+</code></pre>
+<p>看看 <code>CXXFLAGS</code> 有啥不一样？</p>
+</li>
+<li>
+<p>其他目标</p>
+<pre><code class="language-bash">$ make rebuild    # 清理后重编
+$ make debug      # gdb 调试（需要装 gdb）
+$ make dist       # 打包成 tar.gz
+</code></pre>
+</li>
+</ol>
+<h2>四、老师傅的经验之谈</h2>
+<h3>经验 1：自动依赖是必须的</h3>
+<p>手动写头文件依赖？那是石器时代的做法。用 <code>-MMD -MP</code>，编译的时候顺手就生成了，准确又省事。不会自动依赖，别说你会写 <code>Makefile</code>。</p>
+<h3>经验 2：目录用顺序依赖 |</h3>
+<p>普通依赖的话，目录的修改时间一变（比如往里加文件），所有目标都得重编，那不乱套了？目录只要存在就行，用顺序依赖 <code>|</code> 才是正确姿势。</p>
+<h3>经验 3：make help 和 make info 很有用</h3>
+<p>自己写的 <code>Makefile</code>，过俩月你也记不清有哪些目标。整个 <code>help</code> 目标，别人拿到你的项目也知道怎么用。<code>info</code> 目标调试 <code>Makefile</code> 特好使，变量展开对不对一看便知。</p>
+<h3>经验 4：$(shell find) 的跨平台问题</h3>
+<p>Windows CMD 里的 <code>find</code> 是文本搜索工具，不是 Unix 的 <code>find</code>。如果你在 Windows 上用 MinGW/MSYS2 或者 WSL，就有 Unix <code>find</code>。纯 Windows + nmake 那套咱不推荐，直接上 WSL 或者 MinGW 吧。</p>
+<h3>经验 5：不要过度设计</h3>
+<p><code>Makefile</code> 够用就行，别写得太复杂。太复杂的 <code>Makefile</code>，除了你没人敢改，过俩月你自己也看不懂了。保持简洁，保持清晰。</p>
+<h3>坑 1：VPATH 和 vpath（不建议新手用）</h3>
+<p>有些教程会讲 <code>VPATH</code>，用来搜索源文件。那玩意儿坑多，容易出莫名其妙的问题。咱这种&quot;明确指定路径 + 模式规则&quot;的写法更靠谱。</p>
+<h3>坑 2：.d 文件第一次编译没有</h3>
+<p>第一次编译的时候还没有 <code>.d</code> 文件，没关系，<code>-include</code> 会忽略不存在的文件。反正第一次所有 <code>.o</code> 都没有，都会被编译，编译完 <code>.d</code> 文件就有了。</p>
+<h3>坑 3：删除头文件后 make 报错</h3>
+<p>如果你删了一个头文件，<code>make</code> 可能会报：</p>
+<pre><code class="language-text">&quot;No rule to make target 'xxx.h', needed by 'xxx.d'.&quot;
+</code></pre>
+<p>这就是 <code>-MP</code> 选项要解决的问题。<code>-MP</code> 会给每个头文件生成一个空规则，删了头文件也不报错，直接重新编译就行。所以 <code>-MMD</code> 和 <code>-MP</code> 是黄金搭档，缺一不可。</p>
+<h2>五、进阶方向（学有余力可以研究）</h2>
+<ol>
+<li>
+<p>CMake / Meson / Bazel 等构建系统</p>
+<p><code>Makefile</code> 是基础，但大项目现在更多用 CMake 这些高级工具。它们能自动生成 <code>Makefile</code>（或 Ninja 文件），跨平台能力更强。但 <code>Makefile</code> 的原理是根，根儿扎牢了，学啥都快。</p>
+</li>
+<li>
+<p>单元测试集成</p>
+<p>加个 <code>test</code> 目标，自动跑单元测试。</p>
+</li>
+<li>
+<p>代码覆盖率、静态检查</p>
+<p>加个 <code>coverage</code> 目标、<code>lint</code> 目标。</p>
+</li>
+<li>
+<p>多平台适配</p>
+<p>用 <code>ifeq ($(shell uname), Darwin)</code> 判断 Mac/Linux/Windows。</p>
+</li>
+<li>
+<p>并行编译</p>
+<p><code>make -j4</code> 用 4 个并行任务（进程）编译，大项目快很多。咱这个 <code>Makefile</code> 天然支持并行，直接用就行。</p>
+</li>
+</ol>
+<h2>六、毕业寄语</h2>
+<p>徒弟啊，<code>Makefile</code> 的五个示例学完了，从最基础的一条规则，到现在这个完整的项目级 <code>Makefile</code>，不容易。</p>
+<p>但你要记住：</p>
+<p><code>Makefile</code> 只是工具，是为项目服务的。不要为了炫技把 <code>Makefile</code> 写得花里胡哨。能解决问题、清晰易懂、方便维护，才是好的 <code>Makefile</code>。</p>
+<p>编程这行当，工具层出不穷，但底层原理是相通的。把基础打牢，比啥都强。</p>
+<p>师傅领进门，修行在个人。以后的路，还得你自己走。加油！</p>
+<p>—— 你的老师傅</p>
+
+  </main>
+
+  <footer class="files">
+    <h2>📁 本讲文件</h2>
+    <ul>
+      <li><a href="Makefile">Makefile</a></li>
+      <li><span class="dir">include/</span></li>
+      <li><span class="dir">src/</span></li>
+      <li><a href="tutorial.md">tutorial.md</a></li>
+    </ul>
+    <p class="hint">直接打开源文件可以查看完整示例；Markdown 原文保留在本目录的 tutorial.md。</p>
+  </footer>
+</div>
+</body>
+</html>

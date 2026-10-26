@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>进程间通信：两个进程怎么交换数据？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../concurrency/index.html">并发模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 进程与 IPC</div>
+    <h1>📡 进程间通信：两个进程怎么交换数据？</h1>
+    <p>从地址空间隔离讲到共享内存、进程间锁、消息队列和选型。共享内存不是“把变量传过去”，而是让两个进程映射同一块物理内存。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 6</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>concurrency/07_ipc_shared_memory.cpp</code>（Boost.Interprocess） ·
+    相关教程：<a href="../concurrency/tutorial.md">concurrency/tutorial.md</a> ·
+    图中地址均为示意值；Linux 下共享内存名字通常出现在 <code>/dev/shm</code>。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '进程隔离',
+    title: '1. 地址空间隔离：指针不能直接跨进程',
+    caption: '每个进程都有自己的虚拟地址空间，A 里的 <code>0x7f10</code> 在 B 里并不指向同一块内存，直接解引用对方的指针是无效的。操作系统允许把<strong>同一个物理页</strong>映射进两个进程的页表，这就是共享内存的基础：虚拟地址可以不同，物理内存是同一份。',
+    code: '// 在进程 B 里解引用 A 的指针值：无效\nint* p = (int*)0x7f10;\n// 虚拟地址只在所属进程内有意义',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="两个进程拥有独立虚拟地址空间，但共享页映射到同一块物理内存">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+
+  <rect x="30" y="54" width="320" height="180" rx="12" class="svg-box-accent"/>
+  <text x="46" y="80" class="svg-title">进程 A</text>
+  <text x="46" y="102" class="svg-small">独立的虚拟地址空间</text>
+  <rect x="46" y="114" width="288" height="32" rx="5" class="svg-field"/>
+  <text x="60" y="135" class="svg-mono">私有页 → 物理页 P1</text>
+  <rect x="46" y="154" width="288" height="32" rx="5" class="svg-box-accent"/>
+  <text x="60" y="175" class="svg-mono">共享页 → 物理页 P2</text>
+  <text x="46" y="210" class="svg-small">A 看到的共享虚拟地址：0x7f10</text>
+
+  <rect x="410" y="54" width="320" height="180" rx="12" class="svg-box-good"/>
+  <text x="426" y="80" class="svg-title">进程 B</text>
+  <text x="426" y="102" class="svg-small">独立的虚拟地址空间</text>
+  <rect x="426" y="114" width="288" height="32" rx="5" class="svg-field"/>
+  <text x="440" y="135" class="svg-mono">私有页 → 物理页 P3</text>
+  <rect x="426" y="154" width="288" height="32" rx="5" class="svg-box-good"/>
+  <text x="440" y="175" class="svg-mono">共享页 → 物理页 P2</text>
+  <text x="426" y="210" class="svg-small">B 看到的共享虚拟地址：0x7f20</text>
+
+  <text x="344" y="46" class="svg-bad-text">不能直接解引用</text>
+  <line x1="354" y1="86" x2="406" y2="86" class="svg-arrow-bad"/>
+
+  <rect x="30" y="284" width="700" height="104" rx="12" class="svg-box"/>
+  <text x="46" y="308" class="svg-small">物理内存</text>
+  <rect x="70" y="320" width="170" height="52" rx="6" class="svg-box"/>
+  <text x="155" y="351" text-anchor="middle" class="svg-text">P1 · A 私有</text>
+  <rect x="295" y="320" width="170" height="52" rx="6" class="svg-box-accent svg-pulse"/>
+  <text x="380" y="345" text-anchor="middle" class="svg-text">P2 · 共享页</text>
+  <text x="380" y="363" text-anchor="middle" class="svg-small">同一份数据</text>
+  <rect x="520" y="320" width="170" height="52" rx="6" class="svg-box"/>
+  <text x="605" y="351" text-anchor="middle" class="svg-text">P3 · B 私有</text>
+
+  <path d="M190 186 C190 246 300 262 334 316" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <path d="M570 186 C570 246 460 262 426 316" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+
+  <text x="30" y="424" class="svg-small">虚拟地址不同没关系：页表把它们指向同一个物理页，读写的就是同一份数据。</text>
+</svg>`
+  },
+  {
+    nav: '共享内存',
+    title: '2. 共享内存：先建对象，再各映射一次',
+    caption: 'POSIX 共享内存的典型流程是：<code>shm_open</code> 创建或打开一个带名字的共享内存对象，<code>ftruncate</code> 设定大小，<code>mmap</code> 把它映射进自己的地址空间。另一个进程用同一个名字打开并映射，两个指针就指向同一份内存了。',
+    code: 'int fd = shm_open("/demo", O_CREAT | O_RDWR, 0600);\nftruncate(fd, 4096);\nvoid* p = mmap(nullptr, 4096, PROT_READ | PROT_WRITE,\n               MAP_SHARED, fd, 0);',
+    highlight: [0, 1, 2, 3],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="shm_open、ftruncate、mmap 三个步骤建立共享内存并映射进两个进程">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+
+  <rect x="30" y="54" width="200" height="76" rx="10" class="svg-box-accent"/>
+  <text x="46" y="80" class="svg-title">① shm_open</text>
+  <text x="46" y="102" class="svg-mono">"/demo" → fd</text>
+  <text x="46" y="121" class="svg-small">创建或打开</text>
+
+  <rect x="280" y="54" width="200" height="76" rx="10" class="svg-box-accent"/>
+  <text x="296" y="80" class="svg-title">② ftruncate</text>
+  <text x="296" y="102" class="svg-mono">fd, 4096</text>
+  <text x="296" y="121" class="svg-small">设定大小</text>
+
+  <rect x="530" y="54" width="200" height="76" rx="10" class="svg-box-accent"/>
+  <text x="546" y="80" class="svg-title">③ mmap</text>
+  <text x="546" y="102" class="svg-mono">MAP_SHARED</text>
+  <text x="546" y="121" class="svg-small">映射进地址空间</text>
+
+  <line x1="232" y1="92" x2="276" y2="92" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="482" y1="92" x2="526" y2="92" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="260" y="204" width="300" height="122" rx="12" class="svg-box-warn svg-pulse"/>
+  <text x="278" y="230" class="svg-title">共享内存对象 /demo</text>
+  <text x="278" y="254" class="svg-text">大小：4096 字节</text>
+  <text x="278" y="278" class="svg-small">Linux 下对应 /dev/shm/demo</text>
+  <text x="278" y="302" class="svg-small">所有映射它的进程看到同一份内容</text>
+
+  <rect x="30" y="220" width="170" height="94" rx="10" class="svg-box-accent"/>
+  <text x="46" y="246" class="svg-title">进程 A</text>
+  <text x="46" y="268" class="svg-mono">pA = 0x7f10</text>
+  <text x="46" y="290" class="svg-small">mmap 后拿到指针</text>
+
+  <rect x="590" y="220" width="140" height="94" rx="10" class="svg-box-good"/>
+  <text x="606" y="246" class="svg-title">进程 B</text>
+  <text x="606" y="268" class="svg-mono">pB = 0x7f20</text>
+  <text x="606" y="290" class="svg-small">映射同一对象</text>
+
+  <line x1="202" y1="266" x2="256" y2="266" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="560" y1="266" x2="586" y2="266" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="206" y="254" class="svg-small">map</text>
+  <text x="562" y="254" class="svg-small">map</text>
+
+  <text x="30" y="366" class="svg-small">两个进程的虚拟地址可以不同（0x7f10 / 0x7f20），但都指向同一块物理内存。</text>
+  <text x="30" y="392" class="svg-small">通常由父进程创建，把名字告诉子进程；两边各自 open + mmap。</text>
+  <text x="30" y="418" class="svg-small">Boost.Interprocess 的 managed_shared_memory 把这套流程包装成了对象。</text>
+</svg>`
+  },
+  {
+    nav: '进程锁',
+    title: '3. 同步对象也必须放进共享内存',
+    caption: '两个进程能同时改同一块数据，所以仍然需要锁。但锁本身也必须在共享内存里：进程 A 里的 <code>std::mutex</code> 地址在 B 里没有意义，标准也不保证它能跨进程使用。用 <code>interprocess_mutex</code>（或 pthread 的 process-shared 互斥量），并把它和计数器放在同一个共享结构里。',
+    code: 'struct Shared {\n  bip::interprocess_mutex m;\n  int counter;\n};\nbip::scoped_lock<bip::interprocess_mutex> lk(s->m);\n++s->counter;',
+    highlight: [1, 2, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="两个进程共享同一块内存，互斥锁也放在共享内存里，进程 B 等待进程 A 释放锁">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+
+  <rect x="170" y="60" width="420" height="230" rx="14" class="svg-box-warn"/>
+  <text x="188" y="86" class="svg-title">共享内存段（两个进程都映射）</text>
+
+  <rect x="196" y="104" width="180" height="66" rx="8" class="svg-box-accent svg-pulse"/>
+  <text x="212" y="128" class="svg-mono">interprocess_mutex</text>
+  <text x="212" y="150" class="svg-small">锁也在共享区里</text>
+
+  <rect x="196" y="192" width="180" height="58" rx="8" class="svg-field"/>
+  <text x="212" y="216" class="svg-mono">counter = 1</text>
+  <text x="212" y="238" class="svg-small">共享数据</text>
+
+  <text x="196" y="276" class="svg-small">两个进程看到的是同一个 counter 和同一把锁。</text>
+
+  <rect x="30" y="104" width="120" height="100" rx="10" class="svg-box-good"/>
+  <text x="46" y="130" class="svg-title">进程 A</text>
+  <text x="46" y="154" class="svg-text">持有锁</text>
+  <text x="46" y="176" class="svg-small">正在修改 counter</text>
+
+  <rect x="610" y="104" width="120" height="100" rx="10" class="svg-box-bad"/>
+  <text x="626" y="130" class="svg-title">进程 B</text>
+  <text x="626" y="154" class="svg-text">等待锁</text>
+  <text x="626" y="176" class="svg-small">阻塞，不碰数据</text>
+
+  <line x1="152" y1="144" x2="192" y2="136" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ah)"/>
+
+  <line x1="606" y1="154" x2="380" y2="140" class="svg-arrow-bad svg-flow" marker-end="url(#ahr)"/>
+  <text x="486" y="126" class="svg-bad-text">等 A 解锁</text>
+
+  <rect x="30" y="320" width="700" height="60" rx="10" class="svg-box-bad"/>
+  <text x="48" y="346" class="svg-bad-text">不能用进程内的 std::mutex 保护跨进程数据。</text>
+  <text x="48" y="368" class="svg-small">用 interprocess_mutex、pthread 的 process-shared 互斥量，或文件锁。</text>
+
+  <text x="30" y="410" class="svg-small">共享内存只负责“看到同一份数据”，同步仍然要你自己做。</text>
+</svg>`
+  },
+  {
+    nav: '消息队列',
+    title: '4. 消息队列：内核帮你排队，但会拷贝',
+    caption: '消息队列由内核维护，发送方和接收方不需要映射同一块内存。每条消息有明确边界，不会被拆成字节流；代价是 <code>send</code> / <code>receive</code> 会拷贝数据。队列有容量和单条消息大小限制：<code>receive</code> 会阻塞到有消息，不想阻塞就用 <code>try_receive</code> 立即返回。',
+    code: 'bip::message_queue mq(bip::create_only, "mq",\n                      10, sizeof(Msg));\nmq.send(&msg, sizeof(msg), 0);   // 0 = 优先级\nsize_t recvd; unsigned int prio;\nmq.receive(&msg, sizeof(msg), recvd, prio);',
+    highlight: [0, 1, 2, 4],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="发送进程把消息拷贝进内核消息队列，接收进程按消息边界取出">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+
+  <rect x="30" y="150" width="170" height="90" rx="10" class="svg-box-accent"/>
+  <text x="46" y="176" class="svg-title">发送进程</text>
+  <text x="46" y="200" class="svg-text">mq.send(&amp;msg, ...)</text>
+  <text x="46" y="222" class="svg-small">数据被拷贝进队列</text>
+
+  <rect x="240" y="86" width="300" height="200" rx="14" class="svg-box-warn"/>
+  <text x="258" y="112" class="svg-title">内核消息队列 mq</text>
+  <text x="258" y="134" class="svg-small">最多 10 条 · 每条 ≤ sizeof(Msg)</text>
+
+  <g class="svg-float">
+    <rect x="258" y="150" width="264" height="36" rx="5" class="svg-box"/>
+    <text x="272" y="174" class="svg-mono">msg 1（有边界）</text>
+  </g>
+  <g class="svg-float" style="animation-delay:.6s">
+    <rect x="258" y="194" width="264" height="36" rx="5" class="svg-box"/>
+    <text x="272" y="218" class="svg-mono">msg 2（有边界）</text>
+  </g>
+  <g class="svg-float" style="animation-delay:1.2s">
+    <rect x="258" y="238" width="264" height="36" rx="5" class="svg-box"/>
+    <text x="272" y="262" class="svg-mono">msg 3（可带优先级）</text>
+  </g>
+
+  <rect x="580" y="150" width="150" height="90" rx="10" class="svg-box-good"/>
+  <text x="596" y="176" class="svg-title">接收进程</text>
+  <text x="596" y="200" class="svg-text">mq.receive(...)</text>
+  <text x="596" y="222" class="svg-small">一次取一条</text>
+
+  <line x1="202" y1="195" x2="236" y2="195" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="544" y1="195" x2="576" y2="195" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="316" width="700" height="56" rx="10" class="svg-box"/>
+  <text x="48" y="342" class="svg-text">发送和接收都会拷贝；消息有边界，不会像字节流那样粘在一起。</text>
+  <text x="48" y="362" class="svg-small">队列满 / 空时可以阻塞等待，也可以非阻塞返回错误。</text>
+
+  <text x="30" y="404" class="svg-small">跨机器时消息队列帮不上忙，请用 socket；同机小消息用消息队列更省心。</text>
+</svg>`
+  },
+  {
+    nav: '怎么选',
+    title: '5. 选型：先看数据量和边界，再看要不要跨机器',
+    caption: '同一台机器上传输大量数据，共享内存最快，但要自己做同步；结构化的小消息用消息队列更省事；父子进程之间的单向字节流用管道；需要跨机器就只能走 socket。socket 最通用，但多了协议栈和拷贝，通常也是最慢的。',
+    code: '同机大数据   → 共享内存 + 互斥量\n结构化消息   → 消息队列\n单向字节流   → pipe / FIFO\n跨机器通信   → TCP socket',
+    highlight: [0, 1, 2, 3],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="共享内存、消息队列、管道和 socket 的拷贝次数、速度与适用场景对比">
+  <rect x="30" y="50" width="700" height="46" rx="8" class="svg-box-accent"/>
+  <text x="52" y="79" class="svg-title">方式</text>
+  <text x="240" y="79" class="svg-title">是否拷贝</text>
+  <text x="400" y="79" class="svg-title">速度</text>
+  <text x="540" y="79" class="svg-title">适用场景</text>
+
+  <rect x="30" y="104" width="700" height="52" rx="8" class="svg-box-good"/>
+  <text x="52" y="136" class="svg-text">共享内存</text>
+  <text x="240" y="136" class="svg-text">零拷贝（映射）</text>
+  <text x="400" y="136" class="svg-good-text">最快</text>
+  <text x="540" y="136" class="svg-text">同机大数据</text>
+
+  <rect x="30" y="164" width="700" height="52" rx="8" class="svg-box"/>
+  <text x="52" y="196" class="svg-text">消息队列</text>
+  <text x="240" y="196" class="svg-text">内核拷贝</text>
+  <text x="400" y="196" class="svg-text">中</text>
+  <text x="540" y="196" class="svg-text">结构化小消息</text>
+
+  <rect x="30" y="224" width="700" height="52" rx="8" class="svg-box"/>
+  <text x="52" y="256" class="svg-text">pipe / FIFO</text>
+  <text x="240" y="256" class="svg-text">内核拷贝</text>
+  <text x="400" y="256" class="svg-text">中</text>
+  <text x="540" y="256" class="svg-text">单向字节流、父子进程</text>
+
+  <rect x="30" y="284" width="700" height="52" rx="8" class="svg-box-warn"/>
+  <text x="52" y="316" class="svg-text">socket</text>
+  <text x="240" y="316" class="svg-text">协议栈 + 拷贝</text>
+  <text x="400" y="316" class="svg-bad-text">最慢</text>
+  <text x="540" y="316" class="svg-text">跨机器、最通用</text>
+
+  <rect x="30" y="356" width="700" height="68" rx="10" class="svg-box-accent"/>
+  <text x="48" y="382" class="svg-text">选择顺序：数据量 → 是否有消息边界 → 是否跨机器。</text>
+  <text x="48" y="406" class="svg-small">共享内存 + 锁适合高频大数据；消息队列适合任务/事件；socket 负责跨机器。</text>
+</svg>`
+  },
+  {
+    nav: '生命周期',
+    title: '6. 生命周期与坑：名字残留、裸指针、清理',
+    caption: '共享内存对象的生命周期独立于进程：进程退出甚至崩溃，<code>/dev/shm/demo</code> 仍然可能存在，下次用 <code>create_only</code> 就会失败，需要显式 <code>remove</code>。共享区里不要存 <code>std::string</code>、<code>std::vector</code> 或裸指针，它们的内部指针指向各自进程的堆；用固定数组、共享内存分配器或 <code>offset_ptr</code>。',
+    code: 'bip::shared_memory_object::remove("demo_shm");\n// 共享区里存 offset_ptr<T>，不要存裸指针\n// 结构体大小和对齐要保持一致',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="共享内存的四个常见坑：名字残留、裸指针、容器内部指针、权限与清理">
+  <rect x="30" y="54" width="330" height="132" rx="12" class="svg-box-bad"/>
+  <text x="48" y="82" class="svg-bad-text">① 名字会残留</text>
+  <text x="48" y="108" class="svg-text">进程崩溃后 /dev/shm/demo 还在</text>
+  <text x="48" y="132" class="svg-small">create_only 会失败</text>
+  <text x="48" y="156" class="svg-small">→ 先 remove，或用 open_or_create</text>
+
+  <rect x="400" y="54" width="330" height="132" rx="12" class="svg-box-bad"/>
+  <text x="418" y="82" class="svg-bad-text">② 不能存裸指针</text>
+  <text x="418" y="108" class="svg-text">两个进程的虚拟地址不同</text>
+  <text x="418" y="132" class="svg-small">存下来的 T* 到对面无效</text>
+  <text x="418" y="156" class="svg-small">→ 用 offset_ptr&lt;T&gt; 或相对偏移</text>
+
+  <rect x="30" y="210" width="330" height="140" rx="12" class="svg-box-warn"/>
+  <text x="48" y="238" class="svg-bad-text">③ 容器不能直接放</text>
+  <text x="48" y="264" class="svg-text">std::string / vector 的元素在堆上</text>
+  <text x="48" y="288" class="svg-small">对象放进共享区，内部仍指向各自堆</text>
+  <text x="48" y="312" class="svg-small">→ 固定数组，或共享内存分配器</text>
+  <text x="48" y="336" class="svg-small">→ 结构体大小、对齐要一致</text>
+
+  <rect x="400" y="210" width="330" height="140" rx="12" class="svg-box"/>
+  <text x="418" y="238" class="svg-title">④ 权限与清理</text>
+  <text x="418" y="264" class="svg-text">0600：只允许当前用户访问</text>
+  <text x="418" y="288" class="svg-small">知道名字的进程就能打开</text>
+  <text x="418" y="312" class="svg-small">用完 remove()，否则会一直占内存</text>
+  <text x="418" y="336" class="svg-small">共享内存不会随进程退出自动删除</text>
+
+  <text x="30" y="388" class="svg-small">共享内存不是“传变量”，而是让两个进程看同一块物理内存；协议和同步都要自己定。</text>
+  <text x="30" y="412" class="svg-small">调试时先用 ipcs / ls /dev/shm 看有没有残留对象。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

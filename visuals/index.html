@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C++ 图解专区 - 把抽象机制画出来</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="../学习路线图.html">← 返回总路线图</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">VISUAL NOTES</div>
+    <h1>📚 C++ 图解专区</h1>
+    <p>把最容易讲不清的机制拆成分步示意图：每一步只加一个变化，配一段代码对照。点击卡片进入，左右方向键翻页，地址栏会记录当前步骤；也可以点「自动播放」让页面自己往下走。</p>
+  </header>
+
+  <div class="hub-grid">
+    <a class="hub-card" href="move_semantics.html">
+      <div class="hub-icon">🧩</div>
+      <h2>移动语义：所有权怎么转移？</h2>
+      <p>拷贝、std::move、移动构造、移动赋值，以及 noexcept 为什么会影响 vector 扩容。</p>
+      <span class="hub-tag">现代 C++ · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="memory_model.html">
+      <div class="hub-icon">🧠</div>
+      <h2>栈、堆与 RAII：谁负责释放？</h2>
+      <p>从栈帧和堆对象讲起，经过泄漏、悬空指针、异常展开，最后落到 unique_ptr 和 shared_ptr。</p>
+      <span class="hub-tag">内存管理 · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="vtable.html">
+      <div class="hub-icon">🎭</div>
+      <h2>虚函数表：p-&gt;speak() 调用了谁？</h2>
+      <p>静态绑定、vptr / vtable、动态派发、override 签名检查、对象切片和虚析构。</p>
+      <span class="hub-tag">面向对象 · 6 步</span>
+    </a>
+
+    <a class="hub-card" href="linking.html">
+      <div class="hub-icon">🔗</div>
+      <h2>静态库与动态库：程序怎么找到它？</h2>
+      <p>编译与链接、.a 与 .so、-L 和运行期搜索、rpath / $ORIGIN，以及排查工具。</p>
+      <span class="hub-tag">构建系统 · 6 步</span>
+    </a>
+
+    <a class="hub-card" href="concurrency.html">
+      <div class="hub-icon">🧵</div>
+      <h2>并发时序：counter++ 为什么丢更新？</h2>
+      <p>线程共享内存、竞态窗口、互斥锁、死锁、条件变量、假唤醒和线程池，按时间线一步步走。</p>
+      <span class="hub-tag">并发编程 · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="ipc.html">
+      <div class="hub-icon">🔀</div>
+      <h2>进程间通信：两个进程怎么共享数据？</h2>
+      <p>地址空间隔离、共享内存映射、跨进程锁、消息队列，以及选型和生命周期管理。</p>
+      <span class="hub-tag">系统编程 · 6 步</span>
+    </a>
+
+    <a class="hub-card" href="asio.html">
+      <div class="hub-icon">🔌</div>
+      <h2>Asio 事件循环：一个线程怎么扛住一万连接？</h2>
+      <p>io_context 任务队列、同步与异步、完成回调、异步调用链、单线程并发和 strand 串行化。</p>
+      <span class="hub-tag">网络编程 · 6 步</span>
+    </a>
+  </div>
+
+  <p class="page-foot">
+    全部图解都是本地静态页面，不依赖网络，直接用浏览器打开即可。
+    对应代码与教程链接在各页底部。
+  </p>
+</div>
+</body>
+</html>

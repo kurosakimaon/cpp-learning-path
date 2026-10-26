@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<!-- 本页由同目录 tutorial.md 渲染生成；内容以 tutorial.md 为准。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>02 · 多文件项目 - 构建系统 · C++ 学习路线</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+  min-height: 100vh;
+  padding: 28px 18px 48px;
+  color: #333;
+  line-height: 1.85;
+}
+.container { max-width: 960px; margin: 0 auto; }
+.back-btn {
+  display: inline-block; padding: 8px 16px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  text-decoration: none; border-radius: 8px; margin-bottom: 18px;
+  font-size: 13px; transition: background .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.page-header { color: #fff; margin-bottom: 22px; }
+.crumb { font-size: 12.5px; color: #90caf9; letter-spacing: .04em; margin-bottom: 8px; }
+.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,.35); }
+.page-header .desc { font-size: 14.5px; opacity: .92; max-width: 760px; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.tag.beginner { background: #e8f5e9; color: #2e7d32; }
+.tag.elementary { background: #e0f2f1; color: #00695c; }
+.tag.intermediate { background: #e3f2fd; color: #1565c0; }
+.tag.advanced { background: #fff3e0; color: #e65100; }
+.tag.expert { background: #f3e5f5; color: #6a1b9a; }
+.meta .raw {
+  font-size: 12.5px; color: #bbdefb; text-decoration: none;
+  border-bottom: 1px dashed rgba(187,222,251,.6);
+}
+.meta .raw:hover { color: #fff; }
+.content {
+  background: #fff; border-radius: 18px; padding: 38px 44px 42px;
+  box-shadow: 0 16px 46px rgba(0,0,0,.28);
+  overflow-wrap: break-word;
+}
+.content > :first-child { margin-top: 0; }
+.content h1 { display: none; }
+.content h2 {
+  font-size: 22px; color: #1a237e; line-height: 1.45;
+  margin: 34px 0 14px; padding-left: 12px;
+  border-left: 5px solid #3949ab;
+}
+.content h3 { font-size: 18px; color: #283593; margin: 26px 0 10px; }
+.content h4 { font-size: 16px; color: #37474f; margin: 20px 0 8px; }
+.content p { margin: 10px 0; font-size: 15px; color: #37474f; }
+.content ul, .content ol { margin: 10px 0 14px; padding-left: 26px; }
+.content li { margin: 6px 0; font-size: 15px; color: #37474f; }
+.content li > p { margin: 6px 0; }
+.content strong { color: #1a237e; }
+.content a { color: #1565c0; }
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  background: #eef2ff; color: #c62828;
+  padding: 1px 5px; border-radius: 4px; font-size: 13.5px;
+}
+.content pre {
+  background: #1e293b; color: #e2e8f0;
+  padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 14px 0 18px;
+  line-height: 1.6;
+}
+.content pre code {
+  background: none; color: inherit; padding: 0;
+  font-size: 13.5px; white-space: pre;
+}
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px;
+  border-left: 4px solid #7986cb; background: #f4f6ff;
+  color: #455a64; border-radius: 0 8px 8px 0;
+}
+.content blockquote p { margin: 4px 0; }
+.content table {
+  width: 100%; border-collapse: collapse; margin: 16px 0 20px;
+  font-size: 14px; display: block; overflow-x: auto;
+}
+.content th, .content td { border: 1px solid #dfe3f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+.content th { background: #eef2ff; color: #1a237e; white-space: nowrap; }
+.content tbody tr:nth-child(even) { background: #fafbff; }
+.content hr { border: 0; border-top: 1px solid #e0e4f0; margin: 26px 0; }
+.files {
+  background: rgba(255,255,255,.96); border-radius: 16px;
+  padding: 22px 26px; margin-top: 22px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
+.files h2 { font-size: 16px; color: #1a237e; margin-bottom: 10px; }
+.files ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.files li { font-size: 13.5px; }
+.files a { color: #1565c0; text-decoration: none; font-family: Consolas, monospace; }
+.files a:hover { text-decoration: underline; }
+.files .dir { color: #78909c; font-family: Consolas, monospace; }
+.files .hint { margin-top: 10px; font-size: 12px; color: #90a4ae; }
+@media (max-width: 640px) {
+  body { padding: 18px 10px 36px; }
+  .page-header h1 { font-size: 23px; }
+  .content { padding: 26px 20px 30px; border-radius: 14px; }
+  .content h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-btn" href="../index.html">← 返回构建系统总览</a>
+
+  <header class="page-header">
+    <div class="crumb">构建系统 / CMake 路线 / cmake_02_multi_file</div>
+    <h1>📂 02 · 多文件项目</h1>
+    <p class="desc">多源文件编译、头文件路径、变量与列表、file(GLOB) 的坑。</p>
+    <div class="meta">
+      <span class="tag elementary">初级</span>
+      <a class="raw" href="tutorial.md">查看 Markdown 原文</a>
+    </div>
+  </header>
+
+  <main class="content">
+<h1>CMake 入门教程 - 第二讲</h1>
+<blockquote>
+<p>多文件项目怎么搞</p>
+</blockquote>
+<h2>一、项目结构</h2>
+<p>徒弟啊，这一讲咱看看多文件项目怎么组织。</p>
+<p>咱这个例子的文件结构：</p>
+<pre><code class="language-text">cmake_02_multi_file/
+├── main.cpp        主程序
+├── utils.h         工具函数声明
+├── utils.cpp       工具函数实现
+├── math.h          数学函数声明
+├── math.cpp        数学函数实现
+├── CMakeLists.txt  CMake 配置
+└── tutorial.md     就是你正在看的这个
+</code></pre>
+<h2>二、头文件和源文件那点事儿</h2>
+<p>C/C++ 里为什么要有 <code>.h</code> 和 <code>.cpp</code> 分开？</p>
+<p>简单说：</p>
+<ul>
+<li><code>.h</code> 文件（头文件）：放声明（函数长啥样、类有哪些成员）</li>
+<li><code>.cpp</code> 文件（源文件）：放实现（函数具体干了啥）</li>
+</ul>
+<p>为什么要分开？</p>
+<ol>
+<li>接口与实现分离。别人想用你的代码，只需要看 <code>.h</code> 文件就知道怎么调用，不用管你内部怎么实现的。</li>
+<li>加快编译。改了实现（<code>.cpp</code>），只需要重新编这个 <code>.cpp</code>；改了接口（<code>.h</code>），所有包含它的文件都得重新编。</li>
+</ol>
+<h3>老师傅小知识</h3>
+<p><code>#include &quot;xxx.h&quot;</code> 本质上就是把 <code>xxx.h</code> 的内容原封不动地插入到这一行。就这么简单，没什么魔法。</p>
+<h2>三、include_directories 是干啥的？</h2>
+<p>你写 <code>#include &quot;utils.h&quot;</code> 的时候，编译器去哪儿找这个文件？</p>
+<p>搜索顺序大概是这样的：</p>
+<ol>
+<li>当前源文件所在的目录</li>
+<li>你通过 <code>-I</code> 参数（也就是 CMake 里的 <code>include_directories</code>）指定的那些目录</li>
+<li>系统默认的头文件目录（比如 <code>/usr/include</code>）</li>
+</ol>
+<p>所以如果你的头文件放在别的文件夹里，就得用 <code>include_directories</code> 告诉编译器一声。</p>
+<p>举个例子：如果你把所有头文件都放在 <code>include/</code> 子目录里，那你就得写：</p>
+<pre><code class="language-cmake">include_directories(include)
+</code></pre>
+<h2>四、set 命令和变量</h2>
+<p>CMake 里用 <code>set</code> 定义变量，用 <code>${变量名}</code> 引用变量。</p>
+<pre><code class="language-cmake">set(SOURCES main.cpp utils.cpp math.cpp)
+add_executable(demo ${SOURCES})
+</code></pre>
+<p>变量名一般习惯用大写，不过 CMake 是大小写不敏感的吗？哎，这个得说清楚：</p>
+<ul>
+<li>CMake 命令名不区分大小写（<code>add_executable</code> 和 <code>ADD_EXECUTABLE</code> 一样）</li>
+<li>但是变量名是区分大小写的！<code>${SOURCES}</code> 和 <code>${sources}</code> 不一样</li>
+<li>所以最好统一风格，变量名都用大写，省得搞混</li>
+</ul>
+<blockquote>
+<p><strong>老师傅提醒</strong></p>
+<p>除了自己定义的变量，CMake 还有一大堆内置变量。比如：</p>
+<ul>
+<li><code>CMAKE_CURRENT_SOURCE_DIR</code> 当前 <code>CMakeLists.txt</code> 所在的源码目录</li>
+<li><code>CMAKE_CURRENT_BINARY_DIR</code> 当前 <code>CMakeLists.txt</code> 对应的构建目录</li>
+<li><code>PROJECT_NAME</code> 项目名</li>
+<li><code>CMAKE_BUILD_TYPE</code> 构建类型（Debug/Release）</li>
+</ul>
+<p>这些以后慢慢接触，不用急着记。</p>
+</blockquote>
+<h2>五、file(GLOB) 的坑（重点！）</h2>
+<p><code>file(GLOB)</code> 这个命令新手最爱用，因为省事：</p>
+<pre><code class="language-cmake">file(GLOB SOURCES &quot;*.cpp&quot;)
+</code></pre>
+<p>一把把所有 <code>.cpp</code> 文件都收进来，不用一个个列。</p>
+<p>但是！老师傅我必须给你敲个警钟：</p>
+<blockquote>
+<p>正式项目里别用 <code>file(GLOB)</code>！</p>
+</blockquote>
+<p>为啥？最大的坑：新增文件不会自动被检测到！</p>
+<p>举个场景：</p>
+<ol>
+<li>你有 5 个 <code>.cpp</code> 文件，用 <code>file(GLOB)</code> 收集起来了</li>
+<li>你 <code>cmake ..</code> 配置了一下，CMake 记下了这 5 个文件</li>
+<li>你又加了第 6 个 <code>.cpp</code> 文件</li>
+<li>你直接 <code>make</code>，结果第 6 个文件没被编译！</li>
+<li>链接时报错 &quot;undefined reference&quot;，你找了半天 bug</li>
+<li>最后发现是忘了重新 <code>cmake ..</code></li>
+</ol>
+<p>这种事儿太常见了，新手踩坑率 100%。</p>
+<p>那什么时候能用？</p>
+<ul>
+<li>小 demo，自己玩的项目</li>
+<li>你能保证每次加文件都记得重新 <code>cmake</code></li>
+<li>或者用 CMake 3.12+ 的 <code>CONFIGURE_DEPENDS</code> 参数（但也不完美）</li>
+</ul>
+<p>正式项目怎么办？</p>
+<p>老老实实把源文件一个个列出来。文件多怎么了？多就多点，至少不会出莫名其妙的问题。而且代码审查的时候，加了哪些文件一目了然。</p>
+<h2>六、编译运行步骤</h2>
+<p>跟第一讲一样，外部构建：</p>
+<pre><code class="language-bash">cd cmake_02_multi_file
+mkdir build
+cd build
+cmake ..
+cmake --build .      # 或者 make
+</code></pre>
+<p>然后运行：</p>
+<pre><code class="language-bash">./demo                       # Linux/macOS
+demo.exe                     # Windows + MinGW/Ninja（在 build 目录下）
+Debug\demo.exe               # Windows + Visual Studio（在 build 目录下）
+</code></pre>
+<p>看看输出对不对，验证一下多文件编译是不是正常工作了。</p>
+<h2>七、老师傅的经验之谈</h2>
+<ol>
+<li>源文件列表老老实实写，别贪省事用 GLOB。省那几分钟时间，将来踩坑可能花几小时去找。</li>
+<li>头文件保护（<code>#ifndef ... #define ... #endif</code>）一定要写，不然头文件被重复包含了会报一堆莫名其妙的错。</li>
+<li><code>include_directories</code> 是全局的，所有目标都能用到。小项目无所谓，大项目里推荐用 <code>target_include_directories</code>，那个是针对单个目标的，更干净。下一讲咱就会讲到。</li>
+<li>变量名用大写，这是约定俗成的写法，别人看你的 <code>CMakeLists.txt</code> 也顺眼。</li>
+</ol>
+<hr />
+<p>第二讲就到这儿。把多文件编译搞明白，下一讲咱说说怎么把代码做成库，给别人调用。</p>
+
+  </main>
+
+  <footer class="files">
+    <h2>📁 本讲文件</h2>
+    <ul>
+      <li><a href="CMakeLists.txt">CMakeLists.txt</a></li>
+      <li><a href="main.cpp">main.cpp</a></li>
+      <li><a href="math.cpp">math.cpp</a></li>
+      <li><a href="math.h">math.h</a></li>
+      <li><a href="tutorial.md">tutorial.md</a></li>
+      <li><a href="utils.cpp">utils.cpp</a></li>
+      <li><a href="utils.h">utils.h</a></li>
+    </ul>
+    <p class="hint">直接打开源文件可以查看完整示例；Markdown 原文保留在本目录的 tutorial.md。</p>
+  </footer>
+</div>
+</body>
+</html>

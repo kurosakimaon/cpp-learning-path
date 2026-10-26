@@ -255,8 +255,10 @@ g++ main.o -L. -lxxx -Wl,-rpath,. -o app
 
 ### 咱们这个例子用的是方法三
 
-Linux 下 `Makefile` 写的是 `-Wl,-rpath,'$ORIGIN'`，意思是把“可执行文件所在目录”加到运行时搜索路径里。
+Linux 下 shell 命令写的是 `-Wl,-rpath,'$ORIGIN'`；如果这行出现在 `Makefile` 的配方里，`$` 是 make 的变量语法，必须写成 `-Wl,-rpath,'$$ORIGIN'`（make 会把 `$$` 还原成一个 `$`）。它的意思是把“可执行文件所在目录”加到运行时搜索路径里。
 macOS 对应 `@loader_path`；Windows 不需要 rpath，DLL 和 exe 放在同一目录即可。
+
+> 🎬 想看加载器怎么找库、`$ORIGIN` 怎么展开：打开[静态库与动态库图解](../../visuals/linking.html)。
 
 ## 七、动手试试
 

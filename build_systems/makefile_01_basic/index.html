@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<!-- 本页由同目录 tutorial.md 渲染生成；内容以 tutorial.md 为准。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>01 · Makefile 入门 - 构建系统 · C++ 学习路线</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+  min-height: 100vh;
+  padding: 28px 18px 48px;
+  color: #333;
+  line-height: 1.85;
+}
+.container { max-width: 960px; margin: 0 auto; }
+.back-btn {
+  display: inline-block; padding: 8px 16px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  text-decoration: none; border-radius: 8px; margin-bottom: 18px;
+  font-size: 13px; transition: background .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.page-header { color: #fff; margin-bottom: 22px; }
+.crumb { font-size: 12.5px; color: #90caf9; letter-spacing: .04em; margin-bottom: 8px; }
+.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,.35); }
+.page-header .desc { font-size: 14.5px; opacity: .92; max-width: 760px; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.tag.beginner { background: #e8f5e9; color: #2e7d32; }
+.tag.elementary { background: #e0f2f1; color: #00695c; }
+.tag.intermediate { background: #e3f2fd; color: #1565c0; }
+.tag.advanced { background: #fff3e0; color: #e65100; }
+.tag.expert { background: #f3e5f5; color: #6a1b9a; }
+.meta .raw {
+  font-size: 12.5px; color: #bbdefb; text-decoration: none;
+  border-bottom: 1px dashed rgba(187,222,251,.6);
+}
+.meta .raw:hover { color: #fff; }
+.content {
+  background: #fff; border-radius: 18px; padding: 38px 44px 42px;
+  box-shadow: 0 16px 46px rgba(0,0,0,.28);
+  overflow-wrap: break-word;
+}
+.content > :first-child { margin-top: 0; }
+.content h1 { display: none; }
+.content h2 {
+  font-size: 22px; color: #1a237e; line-height: 1.45;
+  margin: 34px 0 14px; padding-left: 12px;
+  border-left: 5px solid #3949ab;
+}
+.content h3 { font-size: 18px; color: #283593; margin: 26px 0 10px; }
+.content h4 { font-size: 16px; color: #37474f; margin: 20px 0 8px; }
+.content p { margin: 10px 0; font-size: 15px; color: #37474f; }
+.content ul, .content ol { margin: 10px 0 14px; padding-left: 26px; }
+.content li { margin: 6px 0; font-size: 15px; color: #37474f; }
+.content li > p { margin: 6px 0; }
+.content strong { color: #1a237e; }
+.content a { color: #1565c0; }
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  background: #eef2ff; color: #c62828;
+  padding: 1px 5px; border-radius: 4px; font-size: 13.5px;
+}
+.content pre {
+  background: #1e293b; color: #e2e8f0;
+  padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 14px 0 18px;
+  line-height: 1.6;
+}
+.content pre code {
+  background: none; color: inherit; padding: 0;
+  font-size: 13.5px; white-space: pre;
+}
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px;
+  border-left: 4px solid #7986cb; background: #f4f6ff;
+  color: #455a64; border-radius: 0 8px 8px 0;
+}
+.content blockquote p { margin: 4px 0; }
+.content table {
+  width: 100%; border-collapse: collapse; margin: 16px 0 20px;
+  font-size: 14px; display: block; overflow-x: auto;
+}
+.content th, .content td { border: 1px solid #dfe3f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+.content th { background: #eef2ff; color: #1a237e; white-space: nowrap; }
+.content tbody tr:nth-child(even) { background: #fafbff; }
+.content hr { border: 0; border-top: 1px solid #e0e4f0; margin: 26px 0; }
+.files {
+  background: rgba(255,255,255,.96); border-radius: 16px;
+  padding: 22px 26px; margin-top: 22px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
+.files h2 { font-size: 16px; color: #1a237e; margin-bottom: 10px; }
+.files ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.files li { font-size: 13.5px; }
+.files a { color: #1565c0; text-decoration: none; font-family: Consolas, monospace; }
+.files a:hover { text-decoration: underline; }
+.files .dir { color: #78909c; font-family: Consolas, monospace; }
+.files .hint { margin-top: 10px; font-size: 12px; color: #90a4ae; }
+@media (max-width: 640px) {
+  body { padding: 18px 10px 36px; }
+  .page-header h1 { font-size: 23px; }
+  .content { padding: 26px 20px 30px; border-radius: 14px; }
+  .content h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-btn" href="../index.html">← 返回构建系统总览</a>
+
+  <header class="page-header">
+    <div class="crumb">构建系统 / Makefile 路线 / makefile_01_basic</div>
+    <h1>🌱 01 · Makefile 入门</h1>
+    <p class="desc">规则与目标、基本语法、第一个 Makefile。理解 make 的工作原理。</p>
+    <div class="meta">
+      <span class="tag beginner">入门</span>
+      <a class="raw" href="tutorial.md">查看 Markdown 原文</a>
+    </div>
+  </header>
+
+  <main class="content">
+<h1>示例 1：Makefile 入门 —— 老师傅的第一课</h1>
+<p>徒弟啊，欢迎来到 Makefile 的世界。这第一节课，咱不求多，只求把最基本的概念吃透。根基不牢，地动山摇。</p>
+<h2>一、这节课学什么？</h2>
+<ol>
+<li>
+<p>什么是 Makefile？</p>
+<p>—— 自动编译的&quot;说明书&quot;。你告诉它怎么编译，它帮你干活。</p>
+</li>
+<li>
+<p>一条规则的三要素：</p>
+<pre><code class="language-makefile">目标 : 依赖
+	命令
+</code></pre>
+<ul>
+<li>目标（target）：你想要什么</li>
+<li>依赖（prerequisite）：用什么来做</li>
+<li>命令（recipe）：怎么做</li>
+</ul>
+</li>
+<li>
+<p><code>make</code> 命令怎么工作？</p>
+<ul>
+<li>它在当前目录找 <code>Makefile</code> 文件</li>
+<li>默认执行第一条规则</li>
+<li>通过比较文件的修改时间，决定要不要重新编译</li>
+</ul>
+</li>
+</ol>
+<h2>二、怎么用这个示例？</h2>
+<p>打开终端（命令行），进入这个目录，然后试试：</p>
+<ol>
+<li>
+<p>第一次编译</p>
+<pre><code class="language-bash">$ make
+</code></pre>
+<p>你会看到输出（Linux/macOS）：</p>
+<pre><code class="language-text">g++ -o main main.cpp
+</code></pre>
+<p>Windows 上会多一个 <code>.exe</code>：</p>
+<pre><code class="language-text">g++ -o main.exe main.cpp
+</code></pre>
+<p>然后目录下多了一个 <code>main</code> 可执行文件（Windows 上是 <code>main.exe</code>）</p>
+</li>
+<li>
+<p>运行程序</p>
+<pre><code class="language-bash">$ ./main            (Linux/Mac)
+$ main.exe          (Windows)
+</code></pre>
+<p>你会看到：<code>Hello, Makefile!</code></p>
+</li>
+<li>
+<p>再敲一次 <code>make</code></p>
+<pre><code class="language-bash">$ make
+</code></pre>
+<p>你会看到：</p>
+<pre><code class="language-text">make: 'main' is up to date.
+</code></pre>
+<p>（Windows 上是 <code>make: 'main.exe' is up to date.</code>）</p>
+<p>意思是：<code>main</code> 已经是最新的了，不用重新编译。
+——这就是 <code>make</code> 的聪明之处！</p>
+</li>
+<li>
+<p>修改一下 <code>main.cpp</code>（比如改改打印的文字），再 <code>make</code></p>
+<pre><code class="language-bash">$ make
+</code></pre>
+<p>哎，它又重新编译了！因为源码比目标新。</p>
+</li>
+<li>
+<p>清理生成的文件</p>
+<pre><code class="language-bash">$ make clean
+</code></pre>
+<p>可执行文件被删掉了，目录又干净了。</p>
+</li>
+</ol>
+<h2>三、老师傅的经验之谈</h2>
+<h3>坑 1：TAB 还是空格？</h3>
+<p>命令行前面必须是 TAB 键，不能是空格！
+这个坑不知道坑了多少新手。报错信息通常是：</p>
+<pre><code class="language-text">&quot;missing separator.  Stop.&quot;
+</code></pre>
+<p>看到这个错误，先检查是不是用了空格代替 TAB。</p>
+<h3>坑 2：Makefile 的文件名</h3>
+<p>默认 <code>make</code> 找的是 <code>Makefile</code>（首字母大写）、<code>makefile</code>（全小写）、<code>GNUmakefile</code>（GNU make 专用）。推荐用 <code>Makefile</code>，首字母大写，这样在文件列表里排在前面，好找。
+如果你文件名不是这个，就得用 <code>make -f 你的文件名</code> 来指定。</p>
+<h3>坑 3：第一条规则是默认目标</h3>
+<p><code>make</code> 不带参数时，执行的是 <code>Makefile</code> 里的第一条规则。
+所以通常把最终要生成的东西放在最前面。</p>
+<h3>为什么要用 Makefile？</h3>
+<p>徒弟你可能会想：不就一个文件嘛，我直接敲 <code>g++</code> 不就行了？
+说得对，一个文件确实没必要。但等你项目大了：</p>
+<ul>
+<li>十几个源文件，每个都要单独编译</li>
+<li>还要链接各种库</li>
+<li>编译选项一大堆</li>
+<li>改了一个文件，不想全部重编</li>
+</ul>
+<p>这时候 <code>Makefile</code> 的威力就出来了。咱一步一步来，先把最简单的搞明白，后面才有底气玩复杂的。</p>
+<h2>四、课后小练习</h2>
+<ol>
+<li>试试修改 <code>main.cpp</code>，观察 <code>make</code> 什么时候重新编译，什么时候不编译。</li>
+<li>试试把命令前的 TAB 改成空格，看看会报什么错（然后改回来哈）。</li>
+<li>试试在 <code>clean</code> 前面加一条别的规则，看看 <code>make</code> 默认执行哪条。</li>
+</ol>
+<p>好，这节课就到这儿。吃透了，咱就进下一关——变量与伪目标。</p>
+
+  </main>
+
+  <footer class="files">
+    <h2>📁 本讲文件</h2>
+    <ul>
+      <li><a href="Makefile">Makefile</a></li>
+      <li><a href="main.cpp">main.cpp</a></li>
+      <li><a href="tutorial.md">tutorial.md</a></li>
+    </ul>
+    <p class="hint">直接打开源文件可以查看完整示例；Markdown 原文保留在本目录的 tutorial.md。</p>
+  </footer>
+</div>
+</body>
+</html>

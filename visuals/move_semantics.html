@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>移动语义：所有权怎么转移？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 现代 C++</div>
+    <h1>🧩 移动语义：所有权怎么转移？</h1>
+    <p>以 <code>std::vector&lt;int&gt;</code> 为例，一步一步看清拷贝、<code>std::move</code>、移动构造和移动赋值到底做了什么。用左右方向键也可以翻页。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 7</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>cpp17/move_semantics_advanced.cpp</code> ·
+    相关教程：<a href="../cpp17/tutorial.md">cpp17/tutorial.md</a> ·
+    图中的地址都是示意值，不是真实内存地址。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '初始状态',
+    title: '1. a 拥有堆上的缓冲区',
+    caption: '<code>std::vector</code> 对象本身通常放在栈上，里面保存指针、size、capacity 三个字段；真正存放元素的缓冲区在堆上。对象的析构函数负责释放这块缓冲区。',
+    code: 'std::vector<int> a{1, 2, 3};   // size=3, capacity 通常 >= 3',
+    highlight: [0],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="栈上的 vector 对象 a 指向堆上的缓冲区">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="40" y="38" class="svg-small">栈（函数作用域）</text>
+  <rect x="40" y="58" width="270" height="132" rx="12" class="svg-box-accent"/>
+  <text x="56" y="84" class="svg-title">a : std::vector&lt;int&gt;</text>
+  <rect x="56" y="96" width="238" height="26" rx="5" class="svg-field"/>
+  <text x="68" y="114" class="svg-mono">ptr  = 0x1000</text>
+  <rect x="56" y="128" width="238" height="26" rx="5" class="svg-field"/>
+  <text x="68" y="146" class="svg-mono">size = 3</text>
+  <rect x="56" y="160" width="238" height="26" rx="5" class="svg-field"/>
+  <text x="68" y="178" class="svg-mono">cap  = 4</text>
+
+  <text x="480" y="38" class="svg-small">堆（动态内存）</text>
+  <rect x="470" y="78" width="250" height="112" rx="12" class="svg-box-warn"/>
+  <text x="486" y="102" class="svg-title">capacity = 4 的缓冲区</text>
+  <rect x="486" y="118" width="54" height="44" rx="4" class="svg-box"/>
+  <text x="513" y="146" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="540" y="118" width="54" height="44" rx="4" class="svg-box"/>
+  <text x="567" y="146" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="594" y="118" width="54" height="44" rx="4" class="svg-box"/>
+  <text x="621" y="146" text-anchor="middle" class="svg-mono">3</text>
+  <rect x="648" y="118" width="54" height="44" rx="4" class="svg-box-ghost"/>
+  <text x="675" y="146" text-anchor="middle" class="svg-small">空</text>
+  <text x="486" y="184" class="svg-small">元素 1、2、3 在这里 · 0x1000（示意）</text>
+
+  <line x1="310" y1="122" x2="466" y2="122" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="330" y="108" class="svg-small">ptr 指向缓冲区</text>
+</svg>`
+  },
+  {
+    nav: '拷贝构造',
+    title: '2. 拷贝：新分配一块，再复制元素',
+    caption: '拷贝构造会为 <code>b</code> 新分配一块缓冲区，把 <code>a</code> 的元素逐个复制过去。现在 <code>a</code> 和 <code>b</code> 各自拥有独立内存，修改一个不会影响另一个，代价是 <strong>O(n)</strong>。',
+    code: 'std::vector<int> b = a;   // 拷贝构造：分配 + 复制',
+    highlight: [0],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="拷贝构造后 a 和 b 各自指向独立的堆缓冲区">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="40" y="38" class="svg-small">栈</text>
+  <rect x="40" y="58" width="245" height="108" rx="12" class="svg-box-accent"/>
+  <text x="56" y="82" class="svg-title">a : vector&lt;int&gt;</text>
+  <text x="56" y="106" class="svg-mono">ptr  = 0x1000</text>
+  <text x="56" y="128" class="svg-mono">size = 3</text>
+  <text x="56" y="150" class="svg-mono">cap  = 4</text>
+
+  <rect x="40" y="206" width="245" height="108" rx="12" class="svg-box-good"/>
+  <text x="56" y="230" class="svg-title">b : vector&lt;int&gt;</text>
+  <text x="56" y="254" class="svg-mono">ptr  = 0x2000</text>
+  <text x="56" y="276" class="svg-mono">size = 3</text>
+  <text x="56" y="298" class="svg-mono">cap  = 4</text>
+
+  <text x="455" y="38" class="svg-small">堆：两块独立内存</text>
+  <rect x="390" y="58" width="320" height="108" rx="12" class="svg-box-warn"/>
+  <text x="406" y="82" class="svg-title">0x1000（a 的缓冲区）</text>
+  <rect x="406" y="98" width="64" height="44" rx="4" class="svg-box"/><text x="438" y="126" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="470" y="98" width="64" height="44" rx="4" class="svg-box"/><text x="502" y="126" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="534" y="98" width="64" height="44" rx="4" class="svg-box"/><text x="566" y="126" text-anchor="middle" class="svg-mono">3</text>
+  <rect x="598" y="98" width="64" height="44" rx="4" class="svg-box-ghost"/><text x="630" y="126" text-anchor="middle" class="svg-small">空</text>
+
+  <rect x="390" y="206" width="320" height="108" rx="12" class="svg-box-good"/>
+  <text x="406" y="230" class="svg-title">0x2000（b 的新缓冲区）</text>
+  <rect x="406" y="246" width="64" height="44" rx="4" class="svg-box"/><text x="438" y="274" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="470" y="246" width="64" height="44" rx="4" class="svg-box"/><text x="502" y="274" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="534" y="246" width="64" height="44" rx="4" class="svg-box"/><text x="566" y="274" text-anchor="middle" class="svg-mono">3</text>
+  <rect x="598" y="246" width="64" height="44" rx="4" class="svg-box-ghost"/><text x="630" y="274" text-anchor="middle" class="svg-small">空</text>
+
+  <line x1="285" y1="112" x2="386" y2="112" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="285" y1="260" x2="386" y2="260" class="svg-arrow" marker-end="url(#ahg)"/>
+  <text x="300" y="178" class="svg-small">复制 N 个元素 →</text>
+  <text x="300" y="340" class="svg-small">b 拥有自己的副本</text>
+</svg>`
+  },
+  {
+    nav: 'std::move 的本质',
+    title: '3. std::move 本身不搬数据',
+    caption: '<code>std::move(a)</code> 等价于一次到右值引用的强制转换，它<strong>不分配、不复制、也不修改 a 的数据</strong>。它只是改变表达式的值类别，告诉编译器：“这个对象可以被掏空。”真正干活的是下一步的移动构造。',
+    code: 'std::move(a);                          // 只是转换\nstatic_cast<std::vector<int>&&>(a);    // 大致等价',
+    highlight: [0, 1],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="std::move 只是把 a 转成右值引用，数据没有移动">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahn" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+  </defs>
+  <text x="40" y="38" class="svg-small">a 本身没有任何变化</text>
+  <rect x="40" y="58" width="270" height="126" rx="12" class="svg-box-accent"/>
+  <text x="56" y="84" class="svg-title">a : vector&lt;int&gt;</text>
+  <text x="56" y="108" class="svg-mono">ptr  = 0x1000</text>
+  <text x="56" y="130" class="svg-mono">size = 3</text>
+  <text x="56" y="152" class="svg-mono">cap  = 4</text>
+  <text x="56" y="174" class="svg-small">数据还在原位</text>
+
+  <rect x="390" y="58" width="330" height="126" rx="12" class="svg-box-warn"/>
+  <text x="406" y="84" class="svg-title">0x1000 缓冲区</text>
+  <rect x="406" y="100" width="68" height="48" rx="4" class="svg-box"/><text x="440" y="130" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="474" y="100" width="68" height="48" rx="4" class="svg-box"/><text x="508" y="130" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="542" y="100" width="68" height="48" rx="4" class="svg-box"/><text x="576" y="130" text-anchor="middle" class="svg-mono">3</text>
+  <rect x="610" y="100" width="68" height="48" rx="4" class="svg-box-ghost"/><text x="644" y="130" text-anchor="middle" class="svg-small">空</text>
+  <text x="406" y="172" class="svg-small">元素一个都没动</text>
+
+  <line x1="310" y1="118" x2="386" y2="118" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="318" y="104" class="svg-small">ptr</text>
+
+  <rect x="210" y="238" width="150" height="52" rx="10" class="svg-box-accent"/>
+  <text x="285" y="270" text-anchor="middle" class="svg-mono">std::move(a)</text>
+  <line x1="285" y1="290" x2="285" y2="330" class="svg-arrow" marker-end="url(#ahn)"/>
+  <text x="300" y="316" class="svg-small">只是类型转换</text>
+
+  <rect x="390" y="238" width="330" height="52" rx="10" class="svg-box-ghost"/>
+  <text x="406" y="270" class="svg-text">xvalue（右值引用）：可以移动</text>
+  <line x1="360" y1="264" x2="386" y2="264" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="410" y="316" class="svg-small">a 的数据仍然完整；下一步才决定要不要接管</text>
+</svg>`
+  },
+  {
+    nav: '移动构造',
+    title: '4. 移动构造：指针交接，源对象置空',
+    caption: '移动构造把 <code>c</code> 的指针直接指向 <code>a</code> 原来的缓冲区，把 size / capacity 一起接过来，再把 <code>a</code> 置空。只有 O(1) 的指针和整数赋值，没有分配、没有逐元素复制。标准只保证 <code>a</code> 之后“有效但未指定”，常见实现是空，别依赖它的具体值。',
+    code: 'std::vector<int> c = std::move(a);   // 移动构造',
+    highlight: [0],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="移动构造后 c 接管 a 的缓冲区，a 变成空壳">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="40" y="38" class="svg-small">栈</text>
+  <rect x="40" y="58" width="280" height="118" rx="12" class="svg-box-ghost"/>
+  <text x="56" y="84" class="svg-title">a（被移动后）</text>
+  <text x="56" y="108" class="svg-mono">ptr  = nullptr</text>
+  <text x="56" y="130" class="svg-mono">size = 0</text>
+  <text x="56" y="152" class="svg-mono">cap  = 0</text>
+  <text x="56" y="172" class="svg-small">有效但未指定（常见实现为空）</text>
+
+  <rect x="40" y="226" width="280" height="118" rx="12" class="svg-box-accent"/>
+  <text x="56" y="252" class="svg-title">c : vector&lt;int&gt;</text>
+  <text x="56" y="276" class="svg-mono">ptr  = 0x1000</text>
+  <text x="56" y="298" class="svg-mono">size = 3</text>
+  <text x="56" y="320" class="svg-mono">cap  = 4</text>
+
+  <text x="475" y="38" class="svg-small">堆：缓冲区没有搬家</text>
+  <rect x="430" y="130" width="280" height="118" rx="12" class="svg-box-warn"/>
+  <text x="446" y="156" class="svg-title">0x1000 缓冲区</text>
+  <rect x="446" y="174" width="58" height="48" rx="4" class="svg-box"/><text x="475" y="204" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="504" y="174" width="58" height="48" rx="4" class="svg-box"/><text x="533" y="204" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="562" y="174" width="58" height="48" rx="4" class="svg-box"/><text x="591" y="204" text-anchor="middle" class="svg-mono">3</text>
+  <rect x="620" y="174" width="58" height="48" rx="4" class="svg-box-ghost"/><text x="649" y="204" text-anchor="middle" class="svg-small">空</text>
+
+  <line x1="320" y1="286" x2="426" y2="224" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="330" y="270" class="svg-small">c 接管指针</text>
+  <line x1="320" y1="120" x2="400" y2="140" class="svg-arrow-bad" marker-end="url(#ahb)"/>
+  <text x="326" y="108" class="svg-small">a 不再拥有</text>
+  <text x="450" y="286" class="svg-small">没有新分配，也没有复制元素 → O(1)</text>
+</svg>`
+  },
+  {
+    nav: '拷贝 vs 移动',
+    title: '5. 成本差在哪？',
+    caption: '对 <code>vector</code> 这种自己持有堆资源的类型，拷贝要分配新内存并复制 N 个元素；移动只是把指针和几个整数接过来。注意：移动不是“零成本”，移动构造和析构仍然会发生；对 <code>int</code> 这类平凡类型，移动和拷贝基本一样。',
+    code: '拷贝构造：new buffer + copy N elements   → O(N)\n移动构造：steal pointer + null out source → O(1)',
+    highlight: [0, 1],
+    stage: `
+<svg viewBox="0 0 760 390" role="img" aria-label="拷贝构造 O(N) 与移动构造 O(1) 的成本对比">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="40" y="42" class="svg-title">拷贝构造</text>
+  <rect x="170" y="22" width="190" height="56" rx="10" class="svg-box-warn"/>
+  <text x="265" y="56" text-anchor="middle" class="svg-text">分配新缓冲区</text>
+  <rect x="390" y="22" width="190" height="56" rx="10" class="svg-box-warn"/>
+  <text x="485" y="56" text-anchor="middle" class="svg-text">复制 N 个元素</text>
+  <line x1="360" y1="50" x2="386" y2="50" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="610" y="22" width="100" height="56" rx="10" class="svg-box-bad"/>
+  <text x="660" y="57" text-anchor="middle" class="svg-bad-text">O(N)</text>
+  <line x1="580" y1="50" x2="606" y2="50" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <text x="40" y="142" class="svg-title">移动构造</text>
+  <rect x="170" y="122" width="190" height="56" rx="10" class="svg-box-accent"/>
+  <text x="265" y="156" text-anchor="middle" class="svg-text">接管指针 / size / cap</text>
+  <rect x="390" y="122" width="190" height="56" rx="10" class="svg-box-accent"/>
+  <text x="485" y="156" text-anchor="middle" class="svg-text">把源对象置空</text>
+  <line x1="360" y1="150" x2="386" y2="150" class="svg-arrow-accent" marker-end="url(#aha)"/>
+  <rect x="610" y="122" width="100" height="56" rx="10" class="svg-box-good"/>
+  <text x="660" y="157" text-anchor="middle" class="svg-good-text">O(1)</text>
+  <line x1="580" y1="150" x2="606" y2="150" class="svg-arrow-accent" marker-end="url(#aha)"/>
+
+  <rect x="40" y="226" width="670" height="112" rx="12" class="svg-box"/>
+  <text x="60" y="256" class="svg-title">真正省掉的是什么？</text>
+  <text x="60" y="284" class="svg-text">• 一次堆分配（可能很贵）</text>
+  <text x="60" y="308" class="svg-text">• N 次元素复制（每个元素都可能有自己的构造/赋值成本）</text>
+  <text x="60" y="330" class="svg-small">移动构造本身仍要执行；它只是把“搬运数据”换成了“交接所有权”。</text>
+</svg>`
+  },
+  {
+    nav: '什么时候会移动',
+    title: '6. 右值才移动；noexcept 决定容器敢不敢移动',
+    caption: '只有右值（包括 <code>std::move(x)</code> 的结果）才会匹配 <code>T&amp;&amp;</code> 重载。容器扩容时，如果元素的移动构造不是 <code>noexcept</code>，<code>std::vector</code> 为了强异常安全会退回拷贝。所以自定义资源类的移动构造和移动赋值要标 <code>noexcept</code>。',
+    code: 'v.push_back(std::move(c));   // 右值 → 移动构造\nv.push_back(c);              // 左值 → 拷贝构造',
+    highlight: [0, 1],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="右值触发移动构造，左值触发拷贝构造，vector 扩容依赖 noexcept">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect x="40" y="32" width="250" height="66" rx="10" class="svg-box-accent"/>
+  <text x="165" y="60" text-anchor="middle" class="svg-mono">std::move(c)</text>
+  <text x="165" y="82" text-anchor="middle" class="svg-small">右值（xvalue）</text>
+  <line x1="290" y1="65" x2="346" y2="65" class="svg-arrow-accent" marker-end="url(#aha)"/>
+  <rect x="350" y="32" width="230" height="66" rx="10" class="svg-box-accent"/>
+  <text x="465" y="60" text-anchor="middle" class="svg-text">push_back(T&amp;&amp;)</text>
+  <text x="465" y="82" text-anchor="middle" class="svg-small">移动构造，接管资源</text>
+  <rect x="610" y="32" width="100" height="66" rx="10" class="svg-box-good"/>
+  <text x="660" y="70" text-anchor="middle" class="svg-good-text">O(1)</text>
+  <line x1="580" y1="65" x2="606" y2="65" class="svg-arrow-accent" marker-end="url(#aha)"/>
+
+  <rect x="40" y="132" width="250" height="66" rx="10" class="svg-box-warn"/>
+  <text x="165" y="160" text-anchor="middle" class="svg-mono">c</text>
+  <text x="165" y="182" text-anchor="middle" class="svg-small">左值（具名对象）</text>
+  <line x1="290" y1="165" x2="346" y2="165" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="350" y="132" width="230" height="66" rx="10" class="svg-box-warn"/>
+  <text x="465" y="160" text-anchor="middle" class="svg-text">push_back(const T&amp;)</text>
+  <text x="465" y="182" text-anchor="middle" class="svg-small">拷贝构造，分配 + 复制</text>
+  <rect x="610" y="132" width="100" height="66" rx="10" class="svg-box-bad"/>
+  <text x="660" y="170" text-anchor="middle" class="svg-bad-text">O(N)</text>
+  <line x1="580" y1="165" x2="606" y2="165" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="40" y="236" width="670" height="148" rx="12" class="svg-box-warn"/>
+  <text x="60" y="266" class="svg-title">vector 扩容时为什么还要看 noexcept？</text>
+  <text x="60" y="294" class="svg-text">扩容要把旧元素搬到新缓冲区。如果移动构造可能抛异常，搬到一半失败会很难恢复。</text>
+  <text x="60" y="320" class="svg-text">为了强异常安全，vector 会使用 std::move_if_noexcept：</text>
+  <text x="60" y="348" class="svg-mono">移动构造 noexcept？ → 移动；否则 → 退回拷贝</text>
+  <text x="60" y="372" class="svg-small">所以资源类的移动构造/移动赋值通常应标 noexcept。</text>
+</svg>`
+  },
+  {
+    nav: '移动赋值与移后状态',
+    title: '7. 移动赋值：先释放旧的，再接管新的',
+    caption: '移动赋值也是所有权转移，但目标对象可能已经持有资源：先把 <code>x</code> 原来的缓冲区释放，再接管 <code>y</code> 的缓冲区，最后把 <code>y</code> 置空。自己实现时要处理自赋值；被移动后的对象仍然可以析构、赋值，但不要读它的具体值。',
+    code: 'x = std::move(y);   // 移动赋值：释放旧资源 + 接管新资源',
+    highlight: [0],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="移动赋值前后，x 释放旧缓冲区并接管 y 的缓冲区">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    <marker id="aha" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+
+  <text x="25" y="34" class="svg-small">移动赋值前</text>
+  <rect x="25" y="50" width="150" height="92" rx="10" class="svg-box-accent"/>
+  <text x="40" y="74" class="svg-title">x</text>
+  <text x="40" y="96" class="svg-mono">ptr=0x3000</text>
+  <text x="40" y="116" class="svg-mono">size=2</text>
+  <rect x="25" y="158" width="150" height="92" rx="10" class="svg-box-good"/>
+  <text x="40" y="182" class="svg-title">y</text>
+  <text x="40" y="204" class="svg-mono">ptr=0x1000</text>
+  <text x="40" y="224" class="svg-mono">size=3</text>
+  <rect x="205" y="50" width="120" height="92" rx="10" class="svg-box-bad"/>
+  <text x="220" y="74" class="svg-title">旧</text>
+  <text x="220" y="98" class="svg-mono">0x3000</text>
+  <text x="220" y="120" class="svg-small">[9, 8]</text>
+  <rect x="205" y="158" width="120" height="92" rx="10" class="svg-box-warn"/>
+  <text x="220" y="182" class="svg-title">y 的</text>
+  <text x="220" y="206" class="svg-mono">0x1000</text>
+  <text x="220" y="228" class="svg-small">[1, 2, 3]</text>
+  <line x1="175" y1="96" x2="201" y2="96" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="175" y1="204" x2="201" y2="204" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="40" y="284" class="svg-small">x 先释放自己的 0x3000</text>
+  <line x1="40" y1="296" x2="130" y2="296" class="svg-arrow-bad"/>
+
+  <text x="405" y="34" class="svg-small">移动赋值后</text>
+  <rect x="405" y="50" width="150" height="92" rx="10" class="svg-box-accent"/>
+  <text x="420" y="74" class="svg-title">x</text>
+  <text x="420" y="96" class="svg-mono">ptr=0x1000</text>
+  <text x="420" y="116" class="svg-mono">size=3</text>
+  <rect x="405" y="158" width="150" height="92" rx="10" class="svg-box-ghost"/>
+  <text x="420" y="182" class="svg-title">y</text>
+  <text x="420" y="204" class="svg-mono">ptr=nullptr</text>
+  <text x="420" y="224" class="svg-mono">size=0</text>
+  <rect x="585" y="50" width="150" height="92" rx="10" class="svg-box-warn"/>
+  <text x="600" y="74" class="svg-title">x 的缓冲区</text>
+  <text x="600" y="98" class="svg-mono">0x1000</text>
+  <text x="600" y="120" class="svg-small">[1, 2, 3]</text>
+  <line x1="555" y1="96" x2="581" y2="96" class="svg-arrow-accent" marker-end="url(#aha)"/>
+  <line x1="480" y1="250" x2="480" y2="280" class="svg-arrow-bad"/>
+  <text x="430" y="300" class="svg-small">y 变成空壳，仍可析构/赋值</text>
+
+  <rect x="25" y="336" width="710" height="88" rx="12" class="svg-box"/>
+  <text x="45" y="364" class="svg-title">两个关键点</text>
+  <text x="45" y="390" class="svg-text">• 自赋值：x = std::move(x) 时不要先把自己释放掉；自定义移动赋值要判断 this != &amp;other。</text>
+  <text x="45" y="412" class="svg-small">• 移后状态：标准只保证“有效但未指定”，能析构、能赋值，但不要依赖里面的值。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

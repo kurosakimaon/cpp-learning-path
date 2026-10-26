@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>静态库与动态库：程序怎么找到它？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 构建系统</div>
+    <h1>🔗 静态库与动态库：程序怎么找到它？</h1>
+    <p>从编译、链接到运行期加载，看清 <code>.a</code>、<code>.so</code>、<code>-L</code>、<code>rpath</code> 和 <code>$ORIGIN</code> 各自负责什么。用左右方向键也可以翻页。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 6</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">命令对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应示例：<code>build_systems/makefile_05_library/</code> ·
+    相关教程：<a href="../build_systems/makefile_05_library/index.html">第 5 讲：静态库与动态库</a> ·
+    命令以 Linux / GCC 为例，macOS 与 Windows 的差异见图解最后一步。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '编译与链接',
+    title: '1. 编译是分头翻译，链接是拼装',
+    caption: '每个 <code>.cpp</code> 先被单独编译成 <code>.o</code>（只检查声明），再由链接器把所有 <code>.o</code> 和库拼成可执行文件，同时解析符号引用。只写了声明、没链接到定义，就会在<strong>链接期</strong>报 <code>undefined reference</code>。',
+    code: 'g++ -c main.cpp -o main.o\ng++ -c math_utils.cpp -o math_utils.o\ng++ main.o math_utils.o -o app\n\n// 只声明、没定义时：\n// undefined reference to `add(int, int)\'',
+    highlight: [2, 4],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="源文件分别编译成目标文件，再由链接器生成可执行文件">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect x="30" y="40" width="140" height="58" rx="9" class="svg-box-accent"/>
+  <text x="100" y="74" text-anchor="middle" class="svg-mono">main.cpp</text>
+  <line x1="174" y1="69" x2="202" y2="69" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="178" y="55" class="svg-small">-c</text>
+  <rect x="206" y="40" width="140" height="58" rx="9" class="svg-box"/>
+  <text x="276" y="74" text-anchor="middle" class="svg-mono">main.o</text>
+
+  <rect x="30" y="128" width="140" height="58" rx="9" class="svg-box-accent"/>
+  <text x="100" y="162" text-anchor="middle" class="svg-mono">math_utils.cpp</text>
+  <line x1="174" y1="157" x2="202" y2="157" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="178" y="143" class="svg-small">-c</text>
+  <rect x="206" y="128" width="140" height="58" rx="9" class="svg-box"/>
+  <text x="276" y="162" text-anchor="middle" class="svg-mono">math_utils.o</text>
+
+  <rect x="390" y="66" width="120" height="94" rx="10" class="svg-box-accent"/>
+  <text x="450" y="106" text-anchor="middle" class="svg-text">链接器</text>
+  <text x="450" y="130" text-anchor="middle" class="svg-small">解析符号</text>
+  <line x1="350" y1="69" x2="386" y2="98" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="350" y1="157" x2="386" y2="128" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="555" y="66" width="175" height="94" rx="10" class="svg-box-good"/>
+  <text x="642" y="104" text-anchor="middle" class="svg-title">app</text>
+  <text x="642" y="128" text-anchor="middle" class="svg-small">可执行文件</text>
+  <line x1="514" y1="113" x2="551" y2="113" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="30" y="220" width="700" height="170" rx="12" class="svg-box-bad"/>
+  <text x="50" y="250" class="svg-bad-text">链接期最常见的错误</text>
+  <rect x="50" y="264" width="660" height="42" rx="7" fill="#0f172a"/>
+  <text x="64" y="291" class="svg-mono" style="fill:#fca5a5" font-family="Consolas, monospace">undefined reference to &#96;add(int, int)&#39;</text>
+  <text x="50" y="332" class="svg-text">编译器看到的是头文件里的声明，所以编译能通过；链接器找不到定义，才报错。</text>
+  <text x="50" y="358" class="svg-text">排查顺序：有没有把实现所在的 .o / 库加进链接命令？函数名和命名空间是否一致？</text>
+  <text x="50" y="380" class="svg-small">用 nm -C 目标文件 | grep add 可以看到符号是已定义（T）还是未定义（U）。</text>
+</svg>`
+  },
+  {
+    nav: '静态库',
+    title: '2. 静态库：链接时把用到的代码复制进来',
+    caption: '静态库 <code>libxxx.a</code> 本质上是一堆 <code>.o</code> 的归档。链接时，链接器只把<strong>真正用到的目标文件</strong>复制进可执行文件，所以程序部署简单、没有运行时依赖；代价是每个程序各存一份，库更新后必须重新链接。',
+    code: 'ar rcs libmathutils.a math_utils.o\ng++ main.o -L. -lmathutils -o app_static\n\n# -L. 指定库搜索目录\n# -lmathutils 展开为 libmathutils.a / .so',
+    highlight: [0, 1, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="静态库在链接时把用到的目标文件复制进可执行文件">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-small">链接前</text>
+  <rect x="30" y="48" width="250" height="170" rx="12" class="svg-box-warn"/>
+  <text x="48" y="76" class="svg-title">libmathutils.a</text>
+  <rect x="48" y="90" width="214" height="44" rx="6" class="svg-box"/>
+  <text x="62" y="118" class="svg-mono">math_utils.o</text>
+  <rect x="48" y="142" width="214" height="44" rx="6" class="svg-box"/>
+  <text x="62" y="170" class="svg-mono">string_utils.o</text>
+  <text x="48" y="204" class="svg-small">ar 打包的归档，成员是 .o</text>
+
+  <line x1="284" y1="133" x2="426" y2="133" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="294" y="117" class="svg-small">只抽取用到的成员</text>
+
+  <text x="450" y="30" class="svg-small">链接后：一个独立文件</text>
+  <rect x="430" y="48" width="300" height="200" rx="12" class="svg-box-good"/>
+  <text x="448" y="76" class="svg-title">app_static</text>
+  <rect x="448" y="90" width="264" height="40" rx="6" class="svg-field"/>
+  <text x="462" y="116" class="svg-mono">main.o</text>
+  <rect x="448" y="136" width="264" height="40" rx="6" class="svg-box-accent"/>
+  <text x="462" y="162" class="svg-mono">math_utils.o（复制进来）</text>
+  <rect x="448" y="182" width="264" height="40" rx="6" class="svg-box-ghost"/>
+  <text x="462" y="208" class="svg-mono">string_utils.o（没用到，不进来）</text>
+  <text x="448" y="236" class="svg-small">库代码现在属于可执行文件本身</text>
+
+  <rect x="30" y="270" width="700" height="140" rx="12" class="svg-box"/>
+  <text x="50" y="300" class="svg-title">代价与收益</text>
+  <text x="50" y="328" class="svg-text">• 优点：部署简单，拷贝一个可执行文件即可；启动不依赖外部 .so。</text>
+  <text x="50" y="354" class="svg-text">• 缺点：每个程序各存一份；库修复后，所有程序都要重新链接、重新发布。</text>
+  <text x="50" y="380" class="svg-text">• 体积：不是整个 .a 都进来，只复制解决当前符号所需的目标文件。</text>
+  <text x="50" y="402" class="svg-small">同时存在 .a 和 .so 时，-l 通常优先选 .so；想强制静态可写 -static 或直接写 .a 路径。</text>
+</svg>`
+  },
+  {
+    nav: '动态库',
+    title: '3. 动态库：运行时才加载，多程序共享',
+    caption: '动态库 <code>libxxx.so</code> 不把代码复制进可执行文件，只在程序里记录“我需要它”。运行时由动态加载器把 <code>.so</code> 映射进内存，多个程序共享同一份代码；更新库文件后，通常不必重新编译程序（前提是 ABI 兼容）。',
+    code: 'g++ -fPIC -c math_utils.cpp -o math_utils.pic.o\ng++ -shared -Wl,-soname,libmathutils.so \\\n    -o libmathutils.so math_utils.pic.o\ng++ main.o -L. -lmathutils -o app_shared',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="多个可执行文件共享同一份动态库代码">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect x="30" y="70" width="250" height="170" rx="12" class="svg-box-warn"/>
+  <text x="48" y="98" class="svg-title">libmathutils.so</text>
+  <text x="48" y="126" class="svg-text">磁盘上一份文件，</text>
+  <text x="48" y="150" class="svg-text">内存中一份代码。</text>
+  <text x="48" y="182" class="svg-small">需要 -fPIC 编译目标文件，</text>
+  <text x="48" y="204" class="svg-small">-shared 负责生成共享库。</text>
+
+  <rect x="430" y="40" width="290" height="80" rx="10" class="svg-box-accent"/>
+  <text x="448" y="68" class="svg-title">app_shared</text>
+  <text x="448" y="92" class="svg-mono">DT_NEEDED: libmathutils.so</text>
+  <text x="448" y="110" class="svg-small">只记录依赖，不包含库代码</text>
+  <line x1="426" y1="82" x2="288" y2="128" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="430" y="150" width="290" height="80" rx="10" class="svg-box-accent"/>
+  <text x="448" y="178" class="svg-title">另一个程序</text>
+  <text x="448" y="202" class="svg-mono">DT_NEEDED: libmathutils.so</text>
+  <text x="448" y="220" class="svg-small">运行时可复用同一份映射</text>
+  <line x1="426" y1="192" x2="288" y2="188" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="30" y="276" width="700" height="134" rx="12" class="svg-box-good"/>
+  <text x="50" y="306" class="svg-good-text">动态加载发生在运行期</text>
+  <text x="50" y="334" class="svg-text">程序启动时，动态加载器按搜索规则找到 .so，映射到进程地址空间，再完成符号重定位。</text>
+  <text x="50" y="360" class="svg-text">找不到时典型报错：error while loading shared libraries: libmathutils.so: cannot open shared object file</text>
+  <text x="50" y="386" class="svg-small">所以“编译通过”不代表“运行能跑”——链接期和加载期是两件事，下一页专门讲。</text>
+</svg>`
+  },
+  {
+    nav: '-L 与运行期',
+    title: '4. -L 只管链接，不管运行',
+    caption: '<code>-L./lib</code> 只告诉<strong>链接器</strong>去哪里找库，可执行文件里只记录库的名字（如 <code>libmathutils.so</code>），不会记住 <code>-L</code> 的目录。运行时加载器按自己的搜索顺序找，找不到就报 <code>cannot open shared object file</code>。',
+    code: 'g++ main.o -L./lib -lmathutils -o app\n\nreadelf -d app | grep NEEDED\n# NEEDED  libmathutils.so   ← 只有名字，没有路径',
+    highlight: [0, 2, 3],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="链接期的 -L 路径不会保留到运行期，加载器按自己的规则搜索">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect x="30" y="28" width="700" height="58" rx="9" class="svg-box-accent"/>
+  <text x="48" y="63" class="svg-mono">g++ main.o -L./lib -lmathutils -o app</text>
+  <text x="430" y="63" class="svg-small">-L：链接期搜索目录　-l：选择库名</text>
+
+  <rect x="30" y="120" width="270" height="120" rx="12" class="svg-box-good"/>
+  <text x="48" y="148" class="svg-title">可执行文件 app</text>
+  <rect x="48" y="162" width="234" height="38" rx="6" class="svg-field"/>
+  <text x="62" y="187" class="svg-mono">DT_NEEDED: libmathutils.so</text>
+  <text x="48" y="220" class="svg-bad-text">没有记录 -L./lib</text>
+
+  <rect x="340" y="135" width="150" height="90" rx="10" class="svg-box-accent"/>
+  <text x="415" y="168" text-anchor="middle" class="svg-text">动态加载器</text>
+  <text x="415" y="192" text-anchor="middle" class="svg-small">ld.so / ld-musl</text>
+  <text x="415" y="212" text-anchor="middle" class="svg-small">运行期工作</text>
+  <line x1="304" y1="180" x2="336" y2="180" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="530" y="100" width="200" height="210" rx="12" class="svg-box-warn"/>
+  <text x="548" y="128" class="svg-title">运行期搜索顺序</text>
+  <text x="548" y="156" class="svg-small">① rpath / RUNPATH</text>
+  <text x="548" y="182" class="svg-small">② LD_LIBRARY_PATH</text>
+  <text x="548" y="208" class="svg-small">③ ldconfig 缓存</text>
+  <text x="548" y="234" class="svg-small">④ /lib、/usr/lib 等</text>
+  <text x="548" y="266" class="svg-small">找到第一个匹配就停</text>
+  <text x="548" y="290" class="svg-small">（RPATH 与 RUNPATH 的</text>
+  <text x="548" y="306" class="svg-small">先后位置略有不同）</text>
+  <line x1="494" y1="180" x2="526" y2="180" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="30" y="340" width="700" height="90" rx="12" class="svg-box-bad"/>
+  <text x="50" y="370" class="svg-bad-text">这就是新手最常踩的坑</text>
+  <text x="50" y="398" class="svg-text">编译时用 -L 找到了库，运行时加载器却不知道去 ./lib 找，于是启动直接失败。</text>
+  <text x="50" y="420" class="svg-small">解决思路：写 rpath（下一节）、设置 LD_LIBRARY_PATH、或把库装进系统目录并更新缓存。</text>
+</svg>`
+  },
+  {
+    nav: 'rpath 与 $ORIGIN',
+    title: '5. rpath：把“去哪找库”写进可执行文件',
+    caption: '<code>-Wl,-rpath,路径</code> 会把运行期搜索路径写进程序。<code>$ORIGIN</code> 是动态加载器提供的特殊值，表示<strong>可执行文件所在目录</strong>，所以 <code>$ORIGIN/../lib</code> 可以跟着整个目录一起搬。注意：shell 里写 <code>\'$ORIGIN\'</code>，Makefile 配方里必须写 <code>\'$$ORIGIN\'</code>。',
+    code: '# shell：单引号保护 $ORIGIN，不让 shell 展开\ng++ main.o -L./lib -lmathutils \\\n    -Wl,-rpath,\'$ORIGIN/../lib\' -o app\n\n# Makefile 配方：$ 要写两遍\nRPATH_FLAGS := -Wl,-rpath,\'$$ORIGIN/../lib\'',
+    highlight: [2, 5],
+    stage: `
+<svg viewBox="0 0 760 460" role="img" aria-label="rpath 使用 ORIGIN 相对可执行文件定位动态库">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect x="30" y="36" width="280" height="190" rx="12" class="svg-box"/>
+  <text x="48" y="64" class="svg-title">项目目录</text>
+  <text x="48" y="94" class="svg-mono">project/</text>
+  <text x="48" y="120" class="svg-mono">├── bin/</text>
+  <text x="48" y="146" class="svg-mono">│   └── app</text>
+  <text x="48" y="172" class="svg-mono">└── lib/</text>
+  <text x="48" y="198" class="svg-mono">    └── libmathutils.so</text>
+
+  <rect x="350" y="36" width="380" height="190" rx="12" class="svg-box-accent"/>
+  <text x="368" y="64" class="svg-title">$ORIGIN 是什么？</text>
+  <text x="368" y="94" class="svg-text">动态加载器在运行时把它替换成</text>
+  <text x="368" y="118" class="svg-mono">可执行文件所在目录</text>
+  <text x="368" y="150" class="svg-small">app 在 project/bin/，所以：</text>
+  <text x="368" y="176" class="svg-mono">$ORIGIN/../lib</text>
+  <text x="368" y="200" class="svg-text">= project/lib → 找到 libmathutils.so</text>
+
+  <line x1="350" y1="150" x2="314" y2="150" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="322" y="136" class="svg-small">相对定位</text>
+
+  <rect x="30" y="252" width="340" height="110" rx="12" class="svg-box-good"/>
+  <text x="48" y="280" class="svg-good-text">Shell 里</text>
+  <rect x="48" y="292" width="304" height="34" rx="6" fill="#0f172a"/>
+  <text x="60" y="315" class="svg-mono" style="fill:#a5b4fc" font-family="Consolas, monospace">-Wl,-rpath,'$ORIGIN/../lib'</text>
+  <text x="48" y="346" class="svg-small">单引号阻止 shell 展开 $ORIGIN</text>
+
+  <rect x="390" y="252" width="340" height="110" rx="12" class="svg-box-warn"/>
+  <text x="408" y="280" class="svg-bad-text">Makefile 配方里</text>
+  <rect x="408" y="292" width="304" height="34" rx="6" fill="#0f172a"/>
+  <text x="420" y="315" class="svg-mono" style="fill:#fcd34d" font-family="Consolas, monospace">-Wl,-rpath,'$$ORIGIN/../lib'</text>
+  <text x="408" y="346" class="svg-small">$ 是 make 的变量语法，必须写两遍</text>
+
+  <rect x="30" y="382" width="700" height="64" rx="10" class="svg-box"/>
+  <text x="50" y="408" class="svg-text">make 把 $$ 变成一个 $，链接器收到 $ORIGIN；真正展开它的是运行时的动态加载器，不是编译器。</text>
+  <text x="50" y="432" class="svg-small">如果写成单个 $，make 会尝试展开变量 O，路径就错了；这是 Makefile 里最常见的 rpath 坑。</text>
+</svg>`
+  },
+  {
+    nav: '排查工具',
+    title: '6. 用工具确认它到底在找哪里',
+    caption: '<code>ldd</code> 看运行时依赖是否都能解析，<code>readelf -d</code> 看 RPATH / RUNPATH 有没有写进去，<code>nm -C</code> 看未定义符号。macOS 用 <code>otool -L</code>；Windows 的 DLL 搜索更依赖 exe 所在目录和 PATH。',
+    code: 'ldd app_shared\nreadelf -d app_shared | grep -E \'RPATH|RUNPATH\'\nnm -C app_shared | grep \' U \'\n# macOS: otool -L app_shared',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="ldd、readelf 和 nm 排查动态库加载问题">
+  <rect x="30" y="36" width="430" height="220" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
+  <text x="48" y="64" class="svg-small" style="fill:#94a3b8">$ ldd app_shared</text>
+  <text x="48" y="90" class="svg-mono" style="fill:#a5b4fc" font-family="Consolas, monospace">libmathutils.so =&gt; ./libmathutils.so</text>
+  <text x="48" y="114" class="svg-mono" style="fill:#cbd5e1" font-family="Consolas, monospace">libstdc++.so.6 =&gt; /lib/x86_64-linux-gnu/...</text>
+  <text x="48" y="146" class="svg-small" style="fill:#94a3b8">$ readelf -d app_shared | grep RPATH</text>
+  <text x="48" y="172" class="svg-mono" style="fill:#a5b4fc" font-family="Consolas, monospace">(RPATH) Library rpath: [$ORIGIN]</text>
+  <text x="48" y="204" class="svg-small" style="fill:#94a3b8">$ nm -C app_shared | grep \' U \'</text>
+  <text x="48" y="230" class="svg-mono" style="fill:#fca5a5" font-family="Consolas, monospace">U add(int, int)   ← 运行期由 .so 补上</text>
+
+  <rect x="480" y="36" width="250" height="220" rx="12" class="svg-box-bad"/>
+  <text x="498" y="64" class="svg-bad-text">三种典型报错</text>
+  <text x="498" y="94" class="svg-text">cannot open shared</text>
+  <text x="498" y="116" class="svg-text">object file</text>
+  <text x="498" y="138" class="svg-small">→ 运行期找不到 .so</text>
+  <text x="498" y="166" class="svg-text">undefined reference</text>
+  <text x="498" y="188" class="svg-small">→ 链接期找不到定义</text>
+  <text x="498" y="216" class="svg-text">version ... not found</text>
+  <text x="498" y="238" class="svg-small">→ 库版本 / ABI 不匹配</text>
+
+  <rect x="30" y="280" width="700" height="140" rx="12" class="svg-box-warn"/>
+  <text x="50" y="310" class="svg-title">跨平台差异</text>
+  <text x="50" y="338" class="svg-text">Linux：$ORIGIN，库名 libxxx.so；工具 ldd / readelf。</text>
+  <text x="50" y="364" class="svg-text">macOS：@loader_path / @executable_path，库名 libxxx.dylib；工具 otool -L。</text>
+  <text x="50" y="390" class="svg-text">Windows：DLL 搜索先看 exe 所在目录，再看 PATH 等；一般不需要 rpath。</text>
+  <text x="50" y="414" class="svg-small">提示：ldd 会触发目标程序的部分加载逻辑，分析不可信二进制时改用 objdump -p 更稳妥。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

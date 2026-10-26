@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Asio 事件循环：异步为什么不是多线程？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../boost/index.html">Boost 模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 网络与异步</div>
+    <h1>🌐 Asio 事件循环：异步为什么不是多线程？</h1>
+    <p>把 <code>io_context</code>、完成事件、handler 队列和调用链拆开看。异步的关键不是“开了多少线程”，而是“谁在等、谁在执行”。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 6</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>boost/asio_basics.cpp</code> ·
+    相关教程：<a href="../boost/tutorial.md">boost/tutorial.md</a> ·
+    Asio 底层在 Linux 上通常基于 epoll，在 Windows 上基于 IOCP；页面用“事件队列”统一表示。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '事件队列',
+    title: '1. io_context 是队列 + 循环，不是线程',
+    caption: '<code>io_context</code> 本身不创建线程，也不是 socket。它维护一个待执行任务队列，<code>run()</code> 在<strong>调用它的那个线程</strong>上不断取出 handler 执行。队列空了 <code>run()</code> 就返回；服务器里常用 <code>work_guard</code> 让它即使暂时没任务也保持运行。',
+    code: 'asio::io_context io;\nasio::post(io, []{ /* 任务 A */ });\nio.run();   // 在当前线程取 handler 执行',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="io_context 维护任务队列，run 在调用线程上逐个执行 handler">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+
+  <rect x="180" y="80" width="400" height="200" rx="14" class="svg-box-accent"/>
+  <text x="198" y="108" class="svg-title">io_context（事件队列 + 调度器）</text>
+  <text x="198" y="128" class="svg-small">待执行的任务 / 已完成的 handler</text>
+
+  <g class="svg-float">
+    <rect x="200" y="142" width="180" height="34" rx="5" class="svg-box"/>
+    <text x="214" y="164" class="svg-mono">task A</text>
+  </g>
+  <g class="svg-float" style="animation-delay:.5s">
+    <rect x="200" y="184" width="180" height="34" rx="5" class="svg-box"/>
+    <text x="214" y="206" class="svg-mono">task B</text>
+  </g>
+  <g class="svg-float" style="animation-delay:1s">
+    <rect x="200" y="226" width="180" height="34" rx="5" class="svg-box"/>
+    <text x="214" y="248" class="svg-mono">timer handler</text>
+  </g>
+
+  <text x="410" y="164" class="svg-text">队列里的东西</text>
+  <text x="410" y="186" class="svg-small">不是“线程”，而是</text>
+  <text x="410" y="208" class="svg-small">等待被调用的函数</text>
+  <text x="410" y="230" class="svg-small">（handler / 回调）</text>
+
+  <rect x="620" y="120" width="110" height="100" rx="10" class="svg-box-good"/>
+  <text x="636" y="148" class="svg-title">线程</text>
+  <text x="636" y="172" class="svg-text">调用 run()</text>
+  <text x="636" y="194" class="svg-small">逐个执行 handler</text>
+
+  <line x1="582" y1="166" x2="616" y2="166" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="584" y="152" class="svg-small">取一个</text>
+
+  <path d="M700 224 V310 H380 V286" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="706" y="270" class="svg-small">处理完</text>
+  <text x="706" y="288" class="svg-small">继续取</text>
+
+  <text x="30" y="358" class="svg-small">run() 没有待处理工作就返回；服务器里用 work_guard 防止它提前退出。</text>
+  <text x="30" y="384" class="svg-small">同一个 io_context 可以只用一个线程跑，也可以多线程同时 run()。</text>
+  <text x="30" y="410" class="svg-small">handler 在哪个线程执行，取决于哪个线程调用了 run()。</text>
+</svg>`
+  },
+  {
+    nav: '同步异步',
+    title: '2. 同步阻塞线程，异步把等待交给 OS',
+    caption: '同步 <code>read_some</code> 会让当前线程停在那里，直到数据到达。异步 <code>async_read_some</code> 只是把操作和回调注册给操作系统（epoll / IOCP），然后立即返回，线程可以继续干别的。注意：异步并没有消灭等待，只是把等待从你的线程挪到了内核。',
+    code: '// 同步：线程阻塞\nsocket.read_some(buf);\n// 异步：注册后立即返回\nsocket.async_read_some(buf, handler);',
+    highlight: [1, 3],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="同步读让线程阻塞，异步读注册回调后立即返回">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+
+  <rect x="30" y="50" width="700" height="150" rx="12" class="svg-box-bad"/>
+  <text x="48" y="78" class="svg-bad-text">同步：线程停在这里等数据</text>
+  <rect x="50" y="96" width="150" height="62" rx="8" class="svg-box"/>
+  <text x="64" y="122" class="svg-text">你的线程</text>
+  <text x="64" y="144" class="svg-small">只能等</text>
+  <rect x="240" y="96" width="220" height="62" rx="8" class="svg-box-bad svg-pulse"/>
+  <text x="256" y="122" class="svg-mono">read_some(buf)</text>
+  <text x="256" y="144" class="svg-small">线程被挂起，不往下走</text>
+  <rect x="500" y="96" width="200" height="62" rx="8" class="svg-box-ghost"/>
+  <text x="516" y="132" class="svg-small">后续代码只能等它返回</text>
+  <line x1="200" y1="127" x2="236" y2="127" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="460" y1="127" x2="496" y2="127" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+  <rect x="50" y="170" width="650" height="12" rx="6" class="svg-field"/>
+  <rect x="50" y="170" width="410" height="12" rx="6" fill="#fca5a5"/>
+  <text x="470" y="181" class="svg-small">等待数据……</text>
+
+  <rect x="30" y="226" width="700" height="160" rx="12" class="svg-box-good"/>
+  <text x="48" y="254" class="svg-good-text">异步：注册回调后立即返回</text>
+  <rect x="50" y="272" width="150" height="62" rx="8" class="svg-box"/>
+  <text x="64" y="298" class="svg-text">你的线程</text>
+  <text x="64" y="320" class="svg-small">继续干别的</text>
+  <rect x="240" y="272" width="220" height="62" rx="8" class="svg-box-accent"/>
+  <text x="256" y="298" class="svg-mono">async_read_some</text>
+  <text x="256" y="320" class="svg-small">注册 handler，立刻返回</text>
+  <rect x="500" y="272" width="200" height="62" rx="8" class="svg-box"/>
+  <text x="516" y="298" class="svg-text">OS 负责等待</text>
+  <text x="516" y="320" class="svg-small">epoll / IOCP</text>
+  <line x1="200" y1="303" x2="236" y2="303" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="460" y1="303" x2="496" y2="303" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="50" y="366" class="svg-small">数据到达后，OS 把“完成事件”放进 io_context，稍后由 run() 执行 handler。</text>
+
+  <text x="30" y="416" class="svg-small">异步不是“没有等待”，而是等待不再占用你的线程。</text>
+</svg>`
+  },
+  {
+    nav: '完成回调',
+    title: '3. 完成事件 → handler 队列 → run() 执行',
+    caption: 'socket 上有数据到达时，操作系统通知 <code>io_context</code>，对应的 handler 被放进队列。随后 <code>run()</code> 在它所在的线程上取出并执行这个 handler。单线程 <code>run()</code> 时 handler 一个接一个执行，天然不会并发；handler 的参数一般是 <code>(error_code, bytes_transferred)</code>。',
+    code: 'io.run();   // 单线程：handler 一个接一个执行\n// handler 的参数：(error_code ec, size_t n)',
+    highlight: [0, 1],
+    stage: `
+<svg viewBox="0 0 760 380" role="img" aria-label="socket 就绪后完成事件进入 io_context 队列，由 run 线程执行 handler">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+
+  <rect x="30" y="110" width="130" height="96" rx="10" class="svg-box-accent"/>
+  <text x="46" y="138" class="svg-title">socket</text>
+  <text x="46" y="162" class="svg-text">数据到达</text>
+  <text x="46" y="184" class="svg-small">内核接收缓冲区</text>
+
+  <rect x="200" y="110" width="150" height="96" rx="10" class="svg-box-warn"/>
+  <text x="216" y="138" class="svg-title">OS 事件</text>
+  <text x="216" y="162" class="svg-text">epoll / IOCP</text>
+  <text x="216" y="184" class="svg-small">报告“可读”</text>
+
+  <rect x="390" y="90" width="190" height="140" rx="12" class="svg-box-accent"/>
+  <text x="406" y="116" class="svg-title">io_context 队列</text>
+  <g class="svg-float">
+    <rect x="406" y="132" width="158" height="38" rx="5" class="svg-box-good"/>
+    <text x="420" y="157" class="svg-mono">handler(ec, n)</text>
+  </g>
+  <text x="406" y="196" class="svg-small">完成事件进入队列</text>
+  <text x="406" y="216" class="svg-small">等待 run() 取走</text>
+
+  <rect x="620" y="110" width="110" height="96" rx="10" class="svg-box-good"/>
+  <text x="636" y="138" class="svg-title">run()</text>
+  <text x="636" y="162" class="svg-text">执行 handler</text>
+  <text x="636" y="184" class="svg-small">在调用线程上</text>
+
+  <line x1="162" y1="158" x2="196" y2="158" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="352" y1="158" x2="386" y2="158" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="582" y1="158" x2="616" y2="158" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+
+  <text x="30" y="270" class="svg-text">handler 里通常先看 ec：</text>
+  <text x="30" y="296" class="svg-mono" style="fill:#b91c1c">if (ec) { 处理错误或结束; }</text>
+  <text x="30" y="322" class="svg-mono" style="fill:#047857">else { 用 n 字节继续下一步; }</text>
+  <text x="30" y="356" class="svg-small">单线程 run() 时，任何时刻只有一个 handler 在跑，队列里的 handler 不会同时执行。</text>
+</svg>`
+  },
+  {
+    nav: '调用链',
+    title: '4. 异步调用链：handler 里发起下一步',
+    caption: '异步服务器的每一段都在 handler 里接力：<code>async_accept</code> 完成后创建会话并开始读，读完的 handler 调用 <code>async_write</code>，写完的 handler 再调用读，形成循环。会话对象通常用 <code>shared_from_this</code> 保活；组合操作（如 <code>async_read</code>）期间，传给它的 buffer 必须一直有效。',
+    code: 'acceptor_.async_accept(\n  [this](error_code ec, tcp::socket s) {\n    if (!ec) start_session(std::move(s));\n    do_accept();          // 继续接下一个\n  });\n// start_session：建 Session 并开始读',
+    highlight: [0, 1, 2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="accept、read、write 的异步调用链以及写完再读的循环">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+
+  <text x="40" y="42" class="svg-title">一条连接上的异步调用链</text>
+
+  <rect x="200" y="58" width="340" height="72" rx="10" class="svg-box-accent"/>
+  <text x="218" y="84" class="svg-mono">① async_accept</text>
+  <text x="218" y="108" class="svg-small">连接到达 → handler 建 Session，开始读</text>
+
+  <rect x="200" y="160" width="340" height="72" rx="10" class="svg-box-accent"/>
+  <text x="218" y="186" class="svg-mono">② async_read_some</text>
+  <text x="218" y="210" class="svg-small">读到 n 字节 → handler 调 do_write</text>
+
+  <rect x="200" y="262" width="340" height="72" rx="10" class="svg-box-accent"/>
+  <text x="218" y="288" class="svg-mono">③ async_write</text>
+  <text x="218" y="312" class="svg-small">写完 → handler 再调 do_read</text>
+
+  <line x1="370" y1="132" x2="370" y2="156" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <line x1="370" y1="234" x2="370" y2="258" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+
+  <path d="M542 298 H590 V196 H546" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="600" y="250" class="svg-good-text">写完继续读</text>
+
+  <text x="40" y="94" class="svg-small">发起后</text>
+  <text x="40" y="116" class="svg-small">立刻返回</text>
+  <text x="40" y="196" class="svg-small">handler</text>
+  <text x="40" y="218" class="svg-small">接力</text>
+  <text x="40" y="298" class="svg-small">循环</text>
+  <text x="40" y="320" class="svg-small">不退出</text>
+
+  <rect x="40" y="364" width="690" height="56" rx="10" class="svg-box-warn"/>
+  <text x="58" y="388" class="svg-small">用 shared_from_this 让会话在异步操作期间保持存活；buffer 在 handler 触发前不能销毁。</text>
+  <text x="58" y="408" class="svg-small">每一步都只注册“下一步”，不要在一次 handler 里阻塞等待。</text>
+</svg>`
+  },
+  {
+    nav: '单线程并发',
+    title: '5. 单线程也能处理很多连接，但不是并行',
+    caption: '一个线程跑 <code>io_context</code>，可以同时挂起成百上千个连接：每个连接的等待都在内核里，线程只在有事件时执行对应的 handler。这是<strong>并发</strong>（交错推进），不是<strong>并行</strong>（同时执行）。所以 handler 里不能做阻塞操作，否则所有连接一起卡住。',
+    code: '// 一个线程 + 一个 io_context 管理多个连接\n// handler 里 sleep / 阻塞读 → 所有连接一起卡住',
+    highlight: [0, 1],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="单线程事件循环交替处理多个连接的完成事件">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+
+  <rect x="40" y="58" width="200" height="76" rx="10" class="svg-box-accent svg-pulse"/>
+  <text x="56" y="84" class="svg-title">连接 1</text>
+  <text x="56" y="108" class="svg-text">async_read 挂起</text>
+
+  <rect x="280" y="58" width="200" height="76" rx="10" class="svg-box-accent svg-pulse" style="animation-delay:.5s"/>
+  <text x="296" y="84" class="svg-title">连接 2</text>
+  <text x="296" y="108" class="svg-text">async_read 挂起</text>
+
+  <rect x="520" y="58" width="200" height="76" rx="10" class="svg-box-accent svg-pulse" style="animation-delay:1s"/>
+  <text x="536" y="84" class="svg-title">连接 3</text>
+  <text x="536" y="108" class="svg-text">async_read 挂起</text>
+
+  <rect x="40" y="178" width="680" height="110" rx="12" class="svg-box-warn"/>
+  <text x="58" y="204" class="svg-title">io_context.run() · 只有一个线程</text>
+  <g class="svg-float">
+    <rect x="70" y="220" width="150" height="40" rx="5" class="svg-box-good"/>
+    <text x="145" y="245" text-anchor="middle" class="svg-small">handler 1</text>
+  </g>
+  <g class="svg-float" style="animation-delay:.5s">
+    <rect x="260" y="220" width="150" height="40" rx="5" class="svg-box-good"/>
+    <text x="335" y="245" text-anchor="middle" class="svg-small">handler 2</text>
+  </g>
+  <g class="svg-float" style="animation-delay:1s">
+    <rect x="450" y="220" width="150" height="40" rx="5" class="svg-box-good"/>
+    <text x="525" y="245" text-anchor="middle" class="svg-small">handler 3</text>
+  </g>
+
+  <path d="M140 134 V174" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M380 134 V174" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M620 134 V174" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <text x="40" y="324" class="svg-title">执行顺序（时间 →）</text>
+  <rect x="40" y="338" width="150" height="36" rx="5" class="svg-box-good"/>
+  <text x="115" y="361" text-anchor="middle" class="svg-small">h1</text>
+  <rect x="200" y="338" width="150" height="36" rx="5" class="svg-box-good"/>
+  <text x="275" y="361" text-anchor="middle" class="svg-small">h2</text>
+  <rect x="360" y="338" width="150" height="36" rx="5" class="svg-box-good"/>
+  <text x="435" y="361" text-anchor="middle" class="svg-small">h3</text>
+  <text x="524" y="362" class="svg-small">→ 一次只跑一个，不重叠</text>
+
+  <text x="40" y="414" class="svg-small">并发不等于并行；单线程靠事件多路复用交错推进多个连接。</text>
+</svg>`
+  },
+  {
+    nav: 'strand',
+    title: '6. 多线程 run() 与 strand：谁需要串行',
+    caption: '多个线程同时 <code>run()</code> 可以提高吞吐，但同一个连接的两个 handler 可能真的并行执行，共享状态就又有数据竞争了。<code>strand</code> 保证通过它提交的 handler 按顺序、不并发执行；它不是一个线程，而是对执行顺序的约束。不同连接用不同 strand，仍然可以并行。',
+    code: 'auto strand = asio::make_strand(io);\n// 通过 strand 提交，串行执行\nasio::post(strand, [&]{ ++counter_; });\nstd::thread t1([&]{ io.run(); });\nstd::thread t2([&]{ io.run(); });  // 多线程 run()\nt1.join(); t2.join();',
+    highlight: [0, 2, 3, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="多线程 run 时，strand 把同一连接的 handler 串行化">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+
+  <rect x="250" y="44" width="260" height="78" rx="10" class="svg-box-accent"/>
+  <text x="266" y="70" class="svg-title">io_context 队列</text>
+  <text x="266" y="94" class="svg-text">多个线程同时 run()</text>
+
+  <rect x="40" y="58" width="150" height="60" rx="8" class="svg-box-good"/>
+  <text x="56" y="84" class="svg-text">线程 1</text>
+  <text x="56" y="104" class="svg-small">执行 handler</text>
+  <rect x="40" y="148" width="150" height="60" rx="8" class="svg-box-good"/>
+  <text x="56" y="174" class="svg-text">线程 2</text>
+  <text x="56" y="194" class="svg-small">执行 handler</text>
+
+  <rect x="570" y="58" width="150" height="60" rx="8" class="svg-box-good"/>
+  <text x="586" y="84" class="svg-text">线程 3</text>
+  <text x="586" y="104" class="svg-small">执行 handler</text>
+  <rect x="570" y="148" width="150" height="60" rx="8" class="svg-box-good"/>
+  <text x="586" y="174" class="svg-text">线程 4</text>
+  <text x="586" y="194" class="svg-small">执行 handler</text>
+
+  <line x1="246" y1="80" x2="194" y2="84" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="246" y1="94" x2="194" y2="170" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="514" y1="80" x2="566" y2="84" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="514" y1="94" x2="566" y2="170" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="200" y="170" width="360" height="86" rx="10" class="svg-box-accent svg-pulse"/>
+  <text x="218" y="196" class="svg-title">strand（同一连接）</text>
+  <text x="218" y="220" class="svg-text">handler 按提交顺序排队</text>
+  <text x="218" y="242" class="svg-small">不要求固定线程，只要求不并发</text>
+
+  <text x="40" y="214" class="svg-bad-text">无 strand：</text>
+  <text x="40" y="236" class="svg-small">两线程可能同时改同一对象</text>
+
+  <line x1="380" y1="122" x2="380" y2="166" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="220" y="300" width="150" height="50" rx="6" class="svg-box-good"/>
+  <text x="295" y="331" text-anchor="middle" class="svg-small">handler A</text>
+  <rect x="400" y="300" width="150" height="50" rx="6" class="svg-box-good"/>
+  <text x="475" y="331" text-anchor="middle" class="svg-small">handler B</text>
+  <line x1="374" y1="325" x2="396" y2="325" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="220" y="376" class="svg-small">A 执行完，B 才开始 → 不需要额外的互斥锁</text>
+
+  <text x="30" y="412" class="svg-small">strand 不是线程；不同 strand 之间仍然可以并行，所以连接之间互不影响。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

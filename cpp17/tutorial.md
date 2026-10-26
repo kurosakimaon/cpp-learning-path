@@ -81,6 +81,8 @@
 
 理解了移动语义，你才算真正入门现代 C++。
 
+> 🎬 一步一步看清所有权怎么转移：[移动语义图解](../visuals/move_semantics.html)。
+
 ### 基础语法糖（type_deduction → structured_binding）
 
 这俩是日常写代码用得最多的。

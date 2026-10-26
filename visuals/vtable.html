@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>虚函数表：p->speak() 到底调用了谁？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 面向对象</div>
+    <h1>🎭 虚函数表：p-&gt;speak() 到底调用了谁？</h1>
+    <p>从静态绑定到 vptr / vtable，再到对象切片和虚析构，把多态的底层机制一次看清。用左右方向键也可以翻页。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 6</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>beginner/08_inheritance_polymorphism.cpp</code> ·
+    相关教程：<a href="../beginner/tutorial.md">beginner/tutorial.md</a> ·
+    vptr / vtable 是主流编译器的实现方式，标准并不规定具体布局。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '静态绑定',
+    title: '1. 非虚函数：编译期就定死了',
+    caption: '普通成员函数是<strong>静态绑定</strong>：调用哪个版本由指针或引用的<strong>静态类型</strong>决定，编译器在编译期就把地址写死。对象真实类型是 <code>Derived</code> 也没用。',
+    code: 'struct Base {\n  void hello() const { std::cout << "Base"; }\n};\nstruct Derived : Base {\n  void hello() const { std::cout << "Derived"; }\n};\n\nBase* p = new Derived;\np->hello();   // 输出 Base：按 Base* 静态绑定',
+    highlight: [8],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="非虚函数按指针的静态类型静态绑定">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-small">编译期：只看指针的静态类型</text>
+  <rect x="30" y="48" width="280" height="82" rx="10" class="svg-box-accent"/>
+  <text x="48" y="76" class="svg-title">Base* p</text>
+  <text x="48" y="100" class="svg-mono">静态类型：Base*</text>
+  <text x="48" y="120" class="svg-small">编译器只知道它是 Base 指针</text>
+
+  <line x1="170" y1="132" x2="170" y2="184" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="182" y="164" class="svg-small">绑定到</text>
+
+  <rect x="30" y="188" width="300" height="78" rx="10" class="svg-box-warn"/>
+  <text x="48" y="216" class="svg-title">Base::hello()</text>
+  <text x="48" y="240" class="svg-small">地址在编译期确定，直接调用</text>
+
+  <text x="450" y="30" class="svg-small">运行期：对象的真实类型</text>
+  <rect x="430" y="48" width="300" height="190" rx="12" class="svg-box-good"/>
+  <text x="448" y="76" class="svg-title">d : Derived</text>
+  <rect x="448" y="90" width="264" height="54" rx="6" class="svg-field"/>
+  <text x="462" y="114" class="svg-text">Base 子对象</text>
+  <text x="462" y="134" class="svg-small">（包含 Base 的成员）</text>
+  <rect x="448" y="154" width="264" height="54" rx="6" class="svg-field"/>
+  <text x="462" y="178" class="svg-text">Derived 自己的成员</text>
+  <text x="462" y="198" class="svg-small">（这些信息在这里用不上）</text>
+  <text x="448" y="228" class="svg-small">真实类型是 Derived，但 hello 不是虚函数</text>
+
+  <line x1="310" y1="100" x2="426" y2="100" class="svg-arrow" marker-end="url(#ahg)"/>
+  <text x="326" y="86" class="svg-small">p 指向 d</text>
+
+  <rect x="30" y="300" width="700" height="100" rx="12" class="svg-box"/>
+  <text x="50" y="330" class="svg-title">非虚函数 = 静态绑定</text>
+  <text x="50" y="358" class="svg-text">调用哪份代码只看表达式的静态类型：Base* 调 Base::hello，Derived* 才调 Derived::hello。</text>
+  <text x="50" y="386" class="svg-small">要在运行期根据真实类型选择，就必须把函数声明为 virtual。</text>
+</svg>`
+  },
+  {
+    nav: 'vptr 与 vtable',
+    title: '2. 多态对象里藏着一个 vptr',
+    caption: '含虚函数的类，编译器通常会为每个对象放一个隐藏指针 <code>vptr</code>（一般在对象起始处），指向该类的<strong>虚函数表 vtable</strong>。vtable 里按固定顺序存放着各个虚函数的地址，同一类的所有对象共享同一张表。',
+    code: 'class Shape {\npublic:\n  virtual double area() const { return 0; }\n  virtual double perimeter() const { return 0; }\n  virtual ~Shape() = default;\nprivate:\n  int color_;\n};\n// 对象布局（示意）：[ vptr ][ color_ ]',
+    highlight: [2, 3, 8],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="多态对象里的 vptr 指向所属类的 vtable">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-small">堆或栈上的一个对象</text>
+  <rect x="30" y="48" width="330" height="200" rx="12" class="svg-box-accent"/>
+  <text x="48" y="76" class="svg-title">Circle c</text>
+  <rect x="48" y="90" width="294" height="54" rx="6" class="svg-box"/>
+  <text x="62" y="114" class="svg-mono">vptr = 0x5000</text>
+  <text x="62" y="134" class="svg-small">隐藏字段，通常位于对象开头</text>
+  <rect x="48" y="154" width="294" height="50" rx="6" class="svg-field"/>
+  <text x="62" y="184" class="svg-mono">color_ = 1</text>
+  <text x="48" y="228" class="svg-small">对象大小通常因此多出一个指针的宽度</text>
+
+  <text x="480" y="30" class="svg-small">类的 vtable：所有 Circle 对象共享</text>
+  <rect x="450" y="48" width="280" height="220" rx="12" class="svg-box-warn"/>
+  <text x="468" y="76" class="svg-title">Circle 的 vtable @0x5000</text>
+  <rect x="468" y="90" width="244" height="48" rx="6" class="svg-field"/>
+  <text x="482" y="120" class="svg-mono">[0] &amp;Circle::area</text>
+  <rect x="468" y="146" width="244" height="48" rx="6" class="svg-field"/>
+  <text x="482" y="176" class="svg-mono">[1] &amp;Circle::perimeter</text>
+  <rect x="468" y="202" width="244" height="48" rx="6" class="svg-field"/>
+  <text x="482" y="232" class="svg-mono">[2] &amp;Circle::~Circle</text>
+  <text x="468" y="260" class="svg-small">槽位顺序由编译器安排，调用方与实现方一致</text>
+
+  <line x1="364" y1="118" x2="446" y2="118" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="372" y="104" class="svg-small">vptr</text>
+
+  <rect x="30" y="290" width="700" height="130" rx="12" class="svg-box"/>
+  <text x="50" y="320" class="svg-title">记住三句话</text>
+  <text x="50" y="348" class="svg-text">• 每个多态对象里有一个 vptr。</text>
+  <text x="50" y="374" class="svg-text">• 每个多态类有一张 vtable，同类型对象共享。</text>
+  <text x="50" y="400" class="svg-small">• 标准不规定布局；主流编译器都采用“对象首字段放 vptr、类共享 vtable”的实现。</text>
+</svg>`
+  },
+  {
+    nav: '动态派发',
+    title: '3. 一次虚调用，运行期走三步',
+    caption: '执行 <code>p-&gt;area()</code> 时，编译器生成的不是直接调用：先从对象里取出 <code>vptr</code>，再按 <code>area</code> 的固定槽位从 vtable 取出函数地址，最后间接调用。因此同一个 <code>Shape*</code> 可以落到不同类的实现上。',
+    code: 'Shape* p = new Circle(2);\ndouble a = p->area();\n// 运行时：\n// ① 从对象取 vptr  ② 查 vtable 的第 0 个槽\n// ③ 间接调用 Circle::area',
+    highlight: [1, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 460" role="img" aria-label="虚函数调用通过 vptr 和 vtable 间接找到 Circle::area">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-small">栈</text>
+  <rect x="30" y="46" width="250" height="76" rx="10" class="svg-box-accent"/>
+  <text x="48" y="74" class="svg-title">Shape* p</text>
+  <text x="48" y="98" class="svg-mono">静态类型：Shape*</text>
+
+  <text x="30" y="150" class="svg-small">堆</text>
+  <rect x="30" y="166" width="320" height="160" rx="12" class="svg-box-good"/>
+  <text x="48" y="194" class="svg-title">Circle 对象（动态类型）</text>
+  <rect x="48" y="208" width="284" height="44" rx="6" class="svg-box"/>
+  <text x="62" y="236" class="svg-mono">vptr = 0x5000</text>
+  <rect x="48" y="260" width="284" height="44" rx="6" class="svg-field"/>
+  <text x="62" y="288" class="svg-mono">radius = 2</text>
+
+  <line x1="155" y1="124" x2="155" y2="162" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="168" y="148" class="svg-small">p 指向对象</text>
+
+  <rect x="450" y="150" width="280" height="190" rx="12" class="svg-box-warn"/>
+  <text x="468" y="178" class="svg-title">Circle 的 vtable @0x5000</text>
+  <rect x="468" y="192" width="244" height="48" rx="6" class="svg-box-accent"/>
+  <text x="482" y="222" class="svg-mono">[0] &amp;Circle::area  ← 命中</text>
+  <rect x="468" y="248" width="244" height="48" rx="6" class="svg-field"/>
+  <text x="482" y="278" class="svg-mono">[1] &amp;Circle::perimeter</text>
+  <text x="468" y="320" class="svg-mono">call [vptr + 0]</text>
+
+  <line x1="350" y1="230" x2="446" y2="216" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="356" y="208" class="svg-small">① 取 vptr</text>
+  <text x="470" y="352" class="svg-small">② 按槽位取地址　③ 间接调用</text>
+
+  <rect x="30" y="356" width="380" height="82" rx="10" class="svg-box"/>
+  <text x="48" y="384" class="svg-title">为什么能多态？</text>
+  <text x="48" y="410" class="svg-text">p 的静态类型始终是 Shape*，</text>
+  <text x="48" y="430" class="svg-small">但 vptr 指向的是对象真实类型的那张表。</text>
+</svg>`
+  },
+  {
+    nav: 'override 检查',
+    title: '4. 签名差一个字，虚函数就白写了',
+    caption: '覆盖要求参数列表、<code>const</code> 限定、返回类型（协变除外）都匹配。少写一个 <code>const</code>，函数就不再覆盖基类版本，而是变成一个普通函数；加上 <code>override</code> 可以让编译器当场报错。',
+    code: 'struct Base {\n  virtual void speak() const;\n};\nstruct Derived : Base {\n  void speak() const override;   // ✓\n  // void speak() override;      // ✗ 少 const\n};',
+    highlight: [4, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="override 检查函数签名是否与基类虚函数一致">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-small">基类里的声明</text>
+  <rect x="30" y="46" width="700" height="60" rx="10" class="svg-box-accent"/>
+  <text x="48" y="82" class="svg-mono">virtual void speak() const;   // 虚函数，占用 vtable 的一个槽位</text>
+
+  <rect x="30" y="136" width="340" height="160" rx="12" class="svg-box-good"/>
+  <text x="48" y="166" class="svg-good-text">✓ 签名一致 → 覆盖</text>
+  <text x="48" y="194" class="svg-mono">void speak() const override;</text>
+  <text x="48" y="222" class="svg-text">参数、const、返回类型全部匹配。</text>
+  <text x="48" y="248" class="svg-text">Derived 的 vtable 槽位被替换成</text>
+  <text x="48" y="270" class="svg-small">Derived::speak，基类指针调用会落到它。</text>
+
+  <rect x="390" y="136" width="340" height="160" rx="12" class="svg-box-bad"/>
+  <text x="408" y="166" class="svg-bad-text">✗ 少了 const → 编译错误</text>
+  <text x="408" y="194" class="svg-mono">void speak() override;</text>
+  <text x="408" y="222" class="svg-text">它没有覆盖任何基类虚函数，</text>
+  <text x="408" y="248" class="svg-text">override 让编译器直接报错，</text>
+  <text x="408" y="270" class="svg-small">而不是悄悄漏掉多态。</text>
+
+  <rect x="30" y="320" width="700" height="110" rx="12" class="svg-box-warn"/>
+  <text x="50" y="350" class="svg-title">如果不写 override 呢？</text>
+  <text x="50" y="378" class="svg-text">少了 const 的 speak() 会变成 Derived 自己的普通成员函数，把基类的同名函数藏起来，</text>
+  <text x="50" y="402" class="svg-text">但通过 Base* 调用时仍然走 Base::speak——错误很隐蔽。</text>
+  <text x="50" y="422" class="svg-small">建议：所有打算覆盖的函数都写 override，让编译器替你检查签名。</text>
+</svg>`
+  },
+  {
+    nav: '对象切片',
+    title: '5. 按值传递：多态被“切掉”了',
+    caption: '把派生类对象按值传给基类参数时，只会复制<strong>基类子对象</strong>，派生类新增的成员被丢掉，副本的 vptr 也变成基类的那张表。想保留多态，必须通过指针或引用传递。',
+    code: 'void byValue(Shape s);       // 按值：切片\nvoid byRef(const Shape& s);  // 按引用：保留动态类型\n\nCircle c(2);\nbyValue(c);   // 只剩 Shape 子对象\nbyRef(c);     // 仍调用 Circle::area()',
+    highlight: [0, 1, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 460" role="img" aria-label="按值传参发生对象切片，按引用保留多态">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-small">原对象</text>
+  <rect x="30" y="48" width="290" height="180" rx="12" class="svg-box-good"/>
+  <text x="48" y="76" class="svg-title">Circle c(2)</text>
+  <rect x="48" y="90" width="254" height="44" rx="6" class="svg-box"/>
+  <text x="62" y="118" class="svg-mono">vptr → Circle 的 vtable</text>
+  <rect x="48" y="142" width="254" height="44" rx="6" class="svg-field"/>
+  <text x="62" y="170" class="svg-mono">radius = 2</text>
+
+  <text x="480" y="30" class="svg-small">byValue(Shape s)：副本</text>
+  <rect x="450" y="48" width="280" height="180" rx="12" class="svg-box-bad"/>
+  <text x="468" y="76" class="svg-title">s : Shape</text>
+  <rect x="468" y="90" width="244" height="44" rx="6" class="svg-box-bad"/>
+  <text x="482" y="118" class="svg-mono">vptr → Shape 的 vtable</text>
+  <rect x="468" y="142" width="244" height="44" rx="6" class="svg-field"/>
+  <text x="482" y="170" class="svg-mono">color_ 等基类成员</text>
+  <text x="468" y="210" class="svg-bad-text">radius 被切掉，多态消失</text>
+
+  <line x1="324" y1="112" x2="446" y2="112" class="svg-arrow-bad" marker-end="url(#ahb)"/>
+  <text x="330" y="98" class="svg-small">只复制 Base 子对象</text>
+
+  <rect x="30" y="268" width="290" height="98" rx="10" class="svg-box-accent"/>
+  <text x="48" y="296" class="svg-title">byRef(const Shape&amp; s)</text>
+  <text x="48" y="322" class="svg-text">不复制对象，s 只是 c 的别名</text>
+  <text x="48" y="346" class="svg-small">引用本身不产生新的对象</text>
+
+  <line x1="324" y1="316" x2="446" y2="316" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="330" y="302" class="svg-small">绑定原对象</text>
+
+  <rect x="450" y="268" width="280" height="98" rx="10" class="svg-box-good"/>
+  <text x="468" y="296" class="svg-title">动态类型仍是 Circle</text>
+  <text x="468" y="322" class="svg-mono">s.area() → Circle::area</text>
+  <text x="468" y="346" class="svg-small">vptr 仍指向 Circle 的 vtable</text>
+
+  <rect x="30" y="390" width="700" height="54" rx="10" class="svg-box-warn"/>
+  <text x="50" y="421" class="svg-text">结论：多态必须通过指针或引用；容器想存多态对象，就存指针 / 智能指针，而不是基类值。</text>
+</svg>`
+  },
+  {
+    nav: '虚析构',
+    title: '6. 基类析构必须是 virtual',
+    caption: '通过基类指针 <code>delete</code> 派生类对象时，如果基类析构不是虚函数，只会执行基类析构，派生类的资源没人释放，属于未定义行为。基类有虚函数时，就应该同时给它一个虚析构函数。',
+    code: 'struct Base {\n  virtual ~Base() = default;   // ✓\n};\nstruct Derived : Base {\n  ~Derived() override { /* 释放派生类资源 */ }\n};\n\nBase* p = new Derived;\ndelete p;   // 先 ~Derived，再 ~Base',
+    highlight: [1, 7, 8],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="虚析构保证通过基类指针删除时先析构派生类">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+    <marker id="ahb" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-small">没有虚析构：错误</text>
+  <rect x="30" y="48" width="340" height="232" rx="12" class="svg-box-bad"/>
+  <text x="48" y="76" class="svg-title">Base* p = new Derived</text>
+  <rect x="48" y="92" width="130" height="52" rx="8" class="svg-box"/>
+  <text x="113" y="123" text-anchor="middle" class="svg-mono">delete p</text>
+  <line x1="180" y1="118" x2="216" y2="118" class="svg-arrow-bad" marker-end="url(#ahb)"/>
+  <rect x="220" y="92" width="130" height="52" rx="8" class="svg-box-bad"/>
+  <text x="285" y="123" text-anchor="middle" class="svg-mono">只调 ~Base()</text>
+  <text x="48" y="182" class="svg-bad-text">Derived 的析构函数不会执行</text>
+  <text x="48" y="210" class="svg-text">派生类持有的资源没人释放，</text>
+  <text x="48" y="234" class="svg-text">行为未定义，常见结果是泄漏。</text>
+  <text x="48" y="262" class="svg-small">非虚析构没有 vtable 入口可供查找。</text>
+
+  <text x="400" y="30" class="svg-small">有虚析构：正确</text>
+  <rect x="390" y="48" width="340" height="232" rx="12" class="svg-box-good"/>
+  <text x="408" y="76" class="svg-title">Base* p = new Derived</text>
+  <rect x="408" y="92" width="100" height="52" rx="8" class="svg-box"/>
+  <text x="458" y="123" text-anchor="middle" class="svg-mono">delete p</text>
+  <line x1="510" y1="118" x2="536" y2="118" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="540" y="92" width="80" height="52" rx="8" class="svg-box-good"/>
+  <text x="580" y="116" text-anchor="middle" class="svg-mono">~Derived</text>
+  <text x="580" y="134" text-anchor="middle" class="svg-small">先</text>
+  <line x1="622" y1="118" x2="648" y2="118" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="652" y="92" width="66" height="52" rx="8" class="svg-box-good"/>
+  <text x="685" y="123" text-anchor="middle" class="svg-mono">~Base</text>
+  <text x="408" y="182" class="svg-good-text">通过 vtable 找到动态类型的析构入口</text>
+  <text x="408" y="210" class="svg-text">先销毁派生类部分，再销毁基类部分，</text>
+  <text x="408" y="234" class="svg-text">顺序与构造严格相反。</text>
+  <text x="408" y="262" class="svg-small">delete p 时 p 的静态类型仍是 Base*。</text>
+
+  <rect x="30" y="310" width="700" height="120" rx="12" class="svg-box-warn"/>
+  <text x="50" y="340" class="svg-title">规则</text>
+  <text x="50" y="368" class="svg-text">只要一个类可能被通过基类指针 delete，它的析构函数就必须是 virtual。</text>
+  <text x="50" y="394" class="svg-text">实践中：基类只要有虚函数，就顺手写上 virtual ~Base() = default;</text>
+  <text x="50" y="418" class="svg-mono">添加虚析构会让类失去平凡析构等性质，但正确性优先。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

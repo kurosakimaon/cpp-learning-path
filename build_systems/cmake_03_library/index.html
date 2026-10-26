@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<!-- 本页由同目录 tutorial.md 渲染生成；内容以 tutorial.md 为准。 -->
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>03 · 库的构建与链接 - 构建系统 · C++ 学习路线</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
+  background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+  min-height: 100vh;
+  padding: 28px 18px 48px;
+  color: #333;
+  line-height: 1.85;
+}
+.container { max-width: 960px; margin: 0 auto; }
+.back-btn {
+  display: inline-block; padding: 8px 16px;
+  background: rgba(255,255,255,0.15); color: #fff;
+  text-decoration: none; border-radius: 8px; margin-bottom: 18px;
+  font-size: 13px; transition: background .2s;
+}
+.back-btn:hover { background: rgba(255,255,255,0.28); }
+.page-header { color: #fff; margin-bottom: 22px; }
+.crumb { font-size: 12.5px; color: #90caf9; letter-spacing: .04em; margin-bottom: 8px; }
+.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,.35); }
+.page-header .desc { font-size: 14.5px; opacity: .92; max-width: 760px; }
+.meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+.tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
+.tag.beginner { background: #e8f5e9; color: #2e7d32; }
+.tag.elementary { background: #e0f2f1; color: #00695c; }
+.tag.intermediate { background: #e3f2fd; color: #1565c0; }
+.tag.advanced { background: #fff3e0; color: #e65100; }
+.tag.expert { background: #f3e5f5; color: #6a1b9a; }
+.meta .raw {
+  font-size: 12.5px; color: #bbdefb; text-decoration: none;
+  border-bottom: 1px dashed rgba(187,222,251,.6);
+}
+.meta .raw:hover { color: #fff; }
+.content {
+  background: #fff; border-radius: 18px; padding: 38px 44px 42px;
+  box-shadow: 0 16px 46px rgba(0,0,0,.28);
+  overflow-wrap: break-word;
+}
+.content > :first-child { margin-top: 0; }
+.content h1 { display: none; }
+.content h2 {
+  font-size: 22px; color: #1a237e; line-height: 1.45;
+  margin: 34px 0 14px; padding-left: 12px;
+  border-left: 5px solid #3949ab;
+}
+.content h3 { font-size: 18px; color: #283593; margin: 26px 0 10px; }
+.content h4 { font-size: 16px; color: #37474f; margin: 20px 0 8px; }
+.content p { margin: 10px 0; font-size: 15px; color: #37474f; }
+.content ul, .content ol { margin: 10px 0 14px; padding-left: 26px; }
+.content li { margin: 6px 0; font-size: 15px; color: #37474f; }
+.content li > p { margin: 6px 0; }
+.content strong { color: #1a237e; }
+.content a { color: #1565c0; }
+.content code {
+  font-family: Consolas, 'Courier New', monospace;
+  background: #eef2ff; color: #c62828;
+  padding: 1px 5px; border-radius: 4px; font-size: 13.5px;
+}
+.content pre {
+  background: #1e293b; color: #e2e8f0;
+  padding: 16px 18px; border-radius: 10px;
+  overflow-x: auto; margin: 14px 0 18px;
+  line-height: 1.6;
+}
+.content pre code {
+  background: none; color: inherit; padding: 0;
+  font-size: 13.5px; white-space: pre;
+}
+.content blockquote {
+  margin: 14px 0; padding: 10px 16px;
+  border-left: 4px solid #7986cb; background: #f4f6ff;
+  color: #455a64; border-radius: 0 8px 8px 0;
+}
+.content blockquote p { margin: 4px 0; }
+.content table {
+  width: 100%; border-collapse: collapse; margin: 16px 0 20px;
+  font-size: 14px; display: block; overflow-x: auto;
+}
+.content th, .content td { border: 1px solid #dfe3f0; padding: 8px 12px; text-align: left; vertical-align: top; }
+.content th { background: #eef2ff; color: #1a237e; white-space: nowrap; }
+.content tbody tr:nth-child(even) { background: #fafbff; }
+.content hr { border: 0; border-top: 1px solid #e0e4f0; margin: 26px 0; }
+.files {
+  background: rgba(255,255,255,.96); border-radius: 16px;
+  padding: 22px 26px; margin-top: 22px;
+  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+}
+.files h2 { font-size: 16px; color: #1a237e; margin-bottom: 10px; }
+.files ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
+.files li { font-size: 13.5px; }
+.files a { color: #1565c0; text-decoration: none; font-family: Consolas, monospace; }
+.files a:hover { text-decoration: underline; }
+.files .dir { color: #78909c; font-family: Consolas, monospace; }
+.files .hint { margin-top: 10px; font-size: 12px; color: #90a4ae; }
+@media (max-width: 640px) {
+  body { padding: 18px 10px 36px; }
+  .page-header h1 { font-size: 23px; }
+  .content { padding: 26px 20px 30px; border-radius: 14px; }
+  .content h2 { font-size: 19px; }
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <a class="back-btn" href="../index.html">← 返回构建系统总览</a>
+
+  <header class="page-header">
+    <div class="crumb">构建系统 / CMake 路线 / cmake_03_library</div>
+    <h1>📦 03 · 库的构建与链接</h1>
+    <p class="desc">静态库构建、target_link_libraries、子目录组织、库依赖管理与动态库概念。</p>
+    <div class="meta">
+      <span class="tag intermediate">中级</span>
+      <a class="raw" href="tutorial.md">查看 Markdown 原文</a>
+    </div>
+  </header>
+
+  <main class="content">
+<h1>CMake 入门教程 - 第三讲</h1>
+<blockquote>
+<p>库的构建与链接</p>
+</blockquote>
+<h2>一、什么是库？</h2>
+<p>徒弟啊，咱先唠唠什么是库。</p>
+<p>简单说，库就是一堆编译好了的代码，打包在一起，给别人用。</p>
+<p>比如你写了一套数学函数，别人想用，总不能把你的 <code>.cpp</code> 文件都拷过去吧？太麻烦了。做成库的话，别人只要拿到库文件和头文件，就能用了。</p>
+<p>库分两种：静态库和动态库。</p>
+<h2>二、静态库 vs 动态库</h2>
+<p>咱用大白话讲：</p>
+<h3>静态库（STATIC）</h3>
+<ul>
+<li>编译的时候，把库的代码完完整整复制到可执行文件里</li>
+<li>结果：可执行文件比较大，但不依赖外部库文件</li>
+<li>发布的时候，只要给一个 exe 就行，不用带库文件</li>
+<li>Linux 下后缀是 <code>.a</code>；Windows + MSVC 下是 <code>.lib</code>，MinGW 下是 <code>.a</code></li>
+</ul>
+<h3>动态库（SHARED / 共享库）</h3>
+<ul>
+<li>编译的时候，只在可执行文件里记个&quot;引用&quot;</li>
+<li>程序运行的时候，才去加载动态库</li>
+<li>结果：可执行文件比较小，但运行时需要 <code>.so</code>/<code>.dll</code> 文件</li>
+<li>好处：多个程序可以共享同一个库（省内存）
+库升级了不用重新编译程序（只要接口没变）</li>
+<li>Linux 下后缀是 <code>.so</code>，Windows 下是 <code>.dll</code>
+（Windows 链接时还需要一个导入库：MSVC 是 <code>.lib</code>，MinGW 是 <code>.dll.a</code>）</li>
+</ul>
+<h3>怎么选？</h3>
+<ul>
+<li>小项目、不想折腾 → 静态库，简单直接</li>
+<li>大项目、多个程序共用 → 动态库，省空间</li>
+<li>第三方库通常同时提供静态库和动态库，具体用哪种看发行版和安装选项（Qt 常用动态库，Boost 两种都有）</li>
+</ul>
+<h2>三、add_library 命令</h2>
+<p>创建库就用 <code>add_library</code>，跟 <code>add_executable</code> 很像：</p>
+<pre><code class="language-cmake">add_library(mathlib STATIC math_functions.cpp)
+</code></pre>
+<p>第一个参数是库的名字（随便起，后面链接的时候用这个名字）。第二个参数是库的类型：<code>STATIC</code> 或 <code>SHARED</code>。后面跟着源文件列表。</p>
+<p>就这么简单。</p>
+<h2>四、add_subdirectory 命令</h2>
+<p>项目大了，代码要分目录放。每个子目录有自己的 <code>CMakeLists.txt</code>。根目录的 <code>CMakeLists.txt</code> 用 <code>add_subdirectory</code> 把子目录加进来。</p>
+<pre><code class="language-cmake">add_subdirectory(mathlib)
+add_subdirectory(app)
+</code></pre>
+<p>CMake 会按顺序去处理这些子目录里的 <code>CMakeLists.txt</code>。</p>
+<h3>注意</h3>
+<p>虽然 <code>target_link_libraries</code> 可以引用后面才定义的库目标，先写 app 再写 mathlib 通常也能配置、链接成功，但建议还是按依赖顺序写：被依赖的库放前面，可读性更好。</p>
+<p>真正有严格顺序要求的是&quot;创建目标&quot;和&quot;给目标设属性&quot;：必须先 <code>add_executable</code> / <code>add_library</code>，再对这个目标调用 <code>target_link_libraries</code>、<code>target_include_directories</code> 等命令。</p>
+<h2>五、target_link_libraries 命令</h2>
+<p>把库链接到可执行文件上：</p>
+<pre><code class="language-cmake">target_link_libraries(math_app PRIVATE mathlib)
+</code></pre>
+<p>意思是：<code>math_app</code> 这个目标，要链接 <code>mathlib</code> 这个库。</p>
+<p><code>PRIVATE</code> 是啥意思？咱先简单理解为&quot;我自己用&quot;就行，下几讲再深入讲 <code>PUBLIC</code>/<code>PRIVATE</code>/<code>INTERFACE</code> 的区别。</p>
+<h2>六、target_include_directories vs include_directories</h2>
+<p>这个很重要，徒弟你好好听。</p>
+<h3>老派写法：include_directories</h3>
+<pre><code class="language-cmake">include_directories(/path/to/headers)
+</code></pre>
+<p>特点：全局生效。写了之后，这个 <code>CMakeLists.txt</code> 以及所有子目录里的所有目标，都能用上这些头文件路径。</p>
+<p>问题：太&quot;脏&quot;了。有些目标根本不需要这些头文件，也被强行加上了。大项目里各种路径混在一起，乱得很。</p>
+<h3>现代写法：target_include_directories</h3>
+<pre><code class="language-cmake">target_include_directories(mathlib PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}
+)
+</code></pre>
+<p>特点：只针对 <code>mathlib</code> 这个目标。而且配合 <code>PUBLIC</code>/<code>PRIVATE</code>/<code>INTERFACE</code>，还能控制要不要把路径传递给链接这个库的人。</p>
+<p>好处：</p>
+<ol>
+<li>干净——谁需要谁加，不污染全局</li>
+<li>智能——<code>PUBLIC</code> 的路径会自动传递给依赖者</li>
+<li>清晰——看一个目标的 CMake 代码就知道它需要啥</li>
+</ol>
+<h3>老师傅结论</h3>
+<p>新项目一律用 <code>target_include_directories</code>，别用 <code>include_directories</code> 了，那是老黄历了。</p>
+<h2>七、PUBLIC / PRIVATE / INTERFACE 初体验</h2>
+<p>这三个关键字是现代 CMake 的精髓，咱先混个脸熟：</p>
+<ul>
+<li><code>PRIVATE</code>：只有我自己用，跟我链接的人不需要知道</li>
+<li><code>PUBLIC</code>：我自己用，跟我链接的人也需要（要传出去）</li>
+<li><code>INTERFACE</code>：我自己不用，但跟我链接的人需要</li>
+</ul>
+<p>举个例子（数学库 <code>mathlib</code>）：</p>
+<ul>
+<li><code>mathlib</code> 自己编译需要 <code>math_functions.h</code> → 自己要用</li>
+<li>用 <code>mathlib</code> 的人（app）也需要 <code>math_functions.h</code> → 别人也要用</li>
+<li>所以用 <code>PUBLIC</code></li>
+</ul>
+<p>再举个例子（假设 <code>mathlib</code> 内部用了一个内部头文件 <code>internal.h</code>）：</p>
+<ul>
+<li><code>mathlib</code> 自己编译需要 <code>internal.h</code> → 自己要用</li>
+<li>用 <code>mathlib</code> 的人不需要 <code>internal.h</code> → 别人不用</li>
+<li>所以用 <code>PRIVATE</code></li>
+</ul>
+<h3>口诀</h3>
+<ul>
+<li>自己用、别人也用 → <code>PUBLIC</code></li>
+<li>自己用、别人不用 → <code>PRIVATE</code></li>
+<li>自己不用、别人用 → <code>INTERFACE</code></li>
+</ul>
+<p><code>INTERFACE</code> 啥时候用？比如一个只有头文件的库（header-only library），它自己没有源文件，不用编译，但用它的人需要包含它的头文件。这时候就用 <code>INTERFACE</code>。</p>
+<h2>八、编译运行</h2>
+<pre><code class="language-bash">cd cmake_03_library
+mkdir build
+cd build
+cmake ..
+cmake --build .
+</code></pre>
+<p>运行：</p>
+<pre><code class="language-bash">./app/math_app              # Linux/macOS
+app\math_app.exe            # Windows + MinGW/Ninja（在 build 目录下）
+app\Debug\math_app.exe      # Windows + Visual Studio（在 build 目录下）
+</code></pre>
+<p>看看输出是不是正确。</p>
+<h2>九、老师傅的经验之谈</h2>
+<ol>
+<li>能用静态库就先用静态库，简单，不容易出运行时找不到库的问题。等项目大了、有需要了再考虑动态库。</li>
+<li>用 <code>target_include_directories</code> 代替 <code>include_directories</code>。这是现代 CMake 的标志之一。</li>
+<li><code>target_link_libraries</code> 也要养成写 <code>PRIVATE</code>/<code>PUBLIC</code> 的习惯，别偷懒省略。省略了 CMake 默认行为有点复杂，容易搞混。</li>
+<li>子目录建议按依赖顺序写，被依赖的放前面，方便阅读；CMake 本身能在生成阶段解析后定义的库目标。</li>
+<li>库的名字和目录名可以一样也可以不一样，不过建议保持一致，省得找起来麻烦。</li>
+</ol>
+<hr />
+<p>第三讲就到这儿。库的概念很重要，后面的例子里咱会大量用到。下一讲讲选项和配置，看看怎么让 CMake 项目更灵活。</p>
+
+  </main>
+
+  <footer class="files">
+    <h2>📁 本讲文件</h2>
+    <ul>
+      <li><a href="CMakeLists.txt">CMakeLists.txt</a></li>
+      <li><span class="dir">app/</span></li>
+      <li><span class="dir">mathlib/</span></li>
+      <li><a href="tutorial.md">tutorial.md</a></li>
+    </ul>
+    <p class="hint">直接打开源文件可以查看完整示例；Markdown 原文保留在本目录的 tutorial.md。</p>
+  </footer>
+</div>
+</body>
+</html>
