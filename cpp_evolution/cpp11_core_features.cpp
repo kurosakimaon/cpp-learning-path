@@ -34,14 +34,22 @@
 #include <mutex>
 #include <future>
 #include <array>
+#include <forward_list>
 #include <unordered_map>
 #include <tuple>
+#include <condition_variable>
+#include <iterator>
 #include <type_traits>
 #include <algorithm>
 #include <numeric>
 #include <initializer_list>
 #include <utility>
 #include <sstream>
+#include <cstdio>
+#include <functional>
+#include <atomic>
+#include <cstddef>
+#include <stdexcept>
 
 // ============================================================================
 // 1. auto 与 decltype —— 类型推导
@@ -83,6 +91,8 @@ void demo() {
     decltype(baz()) d3 = baz();   // const int&
 
     std::cout << "auto 推导结果都是值类型，decltype 保留引用和const\n";
+    std::cout << "  a1=" << a1 << ", a2=" << a2 << ", a3=" << a3 << "\n";
+    std::cout << "  d1=" << d1 << ", d2=" << d2 << ", d3=" << d3 << "\n";
 
     // 尾置返回类型的应用
     auto result = add(std::string("hello "), std::string("world"));
@@ -108,10 +118,14 @@ void demo() {
     std::cout << "decltype((x)) 是 int&，因为 (x) 是左值表达式\n";
     std::cout << "decltype(*p)  是 int&，因为解引用返回左值\n";
     std::cout << "decltype(x++) 是 int，因为后置++返回纯右值\n";
+    std::cout << "  var1=" << var1 << ", var2=" << var2 << ", var3=" << var3
+              << ", var4=" << var4 << ", var5=" << var5 << "\n";
 
     // 经典用法：获取函数返回类型
     using FuncType = decltype(&add<int, double>);
-    std::cout << "add<int,double> 的类型可以通过 decltype 获取\n";
+    FuncType fp = &add<int, double>;
+    std::cout << "add<int,double> 的类型可以通过 decltype 获取，"
+              << "调用结果 = " << fp(1, 2.5) << "\n";
 }
 
 } // namespace section1_auto_decltype
@@ -126,22 +140,29 @@ namespace section2_move_semantics {
 // - 右值引用允许我们"偷取"临时对象的资源，避免不必要的拷贝
 //
 // 值类别体系（C++11 后）：
-// - 左值 (lvalue): 有身份、不能被移动 -> T& 绑定
+// - 左值 (lvalue): 有身份；不能直接绑定到 T&&，需要 std::move 转成将亡值
 // - 将亡值 (xvalue): 有身份、可以被移动 -> T&& 绑定
 // - 纯右值 (prvalue): 无身份、可以被移动 -> const T& 或 T&& 绑定
 // 其中 xvalue + prvalue 统称为右值 (rvalue)
+//
+// 注意：std::move 本身不移动任何东西，它只是把左值转换成将亡值（右值引用），
+// 真正“偷资源”的是移动构造/移动赋值。
 
 class BigData {
 public:
-    BigData(size_t size = 1024) : size_(size), data_(new int[size]) {
+    BigData(std::size_t size = 1024) : size_(size), data_(new int[size]) {
         std::cout << "  BigData 构造（分配 " << size_ << " 个元素）\n";
         std::fill(data_, data_ + size_, 0);
     }
 
     // 拷贝构造函数（深拷贝）
-    BigData(const BigData& other) : size_(other.size_), data_(new int[other.size_]) {
+    BigData(const BigData& other)
+        : size_(other.size_),
+          data_(other.size_ ? new int[other.size_] : nullptr) {
+        if (size_ > 0) {
+            std::copy(other.data_, other.data_ + other.size_, data_);
+        }
         std::cout << "  BigData 拷贝构造（深拷贝 " << size_ << " 个元素）\n";
-        std::copy(other.data_, other.data_ + other.size_, data_);
     }
 
     // 移动构造函数（窃取资源）
@@ -152,13 +173,17 @@ public:
         other.data_ = nullptr;  // 关键：将源对象置空
     }
 
-    // 拷贝赋值
+    // 拷贝赋值：先分配并拷贝新资源，成功后再释放旧资源
+    // 这样即使分配失败，原对象也保持完整（强异常安全）
     BigData& operator=(const BigData& other) {
         if (this != &other) {
+            int* new_data = other.size_ ? new int[other.size_] : nullptr;
+            if (other.size_ > 0) {
+                std::copy(other.data_, other.data_ + other.size_, new_data);
+            }
             delete[] data_;
+            data_ = new_data;
             size_ = other.size_;
-            data_ = new int[size_];
-            std::copy(other.data_, other.data_ + other.size_, data_);
             std::cout << "  BigData 拷贝赋值\n";
         }
         return *this;
@@ -181,10 +206,10 @@ public:
         delete[] data_;
     }
 
-    size_t size() const { return size_; }
+    std::size_t size() const { return size_; }
 
 private:
-    size_t size_;
+    std::size_t size_;
     int* data_;
 };
 
@@ -296,8 +321,9 @@ void demo() {
     std::cout << "mixed() 后 x=" << x << ", y=" << y << "（x不变，y变）\n";
 
     // mutable lambda：修改值捕获的变量
-    auto counter = [count = 0]() mutable {
-        return ++count;
+    int counter_value = 0;
+    auto counter = [counter_value]() mutable {
+        return ++counter_value;
     };
     std::cout << "mutable counter: ";
     for (int i = 0; i < 5; i++) {
@@ -348,7 +374,7 @@ void demo() {
 namespace section4_smart_ptr {
 
 // C++11 引入的三种智能指针：
-// - unique_ptr: 独占所有权，不可拷贝，可移动，零开销
+// - unique_ptr: 独占所有权，不可拷贝，可移动；默认删除器时大小与裸指针相同
 // - shared_ptr: 共享所有权，引用计数，开销较大
 // - weak_ptr:   不拥有所有权，配合 shared_ptr 解决循环引用
 //
@@ -400,7 +426,7 @@ void demo() {
 
     std::cout << "--- 4.1 unique_ptr（独占所有权） ---\n";
     {
-        std::unique_ptr<Resource> p1 = std::make_unique<Resource>("A");
+        std::unique_ptr<Resource> p1(new Resource("A"));
         p1->use();
 
         // 不能拷贝
@@ -451,7 +477,7 @@ void demo() {
 
     std::cout << "\n--- 4.4 工厂模式中的应用 ---\n";
     auto factory = []() -> std::unique_ptr<Resource> {
-        return std::make_unique<Resource>("C");
+        return std::unique_ptr<Resource>(new Resource("C"));
     };
     auto r = factory();
     r->use();
@@ -469,8 +495,9 @@ void demo() {
 namespace section5_misc {
 
 // nullptr: 类型安全的空指针
-// - NULL 本质是 0（宏定义），在重载解析时会有歧义
-// - nullptr 是 std::nullptr_t 类型，可以隐式转换为任何指针类型
+// - NULL 是宏，通常展开为 0 或编译器内置的空指针常量，具体实现不一
+// - 因此 NULL 在重载解析中的行为不直观，容易选错重载
+// - nullptr 是 std::nullptr_t 类型，只能转换为指针，不会转成整数
 void func(int)   { std::cout << "  调用 func(int)\n"; }
 void func(int*)  { std::cout << "  调用 func(int*)\n"; }
 
@@ -550,7 +577,7 @@ public:
     NonCopyable() = default;
     NonCopyable(const NonCopyable&) = delete;
     NonCopyable& operator=(const NonCopyable&) = delete;
-    // 移动构造也被隐式删除（声明了拷贝构造/赋值后不会自动生成移动操作）
+    // 注意：声明了拷贝构造/赋值后，编译器不会自动生成移动操作（移动被抑制）
 };
 
 // 阻止特定类型的重载
@@ -563,7 +590,7 @@ void demo() {
     std::cout << "--- 5.1 nullptr vs NULL ---\n";
     func(0);        // 调用 func(int)
     func(nullptr);  // 调用 func(int*)
-    // func(NULL);  // 在某些编译器上有歧义
+    // func(NULL);  // 取决于 NULL 的实现，可能选错重载或产生歧义
     std::cout << "  nullptr 是类型安全的空指针常量\n";
 
     std::cout << "\n--- 5.2 强类型枚举（enum class） ---\n";
@@ -598,7 +625,7 @@ void demo() {
     std::cout << "\n--- 5.6 初始化列表与统一初始化 ---\n";
     MyContainer mc = {1, 2, 3, 4, 5};  // 使用 initializer_list 构造
     std::cout << "  mc.data() = [";
-    for (size_t i = 0; i < mc.data().size(); i++) {
+    for (std::size_t i = 0; i < mc.data().size(); i++) {
         if (i > 0) std::cout << ", ";
         std::cout << mc.data()[i];
     }
@@ -606,14 +633,22 @@ void demo() {
     mc.append({6, 7, 8});
     std::cout << "  append 后 size = " << mc.data().size() << "\n";
 
-    // 统一初始化的好处：可以防止"最令人烦恼的解析"(most vexing parse)
+    // 注意 () 和 {} 的选择：{} 优先匹配 initializer_list 构造函数
     std::vector<int> v1(10, 5);  // 10 个元素，每个值为 5
     std::vector<int> v2{10, 5};  // 2 个元素：10 和 5
     std::cout << "  v1(size, value) 大小: " << v1.size() << "\n";
     std::cout << "  v2{list} 大小: " << v2.size() << "\n";
 
+    // {} 还能阻止窄化转换：
+    // int x{3.14};             // 编译错误（() 和 = 会截断）
+    // 也能避免 most vexing parse：
+    // std::vector<int> v3();   // 这是函数声明，不是对象
+    // std::vector<int> v4{};   // 默认构造一个空 vector
+    std::cout << "  int x{3.14} 会被编译器拒绝（窄化转换）\n";
+
     std::cout << "\n--- 5.7 default / delete ---\n";
     NonCopyable obj;
+    (void)obj;
     // NonCopyable obj2 = obj;  // 错误！拷贝构造被删除
     // accept_int(3.14);       // 错误！double 版本被删除
     std::cout << "  NonCopyable 类禁止拷贝\n";
@@ -625,7 +660,13 @@ void demo() {
     std::cout << "  std::array 排序后: ";
     for (int n : arr) std::cout << n << " ";
     std::cout << "\n";
-    std::cout << "  std::array 大小固定，栈上分配，比原生数组更安全\n";
+    std::cout << "  std::array 大小固定、元素连续存放，不会退化成指针\n";
+    std::cout << "  operator[] 不检查越界，at() 会检查并抛出 std::out_of_range\n";
+    try {
+        arr.at(10);  // 越界，at() 会抛异常
+    } catch (const std::out_of_range& e) {
+        std::cout << "  arr.at(10) 抛出异常: " << e.what() << "\n";
+    }
 }
 
 } // namespace section5_misc
@@ -700,10 +741,110 @@ void demo() {
     std::thread ta2(atomic_increment, 10000);
     ta1.join();
     ta2.join();
-    std::cout << "  原子计数: " << atomic_counter.load() << "（期望 20000，无锁）\n";
+    std::cout << "  原子计数: " << atomic_counter.load()
+              << "（期望 20000，is_lock_free="
+              << std::boolalpha << atomic_counter.is_lock_free() << "）\n";
 }
 
 } // namespace section6_threading
+
+// ============================================================================
+// 7. 补充：tuple、forward_list、override/final、condition_variable
+// ============================================================================
+namespace section7_extra {
+
+void demo_tuple() {
+    std::cout << "\n--- 7.1 std::tuple ---\n";
+    std::tuple<std::string, int, double> person("Alice", 30, 165.5);
+
+    std::cout << "  get<0> = " << std::get<0>(person)
+              << ", get<1> = " << std::get<1>(person)
+              << ", get<2> = " << std::get<2>(person) << "\n";
+    std::cout << "  tuple_size = "
+              << std::tuple_size<decltype(person)>::value << "\n";
+
+    std::string name;
+    int age = 0;
+    double height = 0.0;
+    std::tie(name, age, height) = person;  // tie 解包到已有变量
+    std::cout << "  tie 解包后: " << name << ", " << age << ", " << height << "\n";
+}
+
+void demo_forward_list() {
+    std::cout << "\n--- 7.2 std::forward_list ---\n";
+    std::forward_list<int> fl = {1, 2, 3};
+    fl.push_front(0);              // 0,1,2,3
+    auto it = fl.begin();
+    std::advance(it, 2);           // 指向 2
+    fl.insert_after(it, 99);       // 0,1,2,99,3
+    fl.erase_after(fl.begin());    // 删除 1 -> 0,2,99,3
+
+    std::cout << "  内容: ";
+    for (int n : fl) std::cout << n << " ";
+    std::cout << "\n";
+    // forward_list 为了省空间不提供 size()，需要 O(n) 数一遍
+    std::cout << "  distance(begin,end) = "
+              << std::distance(fl.begin(), fl.end()) << "\n";
+    std::cout << "  特点：单链表，只能向前遍历；插入/删除不影响其他元素的迭代器\n";
+}
+
+struct BaseShape {
+    virtual ~BaseShape() = default;
+    virtual void describe() const { std::cout << "  BaseShape\n"; }
+};
+
+struct CircleShape : BaseShape {
+    void describe() const override { std::cout << "  CircleShape\n"; }
+};
+
+struct FinalCircle final : CircleShape {
+    void describe() const override { std::cout << "  FinalCircle\n"; }
+};
+
+void demo_override_final() {
+    std::cout << "\n--- 7.3 override / final ---\n";
+    CircleShape circle;
+    FinalCircle final_circle;
+    BaseShape& b1 = circle;
+    BaseShape& b2 = final_circle;
+    b1.describe();
+    b2.describe();
+    std::cout << "  override：签名写错时直接编译报错，避免“以为覆盖了其实没覆盖”\n";
+    std::cout << "  final：禁止继续派生（用在类上）或禁止继续覆盖（用在虚函数上）\n";
+}
+
+void demo_condition_variable() {
+    std::cout << "\n--- 7.4 std::condition_variable ---\n";
+    std::mutex mtx;
+    std::condition_variable cv;
+    bool ready = false;
+
+    std::thread worker([&]() {
+        std::unique_lock<std::mutex> lock(mtx);
+        // 谓词版 wait 会自动处理虚假唤醒
+        cv.wait(lock, [&]() { return ready; });
+        std::cout << "  工作线程被唤醒，ready = " << std::boolalpha << ready << "\n";
+    });
+
+    {
+        std::lock_guard<std::mutex> lock(mtx);
+        ready = true;
+    }
+    cv.notify_one();
+    worker.join();
+
+    std::cout << "  用法：互斥量保护条件，wait 等待，notify 唤醒；条件要用谓词复查\n";
+}
+
+void demo() {
+    std::cout << "\n===== 7. 其他 C++11 特性 =====\n";
+    demo_tuple();
+    demo_forward_list();
+    demo_override_final();
+    demo_condition_variable();
+}
+
+} // namespace section7_extra
 
 // ============================================================================
 // 主函数
@@ -720,6 +861,7 @@ int main() {
     section4_smart_ptr::demo();
     section5_misc::demo();
     section6_threading::demo();
+    section7_extra::demo();
 
     std::cout << "\n============================================================\n";
     std::cout << "  C++11 总结：引入了类型推导、移动语义、lambda、智能指针、\n";

@@ -344,11 +344,19 @@ public:
         std::ostringstream oss;
         int indentLevel = 0;
         for (const auto& line : lines) {
-            if (line == "}") indentLevel = std::max(0, indentLevel - 1);
+            // 取出去掉前导空白后的内容，才能正确识别行首的 } 和行尾的 {
+            size_t first = line.find_first_not_of(" \t");
+            std::string trimmed = (first == std::string::npos) ? "" : line.substr(first);
+
+            if (!trimmed.empty() && trimmed.front() == '}') {
+                indentLevel = std::max(0, indentLevel - 1);
+            }
             oss << indentStrategy_->getIndent(indentLevel)
                 << line
                 << newlineStrategy_->getNewline();
-            if (line == "{") indentLevel++;
+            if (!trimmed.empty() && trimmed.back() == '{') {
+                indentLevel++;
+            }
         }
         return oss.str();
     }
@@ -372,10 +380,11 @@ private:
  * - 符合"组合优于继承"
  *
  * 模板方法（继承）：
- * - 通过继承改变算法的某些步骤
- * - 编译时确定，不能运行时切换
+ * - 在基类中固定算法骨架，通过继承重写某些步骤
+ * - 步骤通过虚函数在运行时分派，但具体子类在创建对象时就已选定，
+ *   通常不能在同一对象上运行期间切换算法
  * - 子类可以访问父类的 protected 成员
- * - 代码复用性更高（公共部分在父类）
+ * - 公共步骤可复用（公共部分在父类）
  */
 
 // 模板方法示例
@@ -409,7 +418,8 @@ class UpperCaseProcessor : public DataProcessor {
 protected:
     std::string transform(const std::string& data) override {
         std::string result = data;
-        std::transform(result.begin(), result.end(), result.begin(), ::toupper);
+        std::transform(result.begin(), result.end(), result.begin(),
+                       [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
         return result;
     }
 };
@@ -568,7 +578,7 @@ void testTemplateMethod() {
 
     std::cout << "\n  策略模式 vs 模板方法:" << std::endl;
     std::cout << "  策略模式: 组合, 运行时切换, 更灵活" << std::endl;
-    std::cout << "  模板方法: 继承, 编译时确定, 代码复用性高" << std::endl;
+    std::cout << "  模板方法: 继承, 由子类定制部分步骤, 骨架固定" << std::endl;
 }
 
 int main() {

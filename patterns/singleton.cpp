@@ -98,6 +98,10 @@ EagerSingleton EagerSingleton::instance_;
  * 特点：首次使用时才创建实例，实现懒加载
  * 优点：延迟初始化，节省资源
  * 缺点：多线程环境下不安全，可能创建多个实例
+ *
+ * 注意：本示例用 new 创建后不释放，让实例与进程同生命周期。
+ * 这是常见做法，但严格的内存泄漏检查工具仍会报告它；生产代码应明确
+ * 由谁负责销毁，或改用第 4 节的 Meyers 单例（静态对象会自动析构）。
  */
 class LazySingleton {
 public:
@@ -116,6 +120,9 @@ public:
     void doSomething() const {
         std::cout << "[LazySingleton] 执行操作, id = " << id_ << std::endl;
     }
+
+    // 只读接口：查询已创建实例的数量，便于测试验证
+    static int getCreatedCount() { return count_; }
 
 private:
     LazySingleton() : id_(++count_) {
@@ -142,6 +149,9 @@ int LazySingleton::count_ = 0;
  * 注意：在C++11之前，DCL由于指令重排问题可能失效。
  * C++11及以后，使用std::atomic和memory_order_acquire/memory_order_release
  * 可以正确实现DCL。
+ *
+ * 注意：与懒汉式一样，这里的实例用 new 创建且不释放，生命周期等同于进程。
+ * 若需要确定性的析构，请使用第 4 节的 Meyers 单例。
  */
 class ThreadSafeSingleton {
 public:
@@ -214,12 +224,14 @@ public:
     }
 
     void doSomething() const {
-        std::cout << "[MeyersSingleton] 执行操作, counter = " << counter_ << std::endl;
+        std::cout << "[MeyersSingleton] 执行操作, counter = " << counter_.load() << std::endl;
     }
 
     void increment() {
         ++counter_;
     }
+
+    int getCounter() const { return counter_.load(); }
 
 private:
     MeyersSingleton() : counter_(0) {
@@ -230,7 +242,7 @@ private:
         std::cout << "[MeyersSingleton] 析构函数被调用" << std::endl;
     }
 
-    int counter_;
+    std::atomic<int> counter_;
 };
 
 
@@ -325,6 +337,7 @@ void testThreadSafety() {
 
     constexpr int numThreads = 10;
     std::vector<std::thread> threads;
+    const int before = MeyersSingleton::getInstance().getCounter();
 
     // 测试Meyers单例的线程安全性
     for (int i = 0; i < numThreads; ++i) {
@@ -340,9 +353,9 @@ void testThreadSafety() {
         t.join();
     }
 
-    std::cout << "最终 counter = " << MeyersSingleton::getInstance().counter_ << std::endl;
-    // 注意：counter_在这里可以访问是因为我们在测试中故意将其暴露
-    // 实际使用中应该通过接口访问
+    const int after = MeyersSingleton::getInstance().getCounter();
+    std::cout << "最终 counter = " << after << std::endl;
+    assert(after == before + numThreads);
 }
 
 // 测试依赖注入方案
@@ -392,7 +405,7 @@ int main() {
     std::cout << "\n=== 2. 懒汉式单例（非线程安全） ===" << std::endl;
     LazySingleton::getInstance()->doSomething();
     LazySingleton::getInstance()->doSomething();
-    std::cout << "  count_ = " << LazySingleton::count_
+    std::cout << "  count_ = " << LazySingleton::getCreatedCount()
               << " (如果等于1说明只有一个实例)" << std::endl;
 
     std::cout << "\n=== 3. 线程安全单例（DCL） ===" << std::endl;

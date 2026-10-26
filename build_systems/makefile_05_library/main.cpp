@@ -4,6 +4,7 @@
  */
 
 #include <iostream>
+#include <cstring>
 #include "math_utils.h"
 #include "string_utils.h"
 

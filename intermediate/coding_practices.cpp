@@ -10,11 +10,13 @@
 
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <memory>
 #include <stdexcept>
 #include <fstream>
 #include <algorithm>
+#include <cmath>
 
 using namespace std;
 
@@ -180,7 +182,8 @@ void codeFormatExample()
 //   year1, month1, day1 - 第一个日期
 //   year2, month2, day2 - 第二个日期
 // 返回值：天数差（正数，取绝对值）
-// 注意：使用儒略日算法，支持公元前年份（用负数表示）
+// 注意：使用格里高利历的儒略日公式，仅适用于公元后的日期；
+//       公元前年份不要用这个简化公式（它没有做对应的历法修正）。
 // ============================================================
 int daysBetweenDates(int year1, int month1, int day1,
                      int year2, int month2, int day2)
@@ -362,6 +365,12 @@ public:
         // 析构函数绝对不能抛异常！
         delete[] m_data;
     }
+
+    // 拥有裸指针的类必须自己管理拷贝；否则默认浅拷贝会让两个对象
+    // 持有同一块内存，析构时 double free。本示例只演示异常安全，
+    // 不实现深拷贝，因此直接禁用拷贝。
+    BasicSafeExample(const BasicSafeExample&) = delete;
+    BasicSafeExample& operator=(const BasicSafeExample&) = delete;
 
     // 这个函数提供基本保证：
     // 如果抛异常，对象还是有效的（资源不泄漏）
@@ -723,7 +732,7 @@ void trap_floatCompare()
 
     // 正确做法：用一个很小的epsilon做范围比较
     const double EPS = 1e-9;
-    bool equal = abs(a - b) < EPS;
+    bool equal = std::abs(a - b) < EPS;
     cout << "  正确比较：abs(a - b) < 1e-9 ? " << (equal ? "true" : "false") << endl;
 }
 

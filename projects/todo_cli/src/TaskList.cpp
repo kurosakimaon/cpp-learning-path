@@ -27,6 +27,24 @@ int TaskList::addTask(const Task& task) {
 }
 
 // ================================================================
+//  从存储导入任务（保留原 ID）
+// ================================================================
+
+void TaskList::importTasks(const std::vector<Task>& tasks) {
+    for (const auto& task : tasks) {
+        tasks_.push_back(task);
+        if (task.getId() >= next_id_) {
+            next_id_ = task.getId() + 1;
+        }
+    }
+}
+
+void TaskList::clear() {
+    tasks_.clear();
+    next_id_ = 1;
+}
+
+// ================================================================
 //  删除任务
 // ================================================================
 

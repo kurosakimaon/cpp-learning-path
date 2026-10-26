@@ -105,6 +105,7 @@ public:
 
     // 转成序列化字符串（用于保存到文件）
     // 格式：id|title|description|priority|due_date|completed|created_at|tag1,tag2
+    // 字段内的 \、|、, 会用反斜杠转义
     std::string serialize() const;
 
     // 从序列化字符串解析

@@ -40,6 +40,10 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)   # 必须支持 C++17，不支持就报错
 set(CMAKE_CXX_EXTENSIONS OFF)         # 禁用 GNU 扩展，用纯标准 C++
 
+# 所有可执行文件和动态库统一放到 build/bin/ 下。
+# 这样 Windows 下动态库和 exe 在同一目录，运行时能找到 DLL。
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+
 # 构建目录的位置——其实不用设，外部构建的时候自然在 build 里
 # 这里只是提一下有这些变量
 
@@ -159,10 +163,12 @@ target_link_libraries(myproject_app
 )
 
 # 编译宏定义
-# 把构建类型传给 C++ 代码
+# 把构建类型传给 C++ 代码。
+# 用 $<CONFIG> 而不是 CMAKE_BUILD_TYPE：后者在 Visual Studio、
+# Xcode 这类多配置生成器里是空的，$<CONFIG> 则在两种生成器下都正确。
 target_compile_definitions(myproject_app
     PRIVATE
-        BUILD_TYPE="${CMAKE_BUILD_TYPE}"
+        BUILD_TYPE="$<CONFIG>"
 )
 
 # 编译警告——用我们自定义的模块
@@ -238,10 +244,28 @@ install(EXPORT myproject-targets
     DESTINATION lib/cmake/myproject
 )
 
-# 【老师傅补充】
-# 真正要做 find_package 支持，还需要写一个 myproject-config.cmake
-# 以及版本配置文件。那属于比较高级的内容了，咱这个例子就点到为止。
-# 有兴趣自己去查查 CMake 官方文档里的 "installing exports"。
+# 光有 targets 文件还不够：find_package(myproject CONFIG) 找的是
+# myproject-config.cmake，所以还得生成并安装这个入口文件，
+# 以及供版本检查用的 myproject-config-version.cmake。
+include(CMakePackageConfigHelpers)
+
+configure_package_config_file(
+    "${CMAKE_CURRENT_SOURCE_DIR}/cmake/myproject-config.cmake.in"
+    "${CMAKE_CURRENT_BINARY_DIR}/myproject-config.cmake"
+    INSTALL_DESTINATION lib/cmake/myproject
+)
+
+write_basic_package_version_file(
+    "${CMAKE_CURRENT_BINARY_DIR}/myproject-config-version.cmake"
+    VERSION ${PROJECT_VERSION}
+    COMPATIBILITY SameMajorVersion
+)
+
+install(FILES
+    "${CMAKE_CURRENT_BINARY_DIR}/myproject-config.cmake"
+    "${CMAKE_CURRENT_BINARY_DIR}/myproject-config-version.cmake"
+    DESTINATION lib/cmake/myproject
+)
 
 
 # ============================================================

@@ -23,11 +23,29 @@
 # ============================================================
 
 
+# ---- 可执行文件后缀 ----
+# Windows 上 g++ 会自动生成 main.exe，目标名也得跟着带 .exe。
+# 用 uname 判断平台：某些 make/终端环境里 OS 变量不一定存在。
+UNAME_S := $(shell uname -s 2>/dev/null)
+ifeq ($(OS),Windows_NT)
+    EXE := .exe
+else ifneq (,$(findstring MINGW,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring MSYS,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring CYGWIN,$(UNAME_S)))
+    EXE := .exe
+else
+    EXE :=
+endif
+TARGET := main$(EXE)
+
+
 # ---- 第一条规则：最终目标 ----
-# 目标名叫 main，要想生成 main，得有 main.cpp 这个依赖
+# 目标名叫 main（Windows 上是 main.exe），得有 main.cpp 这个依赖
 # 怎么生成？用 g++ 编译
-main: main.cpp
-	g++ -o main main.cpp
+$(TARGET): main.cpp
+	g++ -o $@ main.cpp
 #   ^
 #   |
 #   这里是 TAB，不是空格！！！
@@ -54,7 +72,7 @@ main: main.cpp
 # 目标叫 clean，没有依赖（就是纯粹要执行一些命令）
 # 作用是删除编译出来的可执行文件，让项目回到"干净"状态
 clean:
-	rm -f main
+	rm -f main main.exe
 #
 # 【解释】
 # clean 这个目标比较特殊：

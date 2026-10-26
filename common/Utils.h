@@ -114,12 +114,29 @@ private:
 // ============================================================================
 template <typename T>
 std::string type_name() {
+    // __FUNCSIG__ 只有 MSVC 提供；GCC/Clang 使用 __PRETTY_FUNCTION__。
+    // 两者签名格式不同，因此提取方式也不同。
+#if defined(_MSC_VER)
     std::string name = __FUNCSIG__;
-    // 从函数签名中提取类型名
-    // 不同编译器格式略有不同，这里做通用处理
-    size_t begin = name.find("type_name<") + 10;
-    size_t end = name.rfind(">");
-    if (begin != std::string::npos && end != std::string::npos && end > begin) {
+    // 形如：std::string __cdecl utils::type_name<int>(void)
+    size_t begin = name.find("type_name<");
+    if (begin == std::string::npos) return name;
+    begin += 10;
+    size_t end = name.rfind('>');
+#elif defined(__GNUC__) || defined(__clang__)
+    std::string name = __PRETTY_FUNCTION__;
+    // GCC:   std::string utils::type_name() [with T = int; ...]
+    // Clang: std::string utils::type_name() [T = int]
+    size_t begin = name.find("T = ");
+    if (begin == std::string::npos) return name;
+    begin += 4;
+    size_t end = name.find(';', begin);
+    if (end == std::string::npos) end = name.find(']', begin);
+#else
+    return "unknown";
+#endif
+
+    if (end != std::string::npos && end > begin) {
         return name.substr(begin, end - begin);
     }
     return name;

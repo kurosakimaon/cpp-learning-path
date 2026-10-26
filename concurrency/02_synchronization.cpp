@@ -18,6 +18,7 @@
 #include <vector>
 #include <chrono>
 #include <string>
+#include <atomic>
 
 using namespace std;
 
@@ -30,7 +31,9 @@ using namespace std;
 // 互斥锁就是厕所门上的锁，一个人进去锁上，其他人就得在外面等。
 
 // 这是一个"不安全"的计数器，多线程同时++会出问题
-int unsafeCounter = 0;
+// volatile 只是避免编译器把循环优化成一次加法，方便观察竞态；
+// 它不提供原子性，也不是同步手段
+volatile int unsafeCounter = 0;
 
 // 这是一个"安全"的计数器，用 mutex 保护
 int safeCounter = 0;
@@ -184,7 +187,19 @@ void recursiveFunc(int depth) {
 timed_mutex timedMtx;
 
 void demo_timed_mutex() {
-    // try_lock_for：等一段时间，拿到就返回 true，超时返回 false
+    // 先让另一个线程持有锁 300ms，这样主线程才能观察到“超时”。
+    atomic<bool> holder_locked{false};
+    thread holder([&holder_locked] {
+        timedMtx.lock();
+        holder_locked.store(true);
+        this_thread::sleep_for(chrono::milliseconds(300));
+        timedMtx.unlock();
+    });
+    while (!holder_locked.load()) {
+        this_thread::yield();  // 等 holder 真正拿到锁
+    }
+
+    // try_lock_for：最多等 100ms，拿不到就返回 false
     if (timedMtx.try_lock_for(chrono::milliseconds(100))) {
         safePrint("  timed_mutex：等了一会儿，拿到锁了！");
         timedMtx.unlock();
@@ -192,7 +207,9 @@ void demo_timed_mutex() {
         safePrint("  timed_mutex：等超时了，没拿到锁");
     }
 
-    // try_lock_until：等到某个时间点
+    holder.join();  // 等 holder 释放锁
+
+    // try_lock_until：等到某个时间点；此时锁已空闲，应当成功
     auto deadline = chrono::steady_clock::now() + chrono::milliseconds(50);
     if (timedMtx.try_lock_until(deadline)) {
         safePrint("  timed_mutex：在截止时间前拿到锁了！");
@@ -209,7 +226,8 @@ void demo_timed_mutex() {
 //   - 但有人要写书（写操作）的时候，其他人都得出去
 //   - 反过来，有人在看书，写书的人也得等大家都看完
 // 这就是读写锁：读读不互斥，读写互斥，写写互斥。
-// 适合读多写少的场景，性能比普通 mutex 好。
+// 适合读多写少、且读临界区有一定长度的场景；性能不一定比 mutex 好，
+// 读操作极短或竞争激烈时，shared_mutex 的实现开销可能反而更大。
 
 shared_mutex shMtx;
 string sharedData = "初始内容";  // 共享数据
@@ -253,12 +271,15 @@ void producer(int id, int count) {
     for (int i = 1; i <= count; ++i) {
         this_thread::sleep_for(chrono::milliseconds(15));  // 生产需要时间
 
+        int product = id * 100 + i;  // 产品编号：生产者号 + 序号
         {
+            // 临界区只保护队列，不要把 cout 的 I/O 也包进来：
+            // 持锁做 I/O 会拉长临界区，还可能引入不必要的锁顺序问题。
             lock_guard<mutex> lock(queueMutex);
-            productQueue.push(id * 100 + i);  // 产品编号：生产者号 + 序号
-            safePrint("  生产者" + to_string(id) + " 生产了产品 " + to_string(id * 100 + i));
+            productQueue.push(product);
         }
         cv.notify_one();  // 通知一个消费者：有货了！
+        safePrint("  生产者" + to_string(id) + " 生产了产品 " + to_string(product));
     }
 
     // 生产完毕，设置标志并通知所有消费者
@@ -316,7 +337,13 @@ void demo1_why_synchronize() {
     thread t2(unsafeIncrement, TIMES);
     t1.join();
     t2.join();
-    cout << "不加锁的结果：" << unsafeCounter << "（应该是 " << 2 * TIMES << "，错了吧？）" << endl;
+    if (unsafeCounter != 2 * TIMES) {
+        cout << "不加锁的结果：" << unsafeCounter
+             << "（应该是 " << 2 * TIMES << "，少了！）" << endl;
+    } else {
+        cout << "不加锁的结果：" << unsafeCounter
+             << "（这次碰巧对了，但这是数据竞争/UB，换次调度就可能出错）" << endl;
+    }
 
     // 安全的版本
     safeCounter = 0;
@@ -403,7 +430,8 @@ void demo7_shared_mutex() {
     cout << "【老师傅讲解】" << endl;
     cout << "读写锁的规则：读读共享，读写互斥，写写互斥。" << endl;
     cout << "读多用 shared_lock（共享模式），写用 unique_lock（独占模式）。" << endl;
-    cout << "读多写少的场景用它，性能比普通 mutex 好不少。" << endl;
+    cout << "它在读多写少时可能更有优势，但并非一定比 mutex 快；" << endl;
+    cout << "临界区很短时，读写锁自身的开销可能占主导。" << endl;
     cout << endl;
 
     vector<thread> threads;
@@ -453,6 +481,48 @@ void demo8_condition_variable() {
     prod.join();
     cons1.join();
     cons2.join();
+}
+
+// ============================================================
+// 十、std::call_once —— 只初始化一次
+// ============================================================
+// 【老师傅的比喻】
+// 开张前要挂招牌，不管来多少个伙计，招牌只挂一次。
+// call_once 就是干这个的：多个线程同时调用，也只有一个线程
+// 真正执行初始化函数，其他线程会等它完成。
+//
+// 它比“自己用 bool 标志 + 锁”更可靠，因为标准库保证了
+// 初始化函数完成与其他线程返回之间的同步关系。
+
+once_flag initFlag;
+int initializedValue = 0;
+int initCallCount = 0;
+
+void initializeOnce() {
+    // 故意不加锁，call_once 保证这段代码只被执行一次
+    ++initCallCount;
+    initializedValue = 42;
+    safePrint("  [call_once] 初始化执行了（应该只看到一次）");
+}
+
+void demo9_call_once() {
+    cout << "\n========== 示例9：std::call_once ==========" << endl;
+    cout << "【老师傅讲解】" << endl;
+    cout << "5 个线程同时抢着初始化，但初始化函数只会执行一次。" << endl;
+    cout << endl;
+
+    vector<thread> threads;
+    for (int i = 0; i < 5; ++i) {
+        threads.emplace_back([i]() {
+            call_once(initFlag, initializeOnce);
+            // call_once 返回后，初始化一定已经完成，读值安全
+            safePrint("  线程" + to_string(i) + " 看到初始化值: "
+                      + to_string(initializedValue));
+        });
+    }
+    for (auto& t : threads) t.join();
+
+    cout << "实际初始化执行次数: " << initCallCount << "（预期 1）" << endl;
 }
 
 // ============================================================
@@ -546,6 +616,7 @@ int main() {
     demo6_timed_mutex();        // 超时锁
     demo7_shared_mutex();       // 读写锁
     demo8_condition_variable(); // 条件变量
+    demo9_call_once();          // 只初始化一次
 
     lock_comparison();          // 锁的对比总结
     laoShiFuDeHua();            // 老师傅的话

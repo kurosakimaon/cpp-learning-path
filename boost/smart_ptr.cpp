@@ -10,13 +10,14 @@
  *   6. 与 C++11 std::shared_ptr / std::unique_ptr 的对比
  *
  * Boost 优势：
- *   - Boost.SmartPtr 是 C++11 标准智能指针的原型和参考实现
+ *   - Boost.SmartPtr 中的 shared_ptr/weak_ptr 是 C++11 标准的原型；
+ *     unique_ptr 则是标准库自己的设计，并非直接来自 Boost
  *   - 提供 intrusive_ptr 等标准库没有的智能指针
  *   - 支持更丰富的删除器语义和数组支持
  *   - 与 Boost 其他库（如 Boost.Asio、Boost.Serialization）深度集成
  *
  * 编译命令（示例）：
- *   g++ -std=c++17 smart_ptr.cpp -o smart_ptr -lboost_system
+ *   g++ -std=c++17 smart_ptr.cpp -o smart_ptr   （智能指针库是头文件实现）
  */
 
 #include <iostream>
@@ -278,8 +279,8 @@ int main() {
         // 3.1 错误示范：循环引用导致内存泄漏
         std::cout << "3.1 循环引用（BadCase - 会泄漏）:" << std::endl;
         {
-            boost::shared_ptr<BadNode> a(new BadNode{"A"});
-            boost::shared_ptr<BadNode> b(new BadNode{"B"});
+            boost::shared_ptr<BadNode> a(new BadNode{"A", nullptr});
+            boost::shared_ptr<BadNode> b(new BadNode{"B", nullptr});
             a->next = b;  // a 引用 b (ref_count(b) = 2)
             b->next = a;  // b 引用 a (ref_count(a) = 2)
             // 离开作用域时：a 析构 -> ref_count(a) = 1, b 析构 -> ref_count(b) = 1
@@ -290,8 +291,8 @@ int main() {
         // 3.2 正确示范：使用 weak_ptr
         std::cout << "3.2 使用 weak_ptr（GoodCase - 正确释放）:" << std::endl;
         {
-            boost::shared_ptr<GoodNode> a(new GoodNode{"A"});
-            boost::shared_ptr<GoodNode> b(new GoodNode{"B"});
+            boost::shared_ptr<GoodNode> a(new GoodNode{"A", boost::weak_ptr<GoodNode>()});
+            boost::shared_ptr<GoodNode> b(new GoodNode{"B", boost::weak_ptr<GoodNode>()});
             a->next = b;  // weak_ptr 不增加引用计数
             b->next = a;  // weak_ptr 不增加引用计数
 
@@ -326,12 +327,13 @@ int main() {
         }
         std::cout << "  p2/p3 释放后引用计数: " << p1->ref_count() << std::endl;
 
-        // intrusive_ptr 的优势：可以从裸指针安全构造
-        std::cout << "4.2 从裸指针构造（shared_ptr 不能这么做）:" << std::endl;
+        // intrusive_ptr 可以从裸指针安全构造：它直接复用对象内部的引用计数
+        std::cout << "4.2 从裸指针构造（intrusive_ptr 共享已有引用计数）:" << std::endl;
         RefCounted* raw = p1.get();
         boost::intrusive_ptr<RefCounted> p4(raw);  // 安全：共享同一个引用计数
         std::cout << "  p4 从裸指针构造后引用计数: " << p1->ref_count() << std::endl;
-        // 注意：shared_ptr 这样做会导致两个独立的引用计数，最终双重释放！
+        // 注意：shared_ptr 也能从裸指针构造，但如果这块内存已经被另一个
+        // shared_ptr 管理，就会产生两套独立的引用计数，最终双重释放。
     }
 
     // --------------------------------------------------------
@@ -351,7 +353,7 @@ int main() {
                   << (s1.use_count() == s2.use_count() ? "是（共享）" : "否") << std::endl;
 
         // 注意：对象必须已经被 shared_ptr 管理才能调用 shared_from_this()
-        // 否则会抛出 bad_weak_ptr 异常（或在旧版本中是未定义行为）
+        // 否则 shared_from_this() 会抛出 boost::bad_weak_ptr 异常
     }
 
     // --------------------------------------------------------

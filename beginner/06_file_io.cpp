@@ -228,7 +228,7 @@ int main()
     // 七、文件定位（seekg / seekp）
     // ============================================================
     cout << "===== 7. 文件定位 =====" << endl;
-    cout << "文件里有个"指针"，指向当前读写的位置" << endl;
+    cout << "文件里有个“指针”，指向当前读写的位置" << endl;
     cout << "  - seekg / tellg：操作读指针（get）" << endl;
     cout << "  - seekp / tellp：操作写指针（put）" << endl;
     cout << endl;
@@ -268,7 +268,7 @@ int main()
     // 八、stringstream 的使用
     // ============================================================
     cout << "===== 8. stringstream 的使用 =====" << endl;
-    cout << "stringstream 把字符串当"流"来操作，可以从字符串里读，也可以往里写" << endl;
+    cout << "stringstream 把字符串当“流”来操作，可以从字符串里读，也可以往里写" << endl;
     cout << "特别适合：字符串分割、类型转换、字符串拼接等场景" << endl;
     cout << endl;
 

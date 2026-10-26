@@ -3,10 +3,42 @@
 // ================================================================
 
 #include "Command.h"
+#include <cctype>
 #include <iostream>
 #include <sstream>
 
 namespace todo {
+
+namespace {
+
+// 截止日期统一用 YYYY-MM-DD 格式。
+// 因为排序直接按字符串比较，只有这个格式下字典序才等于时间顺序。
+bool isValidDate(const std::string& s) {
+    if (s.size() != 10 || s[4] != '-' || s[7] != '-') {
+        return false;
+    }
+    for (size_t i : {0u, 1u, 2u, 3u, 5u, 6u, 8u, 9u}) {
+        if (!std::isdigit(static_cast<unsigned char>(s[i]))) {
+            return false;
+        }
+    }
+
+    const int year = std::stoi(s.substr(0, 4));
+    const int month = std::stoi(s.substr(5, 2));
+    const int day = std::stoi(s.substr(8, 2));
+
+    if (month < 1 || month > 12) {
+        return false;
+    }
+    static const int days_per_month[] =
+        {31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+    const bool leap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    const int max_day = days_per_month[month - 1] + (month == 2 && leap ? 1 : 0);
+
+    return day >= 1 && day <= max_day;
+}
+
+} // namespace
 
 // ================================================================
 //  AddCommand —— 添加任务
@@ -23,6 +55,11 @@ AddCommand::AddCommand(std::string title,
 }
 
 CommandResult AddCommand::execute(TaskList& tasks, Storage& storage) {
+    if (!due_date_.empty() && !isValidDate(due_date_)) {
+        return CommandResult::error(
+            "截止日期格式不对，应为 YYYY-MM-DD（例如 2024-12-31）");
+    }
+
     Task task(title_);
     task.setPriority(priority_);
     task.setDueDate(due_date_);
@@ -34,7 +71,13 @@ CommandResult AddCommand::execute(TaskList& tasks, Storage& storage) {
 
     // 自动保存（可选，这里我们每次修改都自动保存）
     // 如果不想每次都存，可以改成手动 save 命令
-    storage.save(tasks.getAllTasks());
+    // 注意：保存失败要告诉用户，否则用户以为数据已经落盘了。
+    if (!storage.save(tasks.getAllTasks())) {
+        std::ostringstream oss;
+        oss << "已添加任务 #" << id << ": " << title_
+            << "，但保存到文件失败（数据只在内存中）";
+        return CommandResult::error(oss.str());
+    }
 
     std::ostringstream oss;
     oss << "已添加任务 #" << id << ": " << title_;
@@ -60,7 +103,12 @@ CommandResult DeleteCommand::execute(TaskList& tasks, Storage& storage) {
     std::string title = task->getTitle();
     tasks.deleteTask(task_id_);
 
-    storage.save(tasks.getAllTasks());
+    if (!storage.save(tasks.getAllTasks())) {
+        std::ostringstream oss;
+        oss << "已删除任务 #" << task_id_ << ": " << title
+            << "，但保存到文件失败（数据只在内存中）";
+        return CommandResult::error(oss.str());
+    }
 
     std::ostringstream oss;
     oss << "已删除任务 #" << task_id_ << ": " << title;
@@ -77,7 +125,7 @@ ListCommand::ListCommand()
     , pending_only_(false) {
 }
 
-CommandResult ListCommand::execute(TaskList& tasks, Storage& storage) {
+CommandResult ListCommand::execute(TaskList& tasks, Storage&) {
     // 第一步：获取排序后的列表
     std::vector<Task> sorted;
     if (sort_by_ == "priority") {
@@ -145,14 +193,18 @@ CommandResult CompleteCommand::execute(TaskList& tasks, Storage& storage) {
     // 重新获取（因为 toggle 后状态变了）
     task = tasks.findTask(task_id_);
 
-    storage.save(tasks.getAllTasks());
+    std::string state = task->isCompleted() ? "已完成" : "已取消完成";
+    std::string title = task->getTitle();
+
+    if (!storage.save(tasks.getAllTasks())) {
+        std::ostringstream oss;
+        oss << state << "任务 #" << task_id_ << ": " << title
+            << "，但保存到文件失败（数据只在内存中）";
+        return CommandResult::error(oss.str());
+    }
 
     std::ostringstream oss;
-    if (task->isCompleted()) {
-        oss << "已完成任务 #" << task_id_ << ": " << task->getTitle();
-    } else {
-        oss << "已取消完成任务 #" << task_id_ << ": " << task->getTitle();
-    }
+    oss << state << "任务 #" << task_id_ << ": " << title;
     return CommandResult::ok(oss.str());
 }
 
@@ -173,52 +225,23 @@ CommandResult SaveCommand::execute(TaskList& tasks, Storage& storage) {
 // ================================================================
 
 CommandResult LoadCommand::execute(TaskList& tasks, Storage& storage) {
+    // 文件不存在时不能把内存里的任务清空：
+    // 用户可能是误删了文件，直接清空再自动保存会把数据彻底弄丢。
+    if (!storage.exists()) {
+        return CommandResult::error(
+            "文件不存在，当前任务未改变（可先用 save 创建文件）");
+    }
+
     std::vector<Task> loaded;
     if (!storage.load(loaded)) {
-        return CommandResult::error("加载失败");
+        return CommandResult::error("加载失败，当前任务未改变");
     }
 
-    // 清空现有任务，添加新加载的
-    // 这里我们用一个简单的方法：清空后逐个添加
-    // 更好的做法是给 TaskList 加个 replaceAll 方法
-    // 但为了简单，我们直接操作
-
-    // 注意：这里我们用了一个"技巧"
-    // 因为 TaskList 没有提供批量替换的方法，
-    // 我们就先全部删除再添加。
-    // 实际项目中应该给 TaskList 加合适的方法。
-
-    // 简单做法：把所有任务的 ID 收集起来，然后逐个删
-    // （其实更简单的是直接改内部，但我们保持封装）
-    while (!tasks.empty()) {
-        int id = tasks.getAllTasks().front().getId();
-        tasks.deleteTask(id);
-    }
-
-    for (const auto& task : loaded) {
-        // 注意：addTask 会重新分配 ID
-        // 我们需要保留原来的 ID，所以直接构造时就带好 ID
-        // 这里我们修改一下：直接添加，不重新分配
-        // （实际上 addTask 会覆盖 ID，所以我们需要另一个方法）
-        //
-        // 为了保持简单，我们用一个变通方法：
-        // 先加进去，再把 ID 改回来
-        int new_id = tasks.addTask(task);
-        Task* t = tasks.findTask(new_id);
-        if (t) {
-            t->setId(task.getId());
-        }
-    }
-
-    // 更新 next_id
-    int max_id = 0;
-    for (const auto& t : tasks.getAllTasks()) {
-        if (t.getId() > max_id) max_id = t.getId();
-    }
-    // 注意：next_id_ 是私有成员，我们没法直接设
-    // 实际项目中应该给 TaskList 加 setNextId 方法
-    // 这里为了简化，我们接受 addTask 时重新生成 ID 的行为
-    // （不影响功能，只是 ID 可能不连续）
+    // 加载成功后才清空旧任务并导入文件中的任务。
+    // importTasks 会保留原 ID，并把 next_id_ 更新为“最大 ID + 1”，
+    // 这样后续 add 不会和已加载任务的 ID 撞车。
+    tasks.clear();
+    tasks.importTasks(loaded);
 
     std::ostringstream oss;
     oss << "已加载 " << loaded.size() << " 个任务";
@@ -229,10 +252,10 @@ CommandResult LoadCommand::execute(TaskList& tasks, Storage& storage) {
 //  HelpCommand —— 帮助
 // ================================================================
 
-CommandResult HelpCommand::execute(TaskList& tasks, Storage& storage) {
+CommandResult HelpCommand::execute(TaskList&, Storage&) {
     std::ostringstream oss;
     oss << "可用命令：" << std::endl;
-    oss << "  add <标题> [-p high|medium|low] [-d 日期] [-t 标签1,标签2]" << std::endl;
+    oss << "  add <标题> [-p high|medium|low] [-d YYYY-MM-DD] [-t 标签1,标签2]" << std::endl;
     oss << "      添加新任务" << std::endl;
     oss << "  delete <ID>" << std::endl;
     oss << "      删除指定任务" << std::endl;
@@ -261,9 +284,11 @@ CommandResult HelpCommand::execute(TaskList& tasks, Storage& storage) {
 //  ExitCommand —— 退出
 // ================================================================
 
-CommandResult ExitCommand::execute(TaskList& tasks, Storage& storage) {
-    // 退出前自动保存
-    storage.save(tasks.getAllTasks());
+CommandResult ExitCommand::execute(TaskList&, Storage&) {
+    // 修改类命令（add/delete/complete）在每次操作后已经自动保存；
+    // 退出时不再无条件重写文件。这样只读文件或未做修改时退出，
+    // 不会出现"保存失败"的误报，也不会无谓地重排文件内容。
+    // 如果之前的自动保存失败，命令当时已经明确提示过用户。
     return CommandResult::exit();
 }
 

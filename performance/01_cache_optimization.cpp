@@ -36,11 +36,11 @@ using namespace std::chrono;
 //
 //    CPU 寄存器  →  最快，几个字节，就在运算单元旁边
 //       ↓
-//    L1 缓存    →  非常快，几十 KB，每个核心独享
+//    L1 缓存    →  非常快，几十 KB，通常每个核心独享
 //       ↓  约 1ns
-//    L2 缓存    →  比较快，几百 KB，每个核心独享
+//    L2 缓存    →  比较快，几百 KB，通常每个核心独享（部分架构是核心簇共享）
 //       ↓  约 3-5ns
-//    L3 缓存    →  还行，几 MB ~ 几十 MB，多核共享
+//    L3 缓存    →  还行，几 MB ~ 几十 MB，通常多核共享（拓扑因 CPU 而异）
 //       ↓  约 10-20ns
 //    内存 RAM   →  慢，几十 GB，全机共享
 //       ↓  约 100ns
@@ -66,16 +66,20 @@ using namespace std::chrono;
 //  理解了这些，你就能写出"缓存友好"的代码了。
 //
 
-// 辅助函数：获取当前时间点（高精度）
-inline high_resolution_clock::time_point now() {
-    return high_resolution_clock::now();
+// 辅助函数：获取当前时间点
+// 用 steady_clock：它保证单调递增，不会被系统时间调整影响，适合做基准测试
+inline steady_clock::time_point now() {
+    return steady_clock::now();
 }
 
 // 辅助函数：计算耗时（毫秒）
-inline double elapsed_ms(high_resolution_clock::time_point start,
-                         high_resolution_clock::time_point end) {
+inline double elapsed_ms(steady_clock::time_point start,
+                         steady_clock::time_point end) {
     return duration<double, milli>(end - start).count();
 }
+
+// 防止编译器把“结果没人用”的计算整个优化掉
+volatile double g_double_sink = 0.0;
 
 // ================================================================
 //  二、行优先 vs 列优先遍历（二维数组）
@@ -89,11 +93,13 @@ inline double elapsed_ms(high_resolution_clock::time_point start,
 //  内存里长这样：
 //    [第0行: 0,0 | 0,1 | 0,2 | ...] [第1行: 1,0 | 1,1 | ...] ...
 //
-//  所以如果你按"行优先"遍历（先变列，再变行），
-//  每次访问的都是内存里相邻的元素 → 空间局部性好 → 缓存命中率高
+//  所以如果你按“行优先”遍历（外层循环走行，内层循环走列，
+//  列下标变化最快），每次访问的都是内存里相邻的元素
+//  → 空间局部性好 → 缓存命中率高
 //
-//  反过来，按"列优先"遍历（先变行，再变列），
-//  每次跳一行，内存里隔得很远 → 空间局部性差 → 缓存命中率低
+//  反过来，按“列优先”遍历（外层循环走列，内层循环走行，
+//  行下标变化最快），每次跳一整行，内存里隔得很远
+//  → 空间局部性差 → 缓存命中率低
 //
 //  理论说了不算，我们来实测一下！
 //
@@ -141,25 +147,31 @@ void demo_row_vs_col_major() {
             mat[i][j] = i * MATRIX_SIZE + j;
 
     // 行优先
-    cout << "\n  【行优先遍历】（先变列，再变行）" << endl;
+    cout << "\n  【行优先遍历】（外层走行，内层走列）" << endl;
     double t_row = row_major_traversal(mat);
     cout << "  耗时: " << fixed << setprecision(2) << t_row << " ms" << endl;
 
     // 列优先
-    cout << "\n  【列优先遍历】（先变行，再变列）" << endl;
+    cout << "\n  【列优先遍历】（外层走列，内层走行）" << endl;
     double t_col = col_major_traversal(mat);
     cout << "  耗时: " << fixed << setprecision(2) << t_col << " ms" << endl;
 
     // 对比
     cout << "\n  ---- 对比 ----" << endl;
-    cout << "  行优先比列优先快: " << fixed << setprecision(1)
-         << (t_col / t_row) << " 倍" << endl;
+    if (t_row > 0.0) {
+        cout << "  行优先比列优先快: " << fixed << setprecision(1)
+             << (t_col / t_row) << " 倍" << endl;
+    }
     cout << endl;
     cout << "  为什么差这么多？" << endl;
     cout << "  行优先：每次访问的是内存里相邻的元素，" << endl;
-    cout << "          CPU 把一整行搬进缓存后，后面的访问都命中缓存。" << endl;
-    cout << "  列优先：每次跳一行，内存里隔了几千字节，" << endl;
-    cout << "          几乎每次都要重新从内存加载缓存行。" << endl;
+    cout << "          CPU 把一整行搬进缓存后，后面的访问大都命中缓存。" << endl;
+    cout << "  列优先：每次跳一整行（本例约 4000 字节），" << endl;
+    cout << "          一个缓存行里的其他数据暂时用不上，" << endl;
+    cout << "          矩阵较大时还会频繁访问更外层缓存甚至内存。" << endl;
+    cout << endl;
+    cout << "  注意：这里用的是 vector<vector<int>>，每一行都是独立分配的内存。" << endl;
+    cout << "  行与行之间不保证连续，列优先的跳跃会更不友好。" << endl;
 }
 
 // ================================================================
@@ -179,6 +191,10 @@ void demo_row_vs_col_major() {
 //  - 空间浪费 → 缓存能装的对象变少 → 缓存命中率下降
 //
 //  来看例子：
+//
+//  注意：下面的大小和布局基于常见的 64 位平台（x86-64 / AArch64），
+//  char=1、int=4、double=8，double 对齐到 8 字节。
+//  不同平台、不同编译器的对齐规则可能不同，永远以 sizeof/alignof 实测为准。
 //
 
 // 排列不好的结构体（小大交错，浪费空间）
@@ -215,7 +231,7 @@ void demo_struct_padding() {
     cout << "    实际大小: " << sizeof(GoodStruct) << " 字节" << endl;
 
     cout << "\n  为什么会这样？" << endl;
-    cout << "  编译器要保证每个成员都"对齐"：" << endl;
+    cout << "  编译器要保证每个成员都“对齐”：" << endl;
     cout << "    - char   对齐到 1 字节（随便放）" << endl;
     cout << "    - int    对齐到 4 字节（地址末两位是 00）" << endl;
     cout << "    - double 对齐到 8 字节（地址末三位是 000）" << endl;
@@ -234,9 +250,14 @@ void demo_struct_padding() {
     cout << "\n  省了多少？" << (sizeof(BadStruct) - sizeof(GoodStruct))
          << " 字节 / 每个对象" << endl;
     cout << "  如果有 100 万个对象，就省了 "
-         << (sizeof(BadStruct) - sizeof(GoodStruct)) * 1000000 / 1024 / 1024
+         << fixed << setprecision(1)
+         << (sizeof(BadStruct) - sizeof(GoodStruct)) * 1000000.0 / 1024 / 1024
          << " MB！" << endl;
-    cout << "  省空间 = 更多数据进缓存 = 更快！" << endl;
+    cout << "  省空间 = 更多数据能装进缓存 = 通常更快。" << endl;
+    cout << endl;
+    cout << "  但别盲目重排：如果结构体要按固定格式序列化、传给 C 接口，" << endl;
+    cout << "  或者属于对外 ABI 的一部分，成员顺序不能随便改。" << endl;
+    cout << "  这种场合请用显式的序列化代码，而不是依赖内存布局。" << endl;
 }
 
 // ================================================================
@@ -247,9 +268,10 @@ void demo_struct_padding() {
 //  数组查找 O(1)，插入删除 O(n)
 //  链表查找 O(n)，插入删除 O(1)
 //
-//  但实际跑起来，链表就算只做遍历，都比数组慢得多！
+//  但实际跑起来，数据量大、节点分散时，
+//  链表就算只做遍历，都可能比数组慢得多！
 //  为什么？因为链表的节点在内存里是散的，
-//  每个节点都要重新从内存加载 → 缓存几乎不命中。
+//  每跳一个节点都可能是一次缓存不命中。
 //
 //  而数组是连续的，遍历的时候缓存命中率极高。
 //
@@ -313,14 +335,21 @@ void demo_array_vs_list() {
         cur = next;
     }
 
-    cout << "\n  你会发现，链表遍历慢很多（可能 2-5 倍，甚至更多）。" << endl;
+    cout << "\n  你会发现，链表遍历慢很多。" << endl;
+    cout << "  本机可能快几十倍，具体倍数取决于数据量、内存布局和缓存大小。" << endl;
+    cout << "  注意：本示例是单次计时，数字只作演示，不是严谨基准；" << endl;
+    cout << "        紧循环里连续 new 的节点往往落在相邻页上，并没有刻意打散。" << endl;
     cout << "  为什么？" << endl;
-    cout << "    数组：内存连续，CPU 预取（prefetch）效果好，缓存命中率高。" << endl;
-    cout << "    链表：节点散落在内存各处，next 指针一跳就是随机位置，" << endl;
-    cout << "          几乎每次都缓存不命中，要等内存。" << endl;
+    cout << "    数组：内存连续，CPU 预取（prefetch）效果好，缓存命中率高，" << endl;
+    cout << "          也更容易被编译器向量化。" << endl;
+    cout << "    链表：每个节点要追一次 next 指针，难以向量化；" << endl;
+    cout << "          节点分散时还会频繁缓存不命中，要等更慢的内存。" << endl;
+    cout << "     （想单独观察缓存影响，可以把节点分配顺序随机化再测。）" << endl;
     cout << endl;
-    cout << "  结论：能用数组/vector，就别用链表。" << endl;
-    cout << "       现代 CPU 上，连续内存 = 性能！" << endl;
+    cout << "  结论：如果主要操作是遍历、随机访问，优先用 vector。" << endl;
+    cout << "       链表的插入/删除虽然是 O(1)，但前提是你已经拿到了插入位置；" << endl;
+    cout << "       查找这个位置本身通常是 O(n)，节点还要额外存指针，内存开销也更大。" << endl;
+    cout << "       所以“链表插入快”不能脱离使用场景来谈。" << endl;
 }
 
 // ================================================================
@@ -391,15 +420,23 @@ void demo_soa_vs_aos() {
         particles_aos[i].mass = 1.0;
     }
 
-    // 只更新位置（只用 x, y, vx, vy，不用 mass）
+    // 只更新 x（只用 x 和 vx，y/vy/mass 都不碰）
     auto start = now();
     for (int i = 0; i < N; ++i) {
         particles_aos[i].x += particles_aos[i].vx;
-        particles_aos[i].y += particles_aos[i].vy;
     }
     auto end = now();
+    double t_aos = elapsed_ms(start, end);
+
+    // 读取全部结果，防止编译器判定这些写入“没人用”而删掉循环
+    double check_aos = 0.0;
+    for (int i = 0; i < N; ++i) {
+        check_aos += particles_aos[i].x;
+    }
+    g_double_sink = check_aos;
     cout << "    更新位置耗时: " << fixed << setprecision(2)
-         << elapsed_ms(start, end) << " ms" << endl;
+         << t_aos << " ms" << endl;
+    cout << "    校验和: " << setprecision(0) << check_aos << endl;
 
     // ---- SOA ----
     cout << "\n  【SOA - Structure of Arrays】" << endl;
@@ -416,26 +453,45 @@ void demo_soa_vs_aos() {
         particles_soa.vy[i] = i * 0.02;
     }
 
-    // 只更新位置
+    // 只更新 x
     start = now();
     for (int i = 0; i < N; ++i) {
         particles_soa.x[i] += particles_soa.vx[i];
-        particles_soa.y[i] += particles_soa.vy[i];
     }
     end = now();
+    double t_soa = elapsed_ms(start, end);
+
+    double check_soa = 0.0;
+    for (int i = 0; i < N; ++i) {
+        check_soa += particles_soa.x[i];
+    }
+    g_double_sink = check_soa;
     cout << "    更新位置耗时: " << fixed << setprecision(2)
-         << elapsed_ms(start, end) << " ms" << endl;
+         << t_soa << " ms" << endl;
+    cout << "    校验和: " << setprecision(0) << check_soa << endl;
+
+    cout << "\n  数据一致性检查：" << endl;
+    cout << "    AOS 和 SOA 的校验和应当相同：" << endl;
+    cout << "    AOS = " << setprecision(0) << check_aos
+         << ", SOA = " << check_soa << endl;
 
     cout << "\n  解释：" << endl;
-    cout << "  AOS 的每个粒子 40 字节，你加载一个缓存行（64 字节），" << endl;
-    cout << "  只能装 1 个多粒子的完整数据，而且 mass 字段你根本不用。" << endl;
-    cout << "  SOA 的 x 数组全是 double，一个缓存行能装 8 个 x 值，" << endl;
-    cout << "  全部都是你要用的数据，缓存利用率拉满！" << endl;
+    cout << "  本例只访问 x 和 vx 两个字段。" << endl;
+    cout << "  AOS 的每个粒子占 40 字节，x 和 vx 之间还隔着 y；" << endl;
+    cout << "  一个 64 字节缓存行只能覆盖一个多粒子，" << endl;
+    cout << "  y/vy/mass 这些用不到的数据也被一起搬进了缓存。" << endl;
+    cout << "  SOA 的 x、vx 各自是连续数组，缓存行里几乎全是你要用的数据。" << endl;
+    if (t_soa > 0.0) {
+        cout << "  本次实测：AOS / SOA = " << fixed << setprecision(2)
+             << (t_aos / t_soa) << " 倍" << endl;
+    }
     cout << endl;
-    cout << "  注意：SOA 不是银弹。" << endl;
+    cout << "  注意：SOA 不是银弹，差距也不是固定的。" << endl;
+    cout << "  它取决于数据量、缓存大小、访问哪些字段、编译器的向量化能力。" << endl;
     cout << "  - 如果你的访问模式是'每次都用所有字段'，AOS 可能更好。" << endl;
-    cout << "  - 如果你的访问模式是'每次只用某几个字段'，SOA 优势明显。" << endl;
+    cout << "  - 如果你的访问模式是'每次只用某几个字段'，SOA 通常更有优势。" << endl;
     cout << "  - 游戏引擎、物理模拟、数据处理……这些领域 SOA 用得很多。" << endl;
+    cout << "  别背结论，改一改参数，自己测一遍。" << endl;
 }
 
 // ================================================================
@@ -475,11 +531,15 @@ int main() {
     cout << "  你今天懂了缓存，就已经超过了一半的 C++ 程序员。" << endl;
     cout << endl;
     cout << "  记住几个核心要点：" << endl;
-    cout << "    1. 连续内存是性能之友。能用数组就别用链表。" << endl;
+    cout << "    1. 连续内存通常是性能之友：遍历、随机访问优先 vector。" << endl;
     cout << "    2. 遍历的时候，按内存顺序走（行优先）。" << endl;
-    cout << "    3. 结构体成员按大小排序，减少 padding。" << endl;
+    cout << "    3. 结构体成员按大小排序，通常能减少 padding。" << endl;
     cout << "    4. 如果只用部分字段，考虑 SOA 布局。" << endl;
-    cout << "    5. 性能瓶颈通常不在算法，而在内存访问模式。" << endl;
+    cout << "    5. 在算法复杂度相同的前提下，性能瓶颈常常在内存访问模式。" << endl;
+    cout << endl;
+    cout << "  但别忘了：算法复杂度才是第一位的。" << endl;
+    cout << "  一个 O(n²) 的算法，缓存优化得再好，也打不过 O(n log n)。" << endl;
+    cout << "  先选对算法和数据结构，再谈缓存友好。" << endl;
     cout << endl;
     cout << "  最后送你一句话：" << endl;
     cout << "  「写代码的时候，脑子里要有内存的样子。」" << endl;

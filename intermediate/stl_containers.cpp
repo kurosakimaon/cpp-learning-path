@@ -8,6 +8,7 @@
 // ============================================================
 
 #include <iostream>
+#include <chrono>
 #include <vector>
 #include <list>
 #include <deque>
@@ -16,15 +17,12 @@
 
 #include <map>
 #include <set>
-#include <multimap>
-#include <multiset>
 
 #include <unordered_map>
 #include <unordered_set>
 
 #include <stack>
 #include <queue>
-#include <priority_queue>
 
 #include <string>
 #include <algorithm>
@@ -623,58 +621,56 @@ void howToChoose()
 
 void performanceCompare()
 {
-    cout << "\n=== 10. 简易性能对比（10万条数据）===" << endl;
+    cout << "\n=== 10. 简易性能对比（100万条数据）===" << endl;
+    // 说明：这是单次运行的粗略计时，不是严谨的 benchmark。
+    // 用 steady_clock 量真实经过时间；clock() 量的是进程 CPU 时间，
+    // 而且在 Windows 上精度往往只有几十毫秒，不适合这种短测试。
 
-    const int N = 100000;
-    clock_t start, end;
+    const int N = 1000000;
+    auto now = [] { return std::chrono::steady_clock::now(); };
+    auto ms_since = [](std::chrono::steady_clock::time_point start) {
+        return std::chrono::duration<double, std::milli>(
+                   std::chrono::steady_clock::now() - start).count();
+    };
 
     // vector 尾插
     vector<int> vec;
-    start = clock();
+    auto t0 = now();
     for (int i = 0; i < N; ++i)
         vec.push_back(i);
-    end = clock();
-    cout << "  vector push_back: "
-         << (double)(end - start) / CLOCKS_PER_SEC * 1000 << " ms" << endl;
+    cout << "  vector push_back: " << ms_since(t0) << " ms" << endl;
 
     // list 尾插
     list<int> lst;
-    start = clock();
+    t0 = now();
     for (int i = 0; i < N; ++i)
         lst.push_back(i);
-    end = clock();
-    cout << "  list push_back:   "
-         << (double)(end - start) / CLOCKS_PER_SEC * 1000 << " ms" << endl;
+    cout << "  list push_back:   " << ms_since(t0) << " ms" << endl;
 
     // deque 尾插
     deque<int> dq;
-    start = clock();
+    t0 = now();
     for (int i = 0; i < N; ++i)
         dq.push_back(i);
-    end = clock();
-    cout << "  deque push_back:  "
-         << (double)(end - start) / CLOCKS_PER_SEC * 1000 << " ms" << endl;
+    cout << "  deque push_back:  " << ms_since(t0) << " ms" << endl;
 
-    // vector 遍历
-    start = clock();
+    // 遍历时重复几遍，避免耗时太短、计时噪声占主导
     long long sum = 0;
-    for (int x : vec) sum += x;
-    end = clock();
-    cout << "  vector 遍历: "
-         << (double)(end - start) / CLOCKS_PER_SEC * 1000
+    t0 = now();
+    for (int round = 0; round < 10; ++round)
+        for (int x : vec) sum += x;
+    cout << "  vector 遍历 x10: " << ms_since(t0)
          << " ms (sum=" << sum << ")" << endl;
 
-    // list 遍历
-    start = clock();
     sum = 0;
-    for (int x : lst) sum += x;
-    end = clock();
-    cout << "  list 遍历:   "
-         << (double)(end - start) / CLOCKS_PER_SEC * 1000
+    t0 = now();
+    for (int round = 0; round < 10; ++round)
+        for (int x : lst) sum += x;
+    cout << "  list 遍历   x10: " << ms_since(t0)
          << " ms (sum=" << sum << ")" << endl;
 
-    cout << "\n  看到没？遍历速度vector碾压list，这就是缓存的力量！" << endl;
-    cout << "  数据都在一块连续内存里，CPU缓存命中率高，自然就快" << endl;
+    cout << "\n  在这台机器上，遍历速度 vector 通常明显快于 list，这就是缓存的力量；" << endl;
+    cout << "  数据连续存放，CPU 缓存命中率高。具体倍数受机器和负载影响。" << endl;
 }
 
 // ============================================================

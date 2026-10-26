@@ -22,6 +22,9 @@ add_library(mathlib STATIC
     math_functions.cpp
 )
 
+# 明确要求 C++17。PUBLIC 表示链接 mathlib 的目标也自动用 C++17。
+target_compile_features(mathlib PUBLIC cxx_std_17)
+
 # ============================================================
 #  target_include_directories：给目标指定头文件目录
 # ============================================================

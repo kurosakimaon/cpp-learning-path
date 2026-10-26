@@ -1,69 +1,37 @@
-/*
- * 示例4：应用程序类实现
- */
 #include "application.h"
+
+#include "calculator.h"
 #include "logger.h"
 #include "string_helper.h"
-#include <iostream>
 
-namespace app {
+#include <string>
+#include <vector>
 
-Application::Application() {
-}
+namespace demo {
 
-Application::~Application() {
-}
+int Application::run() const {
+    Calculator calculator;
 
-bool Application::init() {
-    LOG_INFO("应用程序初始化...");
-    LOG_INFO("计算器模块就绪");
-    LOG_INFO("日志模块就绪");
-    return true;
-}
+    log(LogLevel::Info, "项目构建成功，开始演示。");
 
-int Application::run() {
-    LOG_INFO("应用程序开始运行");
+    const int a = 6;
+    const int b = 7;
+    log(LogLevel::Info, std::to_string(a) + " + " + std::to_string(b) +
+                            " = " + std::to_string(calculator.add(a, b)));
+    log(LogLevel::Info, std::to_string(a) + " * " + std::to_string(b) +
+                            " = " + std::to_string(calculator.multiply(a, b)));
 
-    demo_calculator();
-    demo_string_utils();
+    const std::vector<std::string> words{"makefile", "project", "demo"};
+    log(LogLevel::Info, "拼接结果：" + join(words, " / "));
+    log(LogLevel::Info, "转大写：" + toUpper("hello, makefile"));
 
-    LOG_INFO("应用程序运行结束");
-    LOG_INFO("总共进行了 " + std::to_string(calc_.get_count()) + " 次计算");
+#ifdef DEBUG
+    log(LogLevel::Warn, "当前是 Debug 构建（定义了 DEBUG 宏）。");
+#else
+    log(LogLevel::Info, "当前是 Release 构建（未定义 DEBUG 宏）。");
+#endif
+
     return 0;
 }
 
-void Application::shutdown() {
-    LOG_INFO("应用程序关闭中...");
-}
-
-void Application::demo_calculator() {
-    std::cout << "\n===== 计算器演示 =====" << std::endl;
-
-    double a = 10.0, b = 3.0;
-
-    std::cout << a << " + " << b << " = " << calc_.add(a, b) << std::endl;
-    std::cout << a << " - " << b << " = " << calc_.subtract(a, b) << std::endl;
-    std::cout << a << " * " << b << " = " << calc_.multiply(a, b) << std::endl;
-    std::cout << a << " / " << b << " = " << calc_.divide(a, b) << std::endl;
-}
-
-void Application::demo_string_utils() {
-    std::cout << "\n===== 字符串工具演示 =====" << std::endl;
-
-    std::string s = "  Hello, World!  ";
-    std::cout << "原始字符串: '" << s << "'" << std::endl;
-    std::cout << "trim 后: '" << utils::trim(s) << "'" << std::endl;
-    std::cout << "转大写: " << utils::to_upper(utils::trim(s)) << std::endl;
-    std::cout << "转小写: " << utils::to_lower(utils::trim(s)) << std::endl;
-
-    std::string csv = "apple,banana,orange";
-    auto parts = utils::split(csv, ',');
-    std::cout << "\n分割 '" << csv << "':" << std::endl;
-    for (size_t i = 0; i < parts.size(); i++) {
-        std::cout << "  [" << i << "] " << parts[i] << std::endl;
-    }
-
-    std::cout << "用 ' - ' 重新拼接: " << utils::join(parts, " - ") << std::endl;
-}
-
-} // namespace app
+} // namespace demo

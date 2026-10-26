@@ -12,7 +12,8 @@
  * 7. 右值引用与函数重载决议
  *
  * 编译命令: g++ -std=c++17 -Wall -Wextra -pedantic -fno-elide-constructors move_semantics_advanced.cpp -o move_semantics_advanced
- * （加 -fno-elide-constructors 可以禁用 RVO，更清楚地观察移动语义）
+ * （-fno-elide-constructors 只关闭可选的复制消除（如 NRVO）；
+ *    C++17 对返回纯右值的强制复制消除不受影响）
  */
 
 #include <iostream>
@@ -21,6 +22,7 @@
 #include <utility>
 #include <type_traits>
 #include <memory>
+#include <cstring>
 #include <algorithm>
 #include <chrono>
 
@@ -59,12 +61,14 @@ struct TrackedObject {
     // 拷贝赋值
     TrackedObject& operator=(const TrackedObject& other) {
         if (this != &other) {
-            delete[] data;
+            // 先分配新资源，成功后再释放旧资源，避免 new 抛异常后留下悬空指针
+            int* fresh = new int[other.size];
+            std::copy(other.data, other.data + other.size, fresh);
 
+            delete[] data;
+            data = fresh;
             name = other.name + "_copy";
             size = other.size;
-            data = new int[size];
-            std::copy(other.data, other.data + size, data);
             std::cout << "  [" << name << "] 拷贝赋值 (从 " << other.name << ")\n";
         }
         return *this;
@@ -76,11 +80,12 @@ struct TrackedObject {
           data(other.data),
           size(other.size)
     {
-        // 窃取资源，将源对象置为空状态
+        // 窃取资源，将源对象置为空状态。
+        // 注意：noexcept 函数里不能再做可能分配内存的操作（例如字符串拼接），
+        // 否则抛异常会直接 std::terminate。
         other.data = nullptr;
         other.size = 0;
-        other.name += "_moved";
-        std::cout << "  [" << name << "] 移动构造 (从 " << other.name << ")\n";
+        std::cout << "  [" << name << "] 移动构造\n";
     }
 
     // 移动赋值
@@ -97,9 +102,8 @@ struct TrackedObject {
             // 置空源对象
             other.data = nullptr;
             other.size = 0;
-            other.name += "_moved";
 
-            std::cout << "  [" << name << "] 移动赋值 (从 " << other.name << ")\n";
+            std::cout << "  [" << name << "] 移动赋值\n";
         }
         return *this;
     }
@@ -133,16 +137,17 @@ namespace value_categories {
 //  |     |         |     |
 // lvalue  xvalue  xvalue prvalue
 //
-// lvalue（左值）：有身份，不能被移动
+// lvalue（左值）：有身份，不能直接移动
 //   - 变量名、函数名、数据成员
 //   - 返回左值引用的函数调用 (T&)
 //   - 解引用表达式 (*p)
 //   - 下标表达式 (a[i]，数组的情况)
+//   - 注意：用 std::move(lvalue) 可以把它转成 xvalue 再移动
 //
 // prvalue（纯右值）：没有身份，可以被移动
-//   - 字面量 (42, 3.14, "hello")
+//   - 字面量 (42, 3.14)；字符串字面量 "hello" 是数组左值，不是 prvalue
 //   - 返回非引用的函数调用
-//   - 临时对象 (Foo(1, 2))
+//   - 临时对象表达式 (Foo(1, 2))
 //   - 算术/逻辑/比较表达式的结果
 //
 // xvalue（将亡值，"expiring" value）：有身份，可以被移动
@@ -156,7 +161,8 @@ namespace value_categories {
 // 判断口诀：
 //   - 能不能取地址？ 能 -> lvalue
 //   - 有没有名字？   有 -> lvalue
-//   - 是不是临时对象？是 -> prvalue
+//   - 具名对象 -> lvalue
+//   - 纯右值临时对象（未经过 std::move）-> prvalue
 //   - std::move() 的结果 -> xvalue
 
 // 1.1 左值 vs 右值的基本区分
@@ -365,7 +371,7 @@ template <typename T>
 void bad_forward(T t) {
     // t 始终是左值（有名字的变量都是左值）
     // 即使传入的是右值，到这里也变成了左值
-    TrackedObject::bad_forward_demo = false;  // 占位
+    (void)t;
 }
 
 // 完美的转发
@@ -563,7 +569,7 @@ void demo_moved_from_state() {
     s1 = "new value";  // OK：可以赋值
     std::cout << "重新赋值后: s1 = \"" << s1 << "\"\n";
     s1.clear();        // OK：可以 clear
-    s1.empty();        // OK：可以查询状态
+    (void)s1.empty();  // OK：可以查询状态（返回值无副作用，忽略即可）
 
     std::cout << "\n移后状态的安全操作:\n";
     std::cout << "  - 析构（必须安全）\n";
@@ -585,10 +591,10 @@ void demo_when_to_move() {
     std::cout << "  4. 实现移动构造/赋值时，对成员使用 std::move\n\n";
 
     std::cout << "不应该用 std::move 的场景:\n";
-    std::cout << "  1. 返回局部变量（会阻碍 RVO）\n";
+    std::cout << "  1. return 局部变量时（会阻碍 NRVO）\n";
     std::cout << "  2. 对基本类型使用（int, double 等，移动就是拷贝）\n";
     std::cout << "  3. 不确定对象是否还会被使用时\n";
-    std::cout << "  4. 函数返回值（编译器会做 RVO/NRVO）\n";
+    std::cout << "  4. 返回纯右值临时对象（C++17 会强制复制消除）\n";
 }
 
 // 4.4 按值传递 + 移动的惯用法
@@ -644,8 +650,8 @@ void demo_pass_by_value() {
 namespace rvo_demo {
 
 // 5.1 RVO (Return Value Optimization)
-// 当函数返回一个临时对象时，编译器可以直接在调用方的地址上构造对象
-// 避免一次拷贝/移动
+// 当函数返回一个纯右值临时对象时，C++17 要求直接在目标位置构造，
+// 不发生拷贝或移动（guaranteed copy elision）
 
 // C++17 起，RVO 是强制性的（guaranteed copy elision）
 // 对于纯右值返回值，编译器必须省略拷贝
@@ -818,11 +824,12 @@ class StringBuffer {
     size_t capacity_;
 
 public:
-    // 默认构造
-    StringBuffer() : data_(nullptr), size_(0), capacity_(0) {}
+    // 默认构造：始终保留 1 字节存放 '\0'，避免后面 memcpy/append 读到空指针
+    StringBuffer() : data_(new char[1]{'\0'}), size_(0), capacity_(1) {}
 
     // 从 C 字符串构造
     explicit StringBuffer(const char* str) {
+        if (str == nullptr) str = "";
         size_ = std::strlen(str);
         capacity_ = size_ + 1;
         data_ = new char[capacity_];
@@ -831,7 +838,9 @@ public:
 
     // 预分配容量
     explicit StringBuffer(size_t capacity)
-        : data_(new char[capacity]), size_(0), capacity_(capacity)
+        : data_(new char[capacity == 0 ? 1 : capacity]),
+          size_(0),
+          capacity_(capacity == 0 ? 1 : capacity)
     {
         data_[0] = '\0';
     }
@@ -843,10 +852,18 @@ public:
 
     // 拷贝构造
     StringBuffer(const StringBuffer& other)
-        : size_(other.size_), capacity_(other.capacity_)
+        : data_(nullptr),
+          size_(other.size_),
+          capacity_(std::max(other.capacity_, other.size_ + 1))
     {
         data_ = new char[capacity_];
-        std::memcpy(data_, other.data_, size_ + 1);
+        if (other.data_ != nullptr) {
+            std::memcpy(data_, other.data_, size_ + 1);
+        } else {
+            // other 可能是被移动过的对象：空但合法
+            size_ = 0;
+            data_[0] = '\0';
+        }
         std::cout << "  StringBuffer 拷贝构造 (" << size_ << " bytes)\n";
     }
 
@@ -860,16 +877,13 @@ public:
         std::cout << "  StringBuffer 移动构造 (O(1))\n";
     }
 
-    // 拷贝赋值
+    // 拷贝赋值：copy-and-swap，天然提供强异常安全
     StringBuffer& operator=(const StringBuffer& other) {
         if (this != &other) {
-            if (capacity_ < other.size_ + 1) {
-                delete[] data_;
-                capacity_ = other.capacity_;
-                data_ = new char[capacity_];
-            }
-            size_ = other.size_;
-            std::memcpy(data_, other.data_, size_ + 1);
+            StringBuffer temp(other);
+            std::swap(data_, temp.data_);
+            std::swap(size_, temp.size_);
+            std::swap(capacity_, temp.capacity_);
             std::cout << "  StringBuffer 拷贝赋值 (" << size_ << " bytes)\n";
         }
         return *this;
@@ -892,12 +906,16 @@ public:
 
     // 追加字符串
     void append(const char* str) {
+        if (str == nullptr) return;
         size_t len = std::strlen(str);
+        if (len == 0) return;
         if (size_ + len + 1 > capacity_) {
             // 扩容
             size_t new_cap = std::max(capacity_ * 2, size_ + len + 1);
             char* new_data = new char[new_cap];
-            std::memcpy(new_data, data_, size_);
+            if (size_ > 0) {
+                std::memcpy(new_data, data_, size_);
+            }
             delete[] data_;
             data_ = new_data;
             capacity_ = new_cap;
@@ -909,8 +927,8 @@ public:
     // 拼接 + 移动的高效实现
     StringBuffer operator+(const StringBuffer& other) const {
         StringBuffer result(size_ + other.size_ + 1);
-        result.append(data_);
-        result.append(other.data_);
+        result.append(c_str());
+        result.append(other.c_str());
         return result;  // NRVO
     }
 

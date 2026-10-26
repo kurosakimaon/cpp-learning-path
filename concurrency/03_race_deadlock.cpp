@@ -19,6 +19,8 @@
 #include <chrono>
 #include <string>
 #include <algorithm>
+#include <climits>
+#include <stdexcept>
 
 using namespace std;
 
@@ -36,7 +38,9 @@ using namespace std;
 // 顺序不对结果就错了。
 
 // 有 bug 的计数器（竞态条件演示）
-int buggyCounter = 0;
+// volatile 只能阻止编译器把循环优化掉，让竞态更容易被观察到；
+// 它不提供原子性，也不是线程同步手段。
+volatile int buggyCounter = 0;
 
 void buggyIncrement(int times) {
     for (int i = 0; i < times; ++i) {
@@ -77,8 +81,14 @@ void demo_race_condition() {
     cout << "差了多少：" << (expected - buggyCounter) << endl;
     cout << "错误率：" << (expected - buggyCounter) * 100.0 / expected << "%" << endl;
     cout << endl;
-    cout << "看到没？差了不老少呢。而且每次跑结果可能还不一样，" << endl;
-    cout << "这就是竞态条件的'魅力'——不稳定，难复现。" << endl;
+    if (buggyCounter != expected) {
+        cout << "看到没？差了不老少呢。而且每次跑结果可能还不一样，" << endl;
+        cout << "这就是竞态条件的'魅力'——不稳定，难复现。" << endl;
+    } else {
+        cout << "这次碰巧对了，但这行代码仍然是数据竞争（UB），" << endl;
+        cout << "换个编译器、优化级别或机器就可能出错。" << endl;
+        cout << "这就是竞态条件'难复现'的可怕之处。" << endl;
+    }
 }
 
 // ============================================================
@@ -137,8 +147,10 @@ void demo_fix_race_condition() {
     cout << "原子变量版本：结果 = " << atomicCounter.load()
          << "，耗时 = " << chrono::duration_cast<chrono::milliseconds>(end2 - start2).count() << "ms" << endl;
 
-    cout << "\n看到没？结果都对，但原子变量更快。" << endl;
-    cout << "能用原子操作就别用锁，性能差不少呢。" << endl;
+    cout << "\n在这个低竞争的单变量计数例子里，原子变量更快。" << endl;
+    cout << "但别把它当成万能结论：高竞争时原子 RMW 会争用同一缓存行，" << endl;
+    cout << "未必比 mutex 快；而且原子只适合保护单个变量，" << endl;
+    cout << "多个变量要保持一致时仍然得用锁。" << endl;
 }
 
 // ============================================================
@@ -199,6 +211,8 @@ void demo_deadlock() {
     cout << "两个哲学家，两根筷子，拿的顺序相反。" << endl;
     cout << "如果运气不好，就会你等我我等你，谁也吃不上——这就是死锁。" << endl;
     cout << "为了不真的卡死程序，我用了 timed_mutex，等 500ms 等不到就放弃。" << endl;
+    cout << "注意：这是“超时模拟”，不是真正的死锁——真正的死锁会无限期等下去，" << endl;
+    cout << "把下面的 try_lock_for 换成 lock() 才会真的卡死。" << endl;
     cout << endl;
 
     // 哲学家 A：先 1 后 2
@@ -211,7 +225,7 @@ void demo_deadlock() {
             cout << "哲学家A：两根都拿到了，吃饭！" << endl;
             tFork2.unlock();
         } else {
-            cout << "哲学家A：右筷子等不到，饿死了...（死锁！）" << endl;
+            cout << "哲学家A：右筷子等不到，超时放弃（模拟死锁）" << endl;
         }
         tFork1.unlock();
     });
@@ -226,7 +240,7 @@ void demo_deadlock() {
             cout << "哲学家B：两根都拿到了，吃饭！" << endl;
             tFork1.unlock();
         } else {
-            cout << "哲学家B：左筷子等不到，饿死了...（死锁！）" << endl;
+            cout << "哲学家B：左筷子等不到，超时放弃（模拟死锁）" << endl;
         }
         tFork2.unlock();
     });
@@ -234,8 +248,9 @@ void demo_deadlock() {
     ta.join();
     tb.join();
 
-    cout << "\n看到没？两个都没吃上饭，这就是死锁的后果。" << endl;
-    cout << "实际程序里要是死锁了，那就是真卡住，啥也干不了。" << endl;
+    cout << "\n看到没？两个都没吃上饭——这里用超时模拟了循环等待。" << endl;
+    cout << "真正的死锁不会超时，而是永久阻塞；实际程序里一旦死锁，" << endl;
+    cout << "相关线程就再也无法推进。" << endl;
 }
 
 // ============================================================
@@ -391,7 +406,7 @@ void method5_hierarchical_lock() {
 
     t1.join();
     t2.join();
-    cout << "  层次锁在编译期/运行期帮你把好关，想死锁都难。" << endl;
+    cout << "  层次锁在运行期帮你把关：违反顺序会抛异常，想死锁都难。" << endl;
 }
 
 // ============================================================
@@ -409,7 +424,7 @@ void method5_hierarchical_lock() {
 // 解决办法：给每个线程加个随机等待时间，或者按固定顺序来。
 
 void demo_livelock() {
-    cout << "\n========== 示例4：活锁简介 ==========" << endl;
+    cout << "\n========== 示例4：活锁风险（重试竞争） ==========" << endl;
     cout << "【老师傅讲解】" << endl;
     cout << "活锁就是：线程都在跑，但谁也推进不了，一直在那儿'让来让去'。" << endl;
     cout << "比如两个人在走廊里遇上，你让我我让你，谁也过不去。" << endl;
@@ -418,11 +433,14 @@ void demo_livelock() {
     cout << "于是'礼貌地'先释放自己的，等一会儿再试。结果..." << endl;
     cout << "两个同时释放，同时再拿，又撞上了，无限循环。" << endl;
     cout << endl;
-    cout << "咱们用代码模拟一下（只跑几轮就停，不然真的活锁了）：" << endl;
+    cout << "下面是一个简化模拟：双方反复“拿一把、失败、放掉、重试”。" << endl;
+    cout << "注意：这更准确地说是在演示“重试竞争/饥饿风险”，" << endl;
+    cout << "      并不保证每次都构成严格意义上的活锁；活锁与调度时机密切相关。" << endl;
     cout << endl;
 
     timed_mutex m1, m2;
     atomic<int> attempts(0);
+    atomic<int> successes(0);
     const int MAX_ATTEMPTS = 5;
 
     thread ta([&]() {
@@ -431,6 +449,7 @@ void demo_livelock() {
                 this_thread::sleep_for(chrono::milliseconds(5));
                 if (m2.try_lock_for(chrono::milliseconds(10))) {
                     cout << "  线程A：终于两把都拿到了！" << endl;
+                    successes++;
                     m2.unlock();
                     m1.unlock();
                     return;
@@ -442,7 +461,7 @@ void demo_livelock() {
                 }
             }
         }
-        cout << "  线程A：试了 " << MAX_ATTEMPTS << " 次都没成，放弃了（活锁状态）" << endl;
+        cout << "  线程A：试了 " << MAX_ATTEMPTS << " 次都没成，放弃了（反复失败）" << endl;
     });
 
     thread tb([&]() {
@@ -451,6 +470,7 @@ void demo_livelock() {
                 this_thread::sleep_for(chrono::milliseconds(5));
                 if (m1.try_lock_for(chrono::milliseconds(10))) {
                     cout << "  线程B：终于两把都拿到了！" << endl;
+                    successes++;
                     m1.unlock();
                     m2.unlock();
                     return;
@@ -462,13 +482,21 @@ void demo_livelock() {
                 }
             }
         }
-        cout << "  线程B：试了 " << MAX_ATTEMPTS << " 次都没成，放弃了（活锁状态）" << endl;
+        cout << "  线程B：试了 " << MAX_ATTEMPTS << " 次都没成，放弃了（反复失败）" << endl;
     });
 
     ta.join();
     tb.join();
-    cout << "\n你看，两个线程都没闲着，但就是拿不到完整的资源。" << endl;
-    cout << "这就是活锁——忙忙碌碌，一事无成。" << endl;
+    cout << "\n本轮成功拿到两把锁的线程数: " << successes.load() << " / 2" << endl;
+    if (successes.load() < 2) {
+        cout << "有线程反复“拿到一把、让掉、再试”，忙忙碌碌却无法完成操作。" << endl;
+        cout << "这种反复失败接近活锁/饥饿：线程没被阻塞，但整体无法推进。" << endl;
+        cout << "严格意义的活锁还要求线程在不断改变状态却始终无法达成目标。" << endl;
+    } else {
+        cout << "这次调度比较友好，两个线程都成功了。" << endl;
+        cout << "活锁是调度相关的：多跑几次，可能就会看到双方不停重试的情况。" << endl;
+    }
+    cout << "解决办法：加随机退避（random backoff），别让双方总在同一节奏上重试。" << endl;
 }
 
 // ============================================================
@@ -527,10 +555,10 @@ void laoShiFuDeHua() {
     cout << "   能用消息队列通信就别共享内存，能用原子操作就别用锁。" << endl;
     cout << "   实在不行要用锁，也尽量把锁的粒度弄小一点。" << endl;
     cout << endl;
-    cout << "3. 死锁的本质是循环等待" << endl;
-    cout << "   四个必要条件里，最好下手的就是'循环等待'。" << endl;
-    cout << "   按固定顺序加锁、用 scoped_lock 同时加锁、层次锁——" << endl;
-    cout << "   本质上都是在破坏循环等待这个条件。" << endl;
+    cout << "3. 死锁需要四个必要条件同时成立" << endl;
+    cout << "   互斥、持有并等待、不可剥夺、循环等待，破坏任意一个都能防死锁。" << endl;
+    cout << "   按固定顺序加锁、层次锁主要破坏“循环等待”；" << endl;
+    cout << "   std::scoped_lock 同时锁多个互斥量，则用死锁避免算法（尝试+回退）。" << endl;
     cout << endl;
     cout << "4. 多写多练，培养'并发直觉'" << endl;
     cout << "   看多了写多了，你一看到共享数据就会本能地问自己：" << endl;

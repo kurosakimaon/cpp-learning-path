@@ -98,6 +98,7 @@ public:
     // 作用：清理资源（释放内存、关闭文件等）
     // ========================================================================
     ~Person() {
+        delete[] address;
         cout << "【析构】析构函数被调用了：" << name << " 走了..." << endl;
     }
 
@@ -117,19 +118,19 @@ public:
 
     // 先加一个指针成员，用来演示深浅拷贝问题
 private:
-    char* address;  // 住址（用char*指针，故意用来演示深浅拷贝）
+    char* address = nullptr;  // 住址（用char*指针，故意用来演示深浅拷贝）
 
 public:
     // 设置住址的函数（顺便演示深拷贝的需求）
     void setAddress(const char* addr) {
-        // 先释放旧的（如果有的话）
-        if (address != nullptr) {
-            delete[] address;
-        }
-        // 重新分配内存并复制内容 —— 这就是深拷贝的思路
-        int len = strlen(addr) + 1;
-        address = new char[len];
-        strcpy_s(address, len, addr);
+        // 先分配并复制新内容，成功后再释放旧内容。
+        // 如果先 delete 再 new，而 new 抛异常，对象就丢了原数据；
+        // 若 addr 恰好指向自己的旧缓冲区，先 delete 还会读到已释放内存。
+        size_t len = strlen(addr) + 1;
+        char* fresh = new char[len];
+        strcpy(fresh, addr);
+        delete[] address;
+        address = fresh;
     }
 
     const char* getAddress() const {
@@ -137,21 +138,37 @@ public:
     }
 
     // 自己写的拷贝构造函数 —— 深拷贝版本
-    Person(const Person& other) {
-        name   = other.name;
-        age    = other.age;
-        salary = other.salary;
-
+    Person(const Person& other)
+        : name(other.name), age(other.age), salary(other.salary), address(nullptr) {
         // 关键！指针成员要重新分配内存，然后复制内容
         if (other.address != nullptr) {
-            int len = strlen(other.address) + 1;
+            size_t len = strlen(other.address) + 1;
             address = new char[len];
-            strcpy_s(address, len, other.address);
-        } else {
-            address = nullptr;
+            strcpy(address, other.address);
         }
 
         cout << "【拷贝构造】深拷贝了一个人：" << name << endl;
+    }
+
+    // 拷贝赋值运算符 —— 同样要深拷贝，并处理自赋值
+    Person& operator=(const Person& other) {
+        if (this == &other) {
+            return *this;
+        }
+        // 先准备好一份新拷贝，再替换旧资源：
+        // 这样 new 抛异常时，原对象仍然完整（强异常安全）。
+        char* fresh = nullptr;
+        if (other.address != nullptr) {
+            size_t len = strlen(other.address) + 1;
+            fresh = new char[len];
+            strcpy(fresh, other.address);
+        }
+        delete[] address;
+        address = fresh;
+        name   = other.name;
+        age    = other.age;
+        salary = other.salary;
+        return *this;
     }
 
     // ========================================================================

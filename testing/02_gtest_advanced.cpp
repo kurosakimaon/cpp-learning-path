@@ -5,6 +5,13 @@
 // 编译命令：
 //   g++ -std=c++17 02_gtest_advanced.cpp -lgtest -lgtest_main -lpthread -o demo
 //
+// 注意：本文件有 2 个“故意失败”的用例，用于演示 SCOPED_TRACE 的定位信息：
+//   ScopedTraceTest.HelpsDebugLoopFailures
+//   ScopedTraceTest.WorksInHelperFunctions
+// 跑完整套件时看到 2 个失败是预期行为，不是代码坏了。
+// 跳过它们：
+//   demo --gtest_filter=-ScopedTraceTest.*
+//
 // ============================================================
 
 #include <gtest/gtest.h>
@@ -12,6 +19,8 @@
 #include <vector>
 #include <stdexcept>
 #include <cstdlib>
+#include <tuple>
+#include <climits>
 
 // ============================================================
 // 被测对象 1：计算器类
@@ -146,7 +155,8 @@ INSTANTIATE_TEST_SUITE_P(
 //   ASSERT_DEATH(语句, "预期的错误信息正则")
 //   ASSERT_EXIT(语句, 退出条件, "预期输出")
 //
-// 注意：死亡测试会 fork 子进程来跑，所以比较慢。
+// 注意：死亡测试在 POSIX 上通常 fork 子进程来跑，Windows 上使用
+// 另一套机制（CreateProcess 等），两者都比较慢，且行为有平台差异。
 //       通常只在确实需要测"程序会死"的场景才用。
 
 class DeathTest : public ::testing::Test {

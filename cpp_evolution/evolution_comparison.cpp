@@ -18,17 +18,20 @@
  * 7. 模板元编程（SFINAE → void_t → if constexpr）
  * 8. 函数式编程（bind → lambda → 泛型lambda）
  * 9. 字符串处理（string → string_view）
- * 10. 错误处理（返回码 → 异常 → expected/optional 模式）
+ * 10. 初始化与构造（make_* → 类模板参数推导 CTAD）
  *
  * 编译命令: g++ -std=c++17 -Wall -Wextra -pedantic evolution_comparison.cpp -o evo_compare
  */
 
 #include <iostream>
 #include <string>
+#include <string_view>
 #include <vector>
 #include <map>
 #include <tuple>
 #include <type_traits>
+#include <typeinfo>
+#include <utility>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -39,6 +42,7 @@
 #include <sstream>
 #include <chrono>
 #include <iomanip>
+#include <cstddef>
 
 // 辅助：打印分隔
 void section(const char* title) {
@@ -112,8 +116,8 @@ auto add_cpp14(T a, U b) {
     return a + b;
 }
 
-// C++17：与 C++14 基本相同，但 constexpr 支持更好
-// 另外 if constexpr 让条件编译的函数返回类型推导更自然
+// C++17：返回类型推导规则不变，但新增 if constexpr，
+// 可以在一个函数内按类型选择不同的返回表达式
 template <typename T>
 auto process_cpp17(T value) {
     if constexpr (std::is_integral_v<T>) {
@@ -237,10 +241,10 @@ double total_area_cpp17(const std::vector<Shape>& shapes) {
 void demo() {
     section("3. 多态：继承虚函数 → variant + visit");
 
-    // C++11 方式
+    // C++11 方式（C++11 没有 make_unique，用 unique_ptr 直接接管 new）
     std::vector<std::unique_ptr<ShapeCpp11>> shapes11;
-    shapes11.push_back(std::make_unique<CircleCpp11>(5.0));
-    shapes11.push_back(std::make_unique<RectangleCpp11>(3.0, 4.0));
+    shapes11.push_back(std::unique_ptr<ShapeCpp11>(new CircleCpp11(5.0)));
+    shapes11.push_back(std::unique_ptr<ShapeCpp11>(new RectangleCpp11(3.0, 4.0)));
     std::cout << "  [C++11] 继承 + 虚函数：\n";
     std::cout << "    总面积 = " << total_area_cpp11(shapes11) << "\n";
     std::cout << "    特点：需要基类、虚函数、堆分配、生命周期管理\n\n";
@@ -253,7 +257,7 @@ void demo() {
     };
     std::cout << "  [C++17] std::variant + std::visit：\n";
     std::cout << "    总面积 = " << total_area_cpp17(shapes17) << "\n";
-    std::cout << "    特点：值语义、栈上分配、无需继承、封闭类型集合\n\n";
+    std::cout << "    特点：值语义、元素连续存放在 vector 中、无需逐个堆分配、封闭类型集合\n\n";
 
     // overloaded lambda 示例
     std::cout << "  使用 overloaded lambda 直接访问：\n";
@@ -273,8 +277,8 @@ void demo() {
     }
 
     std::cout << "\n  对比：\n";
-    std::cout << "    继承方式：开放类型集（可随时加新类），运行时多态，堆分配\n";
-    std::cout << "    variant方式：封闭类型集（编译期确定），值语义，栈友好\n";
+    std::cout << "    继承方式：开放类型集（可随时加新类），运行时多态，常配堆分配（本例用 unique_ptr）\n";
+    std::cout << "    variant方式：封闭类型集（编译期确定），值语义，元素连续存放\n";
     std::cout << "  适用场景不同，但 variant 为值语义多态提供了新选择\n";
 }
 
@@ -430,7 +434,7 @@ std::tuple<std::string, int, double> get_person_cpp11() {
 
 // C++17：还是返回 tuple，但用结构化绑定接收
 std::tuple<std::string, int, double> get_person_cpp17() {
-    return {"Bob", 25, 180.0};  // 甚至不需要 make_tuple（CTAD）
+    return {"Bob", 25, 180.0};  // 返回类型已写明，花括号直接构造 tuple（不是 CTAD）
 }
 
 void demo() {
@@ -487,8 +491,8 @@ public:
     static constexpr bool value = decltype(test<T>(0))::value;
 };
 
-// ---- C++17：更简洁的 void_t 方式（C++17 标准库引入，但C++11也能实现） ----
-// 实际上 void_t 在 C++11 也能实现，但 C++17 正式加入标准库
+// ---- C++11 也能自己实现 void_t；C++17 标准库正式提供 std::void_t ----
+// 注意：下面这个 void_t 是自定义别名模板，C++11 就能写。
 template <typename...>
 using void_t = void;
 
@@ -499,7 +503,7 @@ template <typename T>
 struct has_serialize<T, void_t<decltype(std::declval<T>().serialize())>>
     : std::true_type {};
 
-// C++17 变量模板简写
+// 变量模板简写（变量模板是 C++14 的语言特性）
 template <typename T>
 constexpr bool has_serialize_v = has_serialize<T>::value;
 
@@ -515,6 +519,7 @@ save_cpp11(const T& obj) {
 template <typename T>
 typename std::enable_if<!has_serialize_cpp11<T>::value, std::string>::type
 save_cpp11(const T& obj) {
+    (void)obj;  // 此分支不使用对象，只按类型生成默认结果
     return std::string("default_") + typeid(T).name();
 }
 
@@ -547,7 +552,8 @@ void demo() {
     std::cout << "    has_serialize<NonSerializable> = "
               << has_serialize_cpp11<NonSerializable>::value << "\n\n";
 
-    std::cout << "  [C++17] void_t 偏特化 + 变量模板\n";
+    std::cout << "  [C++11/14 可用] 自定义 void_t 偏特化 + 变量模板\n";
+    std::cout << "    （std::void_t 是 C++17 才进标准库，但写法本身 C++11 就能实现）\n";
     std::cout << "    has_serialize_v<Serializable> = "
               << has_serialize_v<Serializable> << "\n";
     std::cout << "    has_serialize_v<NonSerializable> = "
@@ -568,7 +574,7 @@ void demo() {
     std::cout << "\n  演进：\n";
     std::cout << "    C++11: 多个 SFINAE 重载函数，晦涩难懂\n";
     std::cout << "    C++17: if constexpr 内联编译期分支，直观自然\n";
-    std::cout << "  收益：模板元编程从"专家黑魔法"变为"普通开发者可用"\n";
+    std::cout << "  收益：模板元编程从“专家黑魔法”变为“普通开发者可用”\n";
 }
 
 } // namespace topic7_tmpl_meta
@@ -585,7 +591,7 @@ int add(int a, int b) { return a + b; }
 void demo() {
     section("8. 函数式：std::bind → lambda → 泛型lambda");
 
-    std::cout << "  [C++03/11] std::bind：\n";
+    std::cout << "  [C++11] std::bind（注意：std::bind 是 C++11 加入的，不是 C++03）：\n";
     auto add5_bind = std::bind(add, std::placeholders::_1, 5);
     std::cout << "    add5_bind(10) = " << add5_bind(10) << "\n";
     std::cout << "    缺点：语法晦涩，占位符不直观，类型复杂\n\n";
@@ -599,8 +605,8 @@ void demo() {
     auto add5_generic = [](auto x) { return x + 5; };
     std::cout << "    add5_generic(10) = " << add5_generic(10) << " (int)\n";
     std::cout << "    add5_generic(10.5) = " << add5_generic(10.5) << " (double)\n";
-    std::cout << "    add5_generic(string) = " << add5_generic(std::string("hello"))
-              << " (string+int 也能工作)\n";
+    std::cout << "    注意：泛型 lambda 会按实参类型实例化，std::string 不支持 + int，\n";
+    std::cout << "          所以 add5_generic(std::string(\"hello\")) 无法编译\n";
     std::cout << "    优点：泛型代码更简洁，无需写模板函数\n\n";
 
     // 实际应用：STL 算法中的谓词
@@ -637,20 +643,20 @@ namespace topic9_string_view {
 // 场景：解析字符串，提取子串
 
 // C++11：每次返回 std::string（创建新字符串，有开销）
-std::string get_prefix_cpp11(const std::string& str, size_t n) {
-    return str.substr(0, n);  // 创建新的 string，有内存分配
+std::string get_prefix_cpp11(const std::string& str, std::size_t n) {
+    return str.substr(0, n);  // 创建独立的 string，可能触发分配/拷贝
 }
 
 // C++17：返回 std::string_view（零拷贝）
-std::string_view get_prefix_cpp17(std::string_view str, size_t n) {
+std::string_view get_prefix_cpp17(std::string_view str, std::size_t n) {
     return str.substr(0, n);  // 零拷贝，只调整指针和长度
 }
 
 // 更实际的例子：解析 CSV 行
 std::vector<std::string> split_csv_cpp11(const std::string& line) {
     std::vector<std::string> result;
-    size_t start = 0;
-    for (size_t i = 0; i <= line.size(); i++) {
+    std::size_t start = 0;
+    for (std::size_t i = 0; i <= line.size(); i++) {
         if (i == line.size() || line[i] == ',') {
             result.push_back(line.substr(start, i - start));
             start = i + 1;
@@ -661,8 +667,8 @@ std::vector<std::string> split_csv_cpp11(const std::string& line) {
 
 std::vector<std::string_view> split_csv_cpp17(std::string_view line) {
     std::vector<std::string_view> result;
-    size_t start = 0;
-    for (size_t i = 0; i <= line.size(); i++) {
+    std::size_t start = 0;
+    for (std::size_t i = 0; i <= line.size(); i++) {
         if (i == line.size() || line[i] == ',') {
             result.push_back(line.substr(start, i - start));
             start = i + 1;
@@ -679,7 +685,7 @@ void demo() {
     std::cout << "  提取前缀：\n";
     std::cout << "  [C++11] 返回 string（拷贝）：\n";
     auto s11 = get_prefix_cpp11(data, 5);
-    std::cout << "    \"" << s11 << "\" （新字符串，有内存分配）\n\n";
+    std::cout << "    \"" << s11 << "\" （独立的 string，可能分配）\n\n";
 
     std::cout << "  [C++17] 返回 string_view（零拷贝）：\n";
     auto s17 = get_prefix_cpp17(data, 5);
@@ -690,7 +696,7 @@ void demo() {
 
     auto result11 = split_csv_cpp11(csv);
     std::cout << "  [C++11] 生成 " << result11.size()
-              << " 个 string（每个都有分配）\n";
+              << " 个独立 string（短串可能走 SSO，长串通常会分配）\n";
 
     auto result17 = split_csv_cpp17(csv);
     std::cout << "  [C++17] 生成 " << result17.size()
@@ -720,11 +726,14 @@ private:
     T value_;
 };
 
+// 自定义推导指引：传入字符串字面量时推导为 MyContainer<std::string>
+MyContainer(const char*) -> MyContainer<std::string>;
+
 void demo() {
     section("10. 构造：make_* → 类模板参数推导(CTAD)");
 
     // pair
-    std::cout << "  [C++11] std::make_pair：\n";
+    std::cout << "  [C++98] std::make_pair（pair 在 C++98 就有）：\n";
     auto p11 = std::make_pair(std::string("hello"), 42);
     std::cout << "    make_pair(\"hello\", 42) -> pair<string, int>\n\n";
 
@@ -744,9 +753,10 @@ void demo() {
     std::cout << "  vector{1,2,3,4,5} 自动推导为 vector<int>\n";
     std::cout << "  大小: " << v.size() << "\n";
 
-    // 自定义类也可以加推导指引
-    // MyContainer(const char*) -> MyContainer<std::string>
-    // （实际实现需要在类外部定义推导指引）
+    // 自定义类也可以加推导指引（上面 MyContainer 的推导指引就写在类外）
+    MyContainer mc("hello");  // 推导为 MyContainer<std::string>
+    std::cout << "  MyContainer(\"hello\") 推导为 MyContainer<std::string>，"
+              << "get() = " << mc.get() << "\n";
 
     std::cout << "\n  演进：make_* 辅助函数 → 类模板参数推导(CTAD)\n";
     std::cout << "  收益：变量定义更简洁，类型自动推导\n";

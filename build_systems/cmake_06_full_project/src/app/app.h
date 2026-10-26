@@ -24,6 +24,7 @@ public:
 
 private:
     std::string welcome_message_;
+    bool demo_requested_ = false;
 
     // 打印帮助信息
     void printHelp();
@@ -31,8 +32,8 @@ private:
     // 打印版本信息
     void printVersion();
 
-    // 处理命令行参数
-    bool parseArgs(int argc, char* argv[]);
+    // 处理命令行参数：返回 -1 表示继续运行，>=0 表示直接以该值退出
+    int parseArgs(int argc, char* argv[]);
 };
 
 } // namespace myproject

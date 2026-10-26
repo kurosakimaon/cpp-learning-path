@@ -6,21 +6,28 @@
  * 它提供了灵活的日志记录、过滤、格式化和输出能力。
  *
  * 主要内容：
- * 1. 日志基础：日志级别、简单日志记录
- * 2. 日志来源 (Logger)：全局 logger、多 logger、severity_logger
- * 3. 日志格式 (Formatter)：自定义输出格式
- * 4. 日志过滤 (Filter)：按级别、按来源过滤
- * 5. 日志接收器 (Sink)：控制台、文件、滚动文件、多 sink
- * 6. 日志属性 (Attribute)：时间戳、线程ID、进程ID等
- * 7. 异步日志
- * 8. 宽字符日志
+ * 1. 最简日志：BOOST_LOG_TRIVIAL
+ * 2. 日志过滤 (Filter)：按级别过滤
+ * 3. severity_logger：自定义级别、多 logger
+ * 4. 日志格式 (Formatter)：时间戳、记录序号、线程ID
+ * 5. 文件日志：滚动文件、自动刷新
+ * 6. 多 Sink：控制台 + 文件 + 远程
+ * 7. 命名作用域：记录函数调用路径
+ * 8. 异步日志：asynchronous_sink
+ * 9. 最佳实践
  *
  * 老师傅的话：
  *   日志是项目的"黑匣子"。线上出了问题，全靠日志排查。
  *   一个好的日志系统要做到：级别清晰、信息完整、性能可靠。
  *   Boost.Log 功能强大，但配置也比较复杂，掌握核心用法就够了。
  *
- * 编译命令: g++ -std=c++17 log_demo.cpp -lboost_log -lboost_log_setup -lboost_thread -lboost_system -lpthread
+ * 编译命令（动态链接 Boost.Log 时必须定义 BOOST_LOG_DYN_LINK）:
+ *   Linux:        g++ -std=c++17 -DBOOST_LOG_DYN_LINK log_demo.cpp \
+ *                     -lboost_log -lboost_log_setup -lboost_thread -lboost_filesystem -lpthread
+ *   MinGW/MSYS2:  g++ -std=c++17 -DBOOST_LOG_DYN_LINK log_demo.cpp \
+ *                     -lboost_log-mt -lboost_log_setup-mt -lboost_thread-mt \
+ *                     -lboost_filesystem-mt -lboost_chrono-mt -lboost_atomic-mt
+ *   （Windows 预编译库常带 -mt 后缀，以实际库文件名为准）
  *
  * 头文件：<boost/log/core.hpp>
  *        <boost/log/trivial.hpp>
@@ -44,6 +51,7 @@
 #include <boost/log/trivial.hpp>
 #include <boost/log/expressions.hpp>
 #include <boost/log/sinks/sync_frontend.hpp>
+#include <boost/log/sinks/async_frontend.hpp>
 #include <boost/log/sinks/text_ostream_backend.hpp>
 #include <boost/log/sources/severity_logger.hpp>
 #include <boost/log/sources/record_ostream.hpp>
@@ -54,6 +62,8 @@
 #include <boost/log/attributes/timer.hpp>
 #include <boost/log/support/date_time.hpp>
 #include <boost/log/utility/manipulators/add_value.hpp>
+#include <boost/core/null_deleter.hpp>
+#include <boost/make_shared.hpp>
 
 namespace logging = boost::log;
 namespace src = boost::log::sources;
@@ -160,7 +170,8 @@ void demo_severity_logger() {
     BOOST_LOG_SEV(db_logger, LogLevel::INFO)  << "[DB] 数据库连接池初始化";
     BOOST_LOG_SEV(net_logger, LogLevel::INFO) << "[NET] 网络模块初始化";
 
-    std::cout << "  多个 logger 可以独立配置不同的 sink 和 filter\n";
+    std::cout << "  多个 logger 共享 core 的 sink 和 filter；要区分来源，"
+                 "可以在日志记录上附加 channel 等属性再过滤\n";
 }
 
 // ============================================================================
@@ -188,7 +199,7 @@ void init_custom_format() {
 
 void demo_custom_format() {
     std::cout << "\n===== 4. 自定义日志格式 =====\n";
-    std::cout << "  格式: [时间] [行号] [级别] [线程ID] 消息\n\n";
+    std::cout << "  格式: [时间] [记录序号] [级别] [线程ID] 消息\n\n";
 
     init_custom_format();
 
@@ -198,8 +209,8 @@ void demo_custom_format() {
     BOOST_LOG_TRIVIAL(error) << "连接超时，正在重试...";
 
     std::cout << "\n  常用格式元素：\n";
-    std::cout << "    %Y-%m-%d %H:%M:%S.%f  — 时间戳（毫秒精度）\n";
-    std::cout << "    LineID                — 日志行号（递增）\n";
+    std::cout << "    %Y-%m-%d %H:%M:%S.%f  — 时间戳（小数秒，微秒精度）\n";
+    std::cout << "    LineID                — 日志记录序号（递增计数器，不是源码行号）\n";
     std::cout << "    severity              — 日志级别\n";
     std::cout << "    ThreadID              — 线程ID\n";
     std::cout << "    ProcessID             — 进程ID\n";
@@ -213,13 +224,14 @@ void demo_custom_format() {
 
 void init_file_logging() {
     // 添加文件 sink：滚动日志文件
-    // - 文件名格式：log_%Y%m%d_%H%M%S.log
+    // - 文件名格式：demo_%Y%m%d_%H%M%S.log
     // - 每个文件最大 1MB
-    // - 最多保留 5 个文件
+    // - 每天零点滚动
+    // 注意：max_files 这类“保留几个文件”的限制要配合
+    // target（目标目录/文件收集器）才会生效，本示例没有启用收集器。
     logging::add_file_log(
         keywords::file_name = "demo_%Y%m%d_%H%M%S.log",
         keywords::rotation_size = 1024 * 1024,  // 1MB 滚动
-        keywords::max_files = 5,                 // 最多保留 5 个
         keywords::time_based_rotation =
             sinks::file::rotation_at_time_point(0, 0, 0),  // 每天零点滚动
         keywords::format =
@@ -235,18 +247,18 @@ void init_file_logging() {
 void demo_file_logging() {
     std::cout << "\n===== 5. 文件日志 =====\n";
 
-    // 注意：为了不污染环境，这里只演示 API，不实际写很多文件
-    // 实际项目中调用 init_file_logging() 即可
+    init_file_logging();
 
     BOOST_LOG_TRIVIAL(info)    << "这是写入文件的 info 日志";
     BOOST_LOG_TRIVIAL(debug)   << "这是写入文件的 debug 日志";
     BOOST_LOG_TRIVIAL(error)   << "这是写入文件的 error 日志";
+    logging::core::get()->flush();
 
-    std::cout << "  日志已写入 demo_*.log 文件（如果启用了文件 sink）\n";
+    std::cout << "  日志已写入当前目录的 demo_*.log 文件\n";
     std::cout << "  滚动策略：\n";
     std::cout << "    - rotation_size: 文件达到指定大小后滚动\n";
     std::cout << "    - rotation_at_time_point: 每天指定时间滚动\n";
-    std::cout << "    - max_files: 最多保留的文件数（防止占满磁盘）\n";
+    std::cout << "    - max_files: 只在配置了 target（文件收集器）时生效\n";
     std::cout << "    - auto_flush: 自动刷新（性能略低，但安全）\n";
 }
 
@@ -293,6 +305,9 @@ void demo_named_scope() {
     // 添加命名作用域属性
     logging::core::get()->add_global_attribute("Scope", attrs::named_scope());
 
+    // 先移除旧 sink，否则会同时往两个控制台 sink 写，日志重复出现
+    logging::core::get()->remove_all_sinks();
+
     // 重新设置格式，包含 Scope
     logging::add_console_log(
         std::clog,
@@ -318,7 +333,7 @@ void demo_named_scope() {
     outer_function();
 
     std::cout << "  命名作用域可以追踪函数调用路径，排查问题时很有用\n";
-    std::cout << "  类似手动打"进入函数"/"退出函数"日志，但更优雅\n";
+    std::cout << "  类似手动打“进入函数”/“退出函数”日志，但更优雅\n";
 }
 
 // ============================================================================
@@ -331,29 +346,35 @@ void demo_named_scope() {
 void demo_async_logging() {
     std::cout << "\n===== 8. 异步日志 =====\n";
 
-    // Boost.Log 支持异步 sink（需要包含 text_file_backend 等）
-    // 基本思路：
-    //   - 前端（frontend）接收日志记录，放入队列
-    //   - 后端（backend）在后台线程中实际写出
-    //
-    // 异步日志的优点：
-    //   - 主线程不阻塞，性能更高
-    //   - 适合高吞吐场景
-    //
-    // 异步日志的注意事项：
-    //   - 程序崩溃可能丢失部分日志
-    //   - 需要处理队列满的情况（丢弃/阻塞）
-    //   - 退出时要确保队列排空
+    // 异步 sink = 前端（队列 + 后台线程）+ 后端（真正写出的 sink）
+    // 这里后端仍用 text_ostream_backend 输出到控制台，便于观察。
+    logging::core::get()->remove_all_sinks();
 
-    BOOST_LOG_TRIVIAL(info) << "异步日志演示（配置需用 async_frontend）";
+    using async_sink_t = sinks::asynchronous_sink<sinks::text_ostream_backend>;
+    auto backend = boost::make_shared<sinks::text_ostream_backend>();
+    backend->add_stream(
+        boost::shared_ptr<std::ostream>(&std::clog, boost::null_deleter()));
+    backend->auto_flush(true);
+
+    auto async_sink = boost::make_shared<async_sink_t>(backend);
+    async_sink->set_formatter(
+        expr::stream << "[" << logging::trivial::severity << "] "
+                     << expr::smessage);
+    logging::core::get()->add_sink(async_sink);
+
+    BOOST_LOG_TRIVIAL(info) << "异步日志演示：这条日志由后台线程写出";
+
+    // flush() 会等队列里的日志真正写完，退出前必须调用。
+    // sink 继续挂在 core 上，后续日志仍走异步；进程退出时 core 析构会 stop。
+    async_sink->flush();
 
     std::cout << "  同步 vs 异步：\n";
     std::cout << "    同步：调用时直接写出，延迟低但阻塞\n";
-    std::cout << "    异步：先入队列后台写出，吞吐高但有延迟\n";
-    std::cout << "  选择建议：\n";
-    std::cout << "    - 普通项目用同步日志就够了\n";
-    std::cout << "    - 高性能服务才需要异步日志\n";
-    std::cout << "    - 异步日志一定要配 auto_flush 和优雅关闭\n";
+    std::cout << "    异步：先入队列，后台线程写出，吞吐高但有延迟\n";
+    std::cout << "  注意事项：\n";
+    std::cout << "    - 程序崩溃可能丢失队列中尚未写出的日志\n";
+    std::cout << "    - 退出前要 flush 并停止后台线程（sink 析构会自动 stop）\n";
+    std::cout << "    - 队列满时的策略（阻塞/丢弃）要提前想清楚\n";
 }
 
 // ============================================================================
@@ -379,7 +400,8 @@ void demo_best_practices() {
 
     std::cout << "\n  📌 性能注意事项：\n";
     std::cout << "    - 不要在循环里打大量 debug 日志\n";
-    std::cout << "    - 复杂的日志格式化可以用 BOOST_LOG_STREAM_WITH_PARAMS\n";
+    std::cout << "    - 需要给单条日志附加参数（级别、channel、自定义属性）时，"
+                 "用 BOOST_LOG_STREAM_WITH_PARAMS\n";
     std::cout << "    - 高并发场景考虑异步日志\n";
     std::cout << "    - 日志级别用编译期宏也可以做零开销\n";
 

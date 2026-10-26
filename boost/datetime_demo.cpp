@@ -3,7 +3,8 @@
  * @brief Boost.DateTime 日期时间库深度解析
  *
  * Boost.DateTime 提供了完整的日期时间处理能力，包括：
- * 日期计算、时间计算、时区、格式化、时间段等。
+ * 日期计算、时间计算、格式化、时间段等；local_time 子库还支持
+ * 带时区的时间（需要加载时区数据库）。
  *
  * 虽然 C++20 引入了 <chrono> 的日历和时区支持，
  * 但在 C++17 及之前，Boost.DateTime 是日期时间处理的首选。
@@ -15,7 +16,7 @@
  * 3. 日期时间（Ptime）：日期+时间
  * 4. 时间间隔（Time Period）：时间段判断
  * 5. 格式化与解析
- * 6. 本地化与时区
+ * 6. 本地时间与 UTC、local_time 时区用法概览
  * 7. 实际应用：倒计时、工作日计算、年龄计算
  *
  * 老师傅的话：
@@ -24,7 +25,7 @@
  *   自己写日期计算，早晚出 bug。用库！
  *   Boost.DateTime 虽然接口有点啰嗦，但功能全面，值得掌握。
  *
- * 编译命令: g++ -std=c++17 datetime_demo.cpp -lboost_date_time
+ * 编译命令: g++ -std=c++17 datetime_demo.cpp   （本文件用到的 DateTime 功能是头文件实现）
  *
  * 头文件：<boost/date_time/gregorian/gregorian.hpp>
  *        <boost/date_time/posix_time/posix_time.hpp>
@@ -89,11 +90,19 @@ void demo_date_basics() {
     std::cout << "    无效日期: " << not_a_date << "\n";
 
     // 日期有效性检查
+    // 注意：date(y, m, d) 构造函数会校验日期，非法日期直接抛异常，
+    // 不会构造出一个 is_not_a_date() == true 的对象。
+    // 要表示“无效日期”，应使用上面的 not_a_date_time 特殊值。
     std::cout << "\n  有效性检查:\n";
-    bg::date invalid(2024, 2, 30);  // 2月没有30号
-    std::cout << "    2024-02-30 有效吗? "
-              << std::boolalpha << invalid.is_not_a_date()
-              << "（is_not_a_date 为 true 表示无效）\n";
+    try {
+        bg::date invalid(2024, 2, 30);  // 2月没有30号
+        std::cout << "    2024-02-30: " << invalid << "\n";
+    } catch (const bg::bad_day_of_month& e) {
+        std::cout << "    2024-02-30 抛出 bad_day_of_month: " << e.what() << "\n";
+    }
+    std::cout << "    not_a_date.is_not_a_date(): "
+              << std::boolalpha << not_a_date.is_not_a_date()
+              << "（not_a_date_time 构造的特殊值）\n";
 
     std::cout << "\n  常用构造方式：\n";
     std::cout << "    date(y, m, d)       — 直接指定\n";
@@ -330,7 +339,7 @@ void demo_time_period() {
     std::cout << "  工作时间: " << work_hours << "\n";
     std::cout << "    开始: " << work_hours.begin() << "\n";
     std::cout << "    结束: " << work_hours.end() << "\n";
-    std::cout << "    时长: " << work_hours.length().total_hours() << " 小时\n";
+    std::cout << "    时长: " << work_hours.length().hours() << " 小时\n";
 
     // 包含关系
     bpt::ptime morning(bg::date(2024, 6, 1), bpt::hours(10));
@@ -362,7 +371,7 @@ void demo_time_period() {
 
     bpt::time_period intersection = work_hours.intersection(overtime);
     std::cout << "    交集: " << intersection
-              << "（" << intersection.length().total_hours() << "小时）\n";
+              << "（" << intersection.length().hours() << "小时）\n";
 
     // 日期时间段也一样
     bg::date_period vacation(bg::date(2024, 10, 1), bg::date(2024, 10, 8));
@@ -371,13 +380,14 @@ void demo_time_period() {
 }
 
 // ============================================================================
-// 7. 时区
+// 7. 本地时间与 UTC
 // ============================================================================
 void demo_timezone() {
-    std::cout << "\n===== 7. 时区 =====\n";
+    std::cout << "\n===== 7. 本地时间与 UTC =====\n";
 
-    // 注意：Boost.DateTime 的时区功能需要时区数据库
-    // 这里演示基本概念，实际使用需要加载时区数据文件
+    // 注意：Boost.DateTime 的 local_time 子库支持完整时区，
+    // 但需要加载时区数据库文件（date_time_zonespec.csv）。
+    // 这里先演示 UTC 与本地时间的区别，再给出 local_time 的用法概览。
 
     // 简单演示：UTC 时间
     bpt::ptime utc_now = bpt::second_clock::universal_time();
@@ -388,7 +398,8 @@ void demo_timezone() {
 
     bpt::time_duration diff = local_now - utc_now;
     std::cout << "  时差: " << diff.hours() << " 小时\n";
-    std::cout << "  （中国是 UTC+8，所以本地时间比UTC早8小时）\n";
+    std::cout << "  （若本机时区为中国 UTC+8，则本地时间 = UTC + 8 小时，\n";
+    std::cout << "    钟面读数比 UTC 大 8 小时；日期也可能比 UTC 先进入下一天）\n";
 
     // local_time 库的完整用法需要 tz_database
     // 基本思路：
@@ -396,7 +407,7 @@ void demo_timezone() {
     //   2. 创建不同时区的时间
     //   3. 在时区间转换
     //
-    // 示例伪代码：
+    // 示例伪代码（本机没有 date_time_zonespec.csv，因此不实际执行）：
     //   blt::tz_database tz_db;
     //   tz_db.load_from_file("date_time_zonespec.csv");
     //   blt::time_zone_ptr sh_tz = tz_db.time_zone_from_region("Asia/Shanghai");
@@ -432,9 +443,10 @@ int count_workdays(bg::date start, bg::date end) {
     int count = 0;
     for (bg::day_iterator it(start); it <= end; ++it) {
         bg::date d = *it;
-        // 0=周日, 6=周六... 实际上 0=周一, 6=周日
-        // Boost中 day_of_week: Monday=0, Sunday=6
-        if (d.day_of_week() < 5) {  // 周一到周五
+        // Boost.Gregorian 的 day_of_week()：Sunday=0, Monday=1, ..., Saturday=6
+        // （和 ISO 标准 Monday=1..Sunday=7 不同，用之前一定要查文档）
+        unsigned dw = d.day_of_week().as_number();
+        if (dw != 0 && dw != 6) {  // 排除周日和周六
             count++;
         }
     }
@@ -494,7 +506,9 @@ void demo_practical() {
     bpt::ptime start_time = bpt::microsec_clock::local_time();
 
     // 模拟一些工作
-    volatile int sum = 0;
+    // 注意用 long long：0+1+...+999999 约 5e11，远超 int 上限，
+    // 用 int 累加会发生有符号溢出（未定义行为），编译器甚至可能把循环优化掉。
+    volatile long long sum = 0;
     for (int i = 0; i < 1000000; i++) {
         sum += i;
     }
@@ -527,13 +541,15 @@ void laoshifu_says() {
     std::cout << "\n";
     std::cout << "  Boost.DateTime 虽然 API 设计得有点啰嗦，\n";
     std::cout << "  但功能全，覆盖了各种边缘情况。\n";
-    std::cout << "  C++20 的 std::chrono 日历功能就是参考它设计的。\n";
+    std::cout << "  C++20 的 chrono 日历/时区提案主要基于 Howard Hinnant 的\n";
+    std::cout << "  date 库，而不是照搬 Boost.DateTime；两者思路可互相参照。\n";
     std::cout << "\n";
     std::cout << "  几个经验：\n";
     std::cout << "  1️⃣ 服务端存 UTC 时间，展示时再转本地时间\n";
     std::cout << "  2️⃣  日志打时间戳一定要包含时区或明确是UTC\n";
     std::cout << "  3️⃣  月份加减注意月末调整（1月31号+1个月是几号？）\n";
-    std::cout << "  4️⃣  不要用 time_t 了，那是C时代的老东西\n";
+    std::cout << "  4️⃣  time_t 存时间点没问题，但别拿它做日历运算；\n";
+    std::cout << "     它只有秒级精度、范围由实现决定，也不带时区信息\n";
     std::cout << "============================================================\n";
 }
 

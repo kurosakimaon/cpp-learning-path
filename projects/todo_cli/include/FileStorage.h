@@ -36,6 +36,9 @@ public:
     // 从文件加载任务
     bool load(std::vector<Task>& out_tasks) override;
 
+    // 文件是否存在且可读
+    bool exists() const override;
+
     // 获取文件名
     const std::string& getFilename() const { return filename_; }
 

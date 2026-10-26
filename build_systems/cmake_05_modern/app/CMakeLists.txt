@@ -19,6 +19,7 @@ target_link_libraries(stats_app PRIVATE mathlib::mathlib)
 
 # 给 app 也加一些自己的编译选项
 target_compile_options(stats_app PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra>
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wextra>
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
 )

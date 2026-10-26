@@ -108,7 +108,8 @@ int main()
     cout << "0 的值：" << pZero << endl;
 
     // 老师傅特别提醒：使用指针前一定要检查是不是空指针！
-    // 解引用空指针会导致程序崩溃（段错误）
+    // 解引用空指针是未定义行为，通常会触发段错误，
+    // 但标准不保证一定崩溃，也可能看起来"正常"地跑下去。
     if (pNull != nullptr) {
         cout << *pNull << endl;  // 不会执行到这里
     } else {
@@ -220,16 +221,20 @@ int main()
     int val = 42;
     int *ptr = &val;  // 指针
     int &ref2 = val;  // 引用
+    (void)ptr;        // 本段只做概念对比，变量留作对照
+    (void)ref2;
 
     cout << "           指针                    引用" << endl;
     cout << "-----------------------------------------" << endl;
     cout << "定义方式     int *p = &var;         int &r = var;" << endl;
-    cout << "是否需要初始化  不一定（可以空）       必须初始化" << endl;
-    cout << "可以为空吗     可以（nullptr）       不可以" << endl;
+    cout << "是否需要初始化  不一定（但必须赋值后才能用） 必须初始化" << endl;
+    cout << "可以存空值吗   可以（nullptr）       不可以（没有空引用）" << endl;
     cout << "能改指向吗     能                    不能（绑定后不变）" << endl;
     cout << "怎么用        要加*解引用           直接用就行" << endl;
-    cout << "占内存吗      占（存地址）          不占额外内存" << endl;
-    cout << "危险程度      高（野指针、空指针）    低（更安全）" << endl;
+    cout << "占内存吗      占（存地址）          标准未规定；通常也占一个指针大小" << endl;
+    cout << "危险程度      高（野指针、空指针）    也有悬空引用，但语法上更省心" << endl;
+    // 注意：引用不是"零成本别名"的保证，编译器可以把它实现成指针；
+    // 引用一旦绑定就不能换对象，悬空引用同样会导致未定义行为。
 
     cout << endl;
     cout << "用指针的时候：" << endl;
@@ -274,6 +279,7 @@ int main()
     const int *pConstVal = &num;
     // *pConstVal = 100;  // 错误！不能通过这个指针修改值
     pConstVal = &num2;    // 可以，指针可以指向别的地方
+    (void)pConstVal;
     cout << "指向常量的指针：值不能通过指针改，但指针可以换指向" << endl;
 
     // 常量指针（指针本身不能改指向，但指向的值可以改）
@@ -286,11 +292,39 @@ int main()
     const int *const pAllConst = &num;
     // *pAllConst = 100;  // 错误
     // pAllConst = &num2; // 错误
+    (void)pAllConst;
     cout << "指向常量的常量指针：两者都不能改" << endl;
 
     // 老师傅教你怎么记：从右往左读
     // const int *p  -> p 是指针，指向 int const（常量int）
     // int *const p  -> p 是 const（常量），是指针，指向int
+    cout << endl;
+
+    // ============================================================
+    // 补充：堆内存与 new/delete
+    // ============================================================
+    // 前面用的变量都在栈上，函数结束自动销毁。
+    // 如果需要在运行时决定大小、或让对象活得更久，就要用堆内存：
+    // new 向堆申请，delete 归还。申请和归还必须配对！
+    cout << "===== 补充：堆内存与 new/delete =====" << endl;
+
+    int* pOne = new int(123);          // 申请一个 int，初始化为 123
+    cout << "*pOne = " << *pOne << endl;
+    delete pOne;                       // 归还单个对象
+    pOne = nullptr;                    // 置空，避免野指针
+    cout << "delete 后已把 pOne 置为 nullptr" << endl;
+
+    int* pHeapArr = new int[5];        // 申请 5 个 int 的数组
+    for (int i = 0; i < 5; ++i) pHeapArr[i] = i * i;
+    cout << "pHeapArr[4] = " << pHeapArr[4] << endl;
+    delete[] pHeapArr;                 // 数组必须用 delete[] 归还
+    pHeapArr = nullptr;
+
+    cout << "规则：" << endl;
+    cout << "  new      对应 delete" << endl;
+    cout << "  new[]    对应 delete[]" << endl;
+    cout << "  重复 delete、忘记 delete、配对错误都是 bug" << endl;
+    cout << "  现代 C++ 更推荐用 std::vector / 智能指针自动管理" << endl;
     cout << endl;
 
     // ============================================================
@@ -308,7 +342,7 @@ int main()
     cout << "    4. 实现复杂数据结构（链表、树、图）" << endl;
     cout << endl;
     cout << "  指针的危险：" << endl;
-    cout << "    1. 空指针解引用 -> 程序崩溃" << endl;
+    cout << "    1. 空指针解引用 -> 未定义行为（常见是崩溃）" << endl;
     cout << "    2. 野指针（指向已释放内存）-> 神秘bug" << endl;
     cout << "    3. 越界访问 -> 破坏其他数据" << endl;
     cout << "    4. 内存泄漏（忘记释放）-> 程序越来越卡" << endl;

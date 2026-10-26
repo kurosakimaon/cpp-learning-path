@@ -222,7 +222,7 @@
       每个都有正反对比和实测数据。学完本模块，你写出来的代码天然就会更快。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #2a4a9f); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.5)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.4)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #2a4a9f); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.5)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.4)';">
         📖 学习指南
       </a>
       <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
@@ -297,10 +297,10 @@
     <h2>💡 学习建议</h2>
     <ul>
       <li><strong>每个实验都亲手跑一遍</strong>：光看没用，自己跑一遍，亲眼看到性能差距，印象才深刻。建议用 Release 模式编译（-O2）。</li>
-      <li><strong>先理解缓存，再谈优化</strong>：缓存是性能优化的基石。理解了缓存，你就能自己推导出很多优化方法，不用死记硬背。</li>
+      <li><strong>先理解缓存，再谈优化</strong>：缓存是很多计算密集型程序性能优化的基石。理解了缓存，你就能自己推导出很多优化方法，不用死记硬背。</li>
       <li><strong>养成"性能意识"</strong>：写代码的时候，脑子里多根弦——这个地方会不会慢？有没有不必要的拷贝？内存访问模式友好吗？</li>
       <li><strong>先测量，再优化</strong>：永远不要猜瓶颈在哪里。用性能分析工具找到热点，集中火力优化 20% 的代码，获得 80% 的收益。</li>
-      <li><strong>别钻微观优化的牛角尖</strong>：i++ 和 ++i、位运算代替乘除法……这些编译器都帮你做好了。把精力放在宏观的架构和数据结构上。</li>
+      <li><strong>别钻微观优化的牛角尖</strong>：对内置类型来说，i++ 和 ++i、位运算代替乘除法……这些编译器通常都会处理掉；但自定义迭代器的 i++ 可能多构造一个临时对象，所以养成写 ++i 的习惯也没坏处。把精力放在宏观的架构和数据结构上。</li>
     </ul>
   </div>
 

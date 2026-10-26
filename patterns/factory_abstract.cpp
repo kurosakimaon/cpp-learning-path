@@ -32,18 +32,18 @@
  * 4. 提供一个产品类库，而只想显示它们的接口而不是实现时
  *
  * 【优点】
- * 1. 将产品创建与使用分离，符合开闭原则
- * 2. 抽象工厂保证了产品族的一致性
+ * 1. 将产品创建与使用分离；工厂方法新增产品时符合开闭原则
+ * 2. 抽象工厂保证了产品族的一致性（新增“产品族”方便，新增“产品种类”需改接口）
  * 3. 具体产品类名被工厂封装，客户端只依赖抽象接口
  *
  * 【缺点】
- * 1. 增加新产品时需要修改工厂接口，违反开闭原则（抽象工厂）
+ * 1. 抽象工厂新增“产品种类”时需要修改工厂接口，违反开闭原则
  * 2. 类的数量增加，系统复杂度上升
- * 3. 产品族扩展困难
+ * 3. 新增“产品族”容易，新增“产品种类”困难（与优点2是同一枚硬币的两面）
  *
  * 【现代C++实现方式】
  * 1. 模板工厂 - 利用模板参数避免创建大量工厂类
- * 2. 反射式工厂 - 通过注册机制动态创建产品
+ * 2. 注册式工厂 - 通过“名称 -> 创建函数”的注册表动态创建产品
  * 3. 智能指针管理产品生命周期
  */
 
@@ -307,12 +307,15 @@ private:
 
 
 // ============================================================
-// 第三部分：反射式工厂（注册机制）
+// 第三部分：注册式工厂（注册机制）
 // ============================================================
 
 /**
- * 反射式工厂：通过注册机制，可以在运行时动态创建产品。
+ * 注册式工厂：通过注册机制，可以在运行时按名称动态创建产品。
  * 客户端通过字符串名称来创建对应的产品对象。
+ *
+ * 注意：C++17 并没有反射能力，这里不是真正的“反射”，
+ * 只是维护一张“产品名 -> 创建函数”的注册表。
  *
  * 这是一种非常灵活的工厂实现，常用于插件系统、配置驱动的对象创建等场景。
  *
@@ -321,13 +324,13 @@ private:
  * 2. 每个具体产品在初始化时将自己注册到工厂
  * 3. 客户端通过名称查询并创建产品
  */
-class ReflectiveFactory {
+class ProductRegistry {
 public:
     using CreatorFunc = std::function<std::unique_ptr<IProduct>()>;
 
     // 获取单例实例
-    static ReflectiveFactory& instance() {
-        static ReflectiveFactory factory;
+    static ProductRegistry& instance() {
+        static ProductRegistry factory;
         return factory;
     }
 
@@ -356,14 +359,14 @@ public:
     }
 
 private:
-    ReflectiveFactory() = default;
+    ProductRegistry() = default;
     std::unordered_map<std::string, CreatorFunc> registry_;
 };
 
 // 辅助宏：用于自动注册产品
 #define REGISTER_PRODUCT(ProductClass) \
     namespace { \
-        bool _registered_##ProductClass = ReflectiveFactory::instance().registerProduct( \
+        bool _registered_##ProductClass = ProductRegistry::instance().registerProduct( \
             #ProductClass, \
             []() -> std::unique_ptr<IProduct> { \
                 return std::make_unique<ProductClass>(); \
@@ -428,10 +431,10 @@ void testAbstractFactory() {
     std::cout << "主题一致性: " << (darkApp.isThemeConsistent() ? "是" : "否") << std::endl;
 }
 
-void testReflectiveFactory() {
-    std::cout << "\n========== 反射式工厂测试 ==========" << std::endl;
+void testProductRegistry() {
+    std::cout << "\n========== 注册式工厂测试 ==========" << std::endl;
 
-    auto& factory = ReflectiveFactory::instance();
+    auto& factory = ProductRegistry::instance();
 
     // 手动注册ProductA和ProductB
     factory.registerProduct("ProductA", []() {
@@ -472,14 +475,14 @@ int main() {
 
     testFactoryMethod();
     testAbstractFactory();
-    testReflectiveFactory();
+    testProductRegistry();
 
     std::cout << "\n========== 工厂模式总结 ==========" << std::endl;
     std::cout << "工厂方法：一个工厂创建一种产品，通过子类决定创建什么" << std::endl;
     std::cout << "抽象工厂：一个工厂创建一族相关产品，保证产品族一致性" << std::endl;
     std::cout << "模板工厂：利用模板减少工厂类数量，现代C++推荐" << std::endl;
-    std::cout << "反射工厂：运行时动态注册和创建产品，灵活性最高" << std::endl;
-    std::cout << "开闭原则：新增产品只需新增产品类，无需修改客户端代码" << std::endl;
+    std::cout << "注册式工厂：运行时按名称注册和创建产品，灵活性最高" << std::endl;
+    std::cout << "开闭原则：工厂方法新增产品只需加类；抽象工厂新增产品种类需修改工厂接口" << std::endl;
 
     return 0;
 }

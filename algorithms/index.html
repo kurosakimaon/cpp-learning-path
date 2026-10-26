@@ -265,14 +265,15 @@
     <p>
       数据结构与算法是程序的灵魂，也是面试中的重中之重。本模块不仅提供 C++ 源码实现，
       更有<strong>交互式可视化</strong>工具，让你直观感受每一种算法的运行过程。
-      从基础的排序、查找，到高级的树、图、动态规划，循序渐进，帮你打下坚实的算法基础。
+      从基础的排序、查找，到数组、链表、栈、队列、二叉搜索树、哈希表、堆等经典数据结构，
+      循序渐进，帮你打下坚实的算法基础。
     </p>
     <p style="margin-top: 10px;">
       光看不练假把式。建议你先玩可视化建立直觉，再阅读源码理解实现，
       最后<strong>亲手敲一遍，改一改，测一测</strong>，这样才能真正掌握。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #667eea); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #667eea); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.3)';">
         📖 学习指南
       </a>
       <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
@@ -528,11 +529,11 @@
         <tr>
           <td><strong>希尔排序</strong></td>
           <td>O(n log n)</td>
-          <td>O(n^1.3)</td>
+          <td>取决于增量序列</td>
           <td>O(n²)</td>
           <td>O(1)</td>
           <td>❌ 否</td>
-          <td>插入排序的改进版</td>
+          <td>插入排序的改进版；本页折半增量最坏 O(n²)</td>
         </tr>
         <tr>
           <td><strong>归并排序</strong></td>
@@ -548,7 +549,7 @@
           <td>O(n log n)</td>
           <td>O(n log n)</td>
           <td>O(n²)</td>
-          <td>O(log n)</td>
+          <td>O(log n) 平均<br>O(n) 最坏</td>
           <td>❌ 否</td>
           <td>平均最快，最常用</td>
         </tr>
@@ -559,14 +560,14 @@
           <td>O(n log n)</td>
           <td>O(1)</td>
           <td>❌ 否</td>
-          <td>时间稳定，适合Top K</td>
+          <td>时间稳定；Top K 可用大小为 K 的堆，无需全排序</td>
         </tr>
         <tr>
           <td><strong>计数排序</strong></td>
           <td>O(n+k)</td>
           <td>O(n+k)</td>
           <td>O(n+k)</td>
-          <td>O(k)</td>
+          <td>O(n+k)</td>
           <td>✅ 是</td>
           <td>非比较排序，范围小的整数最快</td>
         </tr>
@@ -595,6 +596,10 @@
       <li><strong>回溯</strong>：一步一步试，走不通就退回来（DFS）</li>
       <li><strong>双指针</strong>：两个指针配合，降低时间复杂度</li>
     </ul>
+    <p>
+      本模块的源码重点覆盖排序算法和基础数据结构，分治思想体现在归并排序与快速排序中；
+      动态规划、贪心、回溯和图算法属于进阶主题，本模块只做概念介绍，不展开实现。
+    </p>
     <p>
       记住一句话：<strong>程序 = 数据结构 + 算法</strong>。
       数据结构是"怎么存"，算法是"怎么算"，两者缺一不可。

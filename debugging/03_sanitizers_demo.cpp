@@ -7,15 +7,19 @@
  *  学完这个文件，你要了解：
  *    1. AddressSanitizer (ASAN) —— 内存问题检测器
  *    2. UndefinedBehaviorSanitizer (UBSAN) —— 未定义行为检测器
- *    3. MemorySanitizer (MSAN) —— 未初始化内存读取
- *    4. ThreadSanitizer (TSAN) —— 数据竞争检测
+ *    3. ThreadSanitizer (TSAN) —— 数据竞争检测
+ *    4. LeakSanitizer (LSAN) —— 内存泄漏检测（Linux 上通常随 ASan 启用）
+ *    5. MemorySanitizer (MSAN) —— 未初始化内存读取（Clang 专属，本文件仅介绍）
  *
- *  编译方法（GCC/Clang）：
- *    ASAN:  g++ -fsanitize=address -g 03_sanitizers.cpp -o demo_asan
- *    UBSAN: g++ -fsanitize=undefined -g 03_sanitizers.cpp -o demo_ubsan
- *    TSAN:  g++ -fsanitize=thread -g 03_sanitizers.cpp -o demo_tsan
+ *  编译方法（Linux/macOS 的 GCC/Clang；MinGW 通常不带 sanitizer 运行时，
+ *  链接会失败，请用 WSL/Linux 或 MSVC 的 ASan）：
+ *    ASAN:  g++ -fsanitize=address -g 03_sanitizers_demo.cpp -o demo_asan
+ *    UBSAN: g++ -fsanitize=undefined -g 03_sanitizers_demo.cpp -o demo_ubsan
+ *    TSAN:  g++ -fsanitize=thread -g 03_sanitizers_demo.cpp -o demo_tsan
+ *    ASAN+LSAN: g++ -fsanitize=address,leak -g 03_sanitizers_demo.cpp -o demo_asan
  *
- *  MSVC 用户：项目属性 → C/C++ → 常规 → 启用地址擦除器
+ *  MSVC 用户：项目属性 → C/C++ → 常规 → 启用地址擦除器（仅支持 ASan；
+ *  MSVC 没有 UBSan/TSan，泄漏检测也不在 Windows ASan 的支持范围内）。
  *
  *  注意：这些 bug 用普通编译跑可能没事，加了 sanitizer 才会被检测出来
  */
@@ -117,18 +121,21 @@ void asan_double_free() {
 }
 
 // ============================================================
-//  ASAN 能检测的问题 5：内存泄漏（Memory Leak）
+//  LSAN 能检测的问题：内存泄漏（Memory Leak）
 // ============================================================
 
 void asan_memory_leak() {
-    cout << "\n=== ASAN: 内存泄漏检测 ===" << endl;
+    cout << "\n=== LSAN: 内存泄漏检测 ===" << endl;
 
     // ❌ 分配了不释放
     // int* p = new int[100];
     // 函数返回后 p 没了，但内存没释放 → 泄漏
 
-    cout << "ASAN 退出时会统计泄漏的内存大小和调用栈" << endl;
-    cout << "用 ASAN_OPTIONS=detect_leaks=1 开启泄漏检测" << endl;
+    cout << "泄漏检测由 LeakSanitizer（LSan）负责，" << endl;
+    cout << "在 Linux/macOS 上通常会随 ASan 一起启用：" << endl;
+    cout << "  g++ -fsanitize=address,leak ..." << endl;
+    cout << "程序退出时会统计泄漏的内存大小和调用栈。" << endl;
+    cout << "Windows/MSVC 的 ASan 不提供泄漏检测。" << endl;
     cout << "（已注释掉泄漏代码，你可以自己加几行试试）" << endl;
 }
 
@@ -216,7 +223,9 @@ void tsan_demo() {
 //  程序崩了，你想知道是从哪个路径调用过来的
 //  这时候打印调用栈（call stack）非常有用
 
+#if defined(__linux__) || defined(__APPLE__)
 #include <execinfo.h>
+#endif
 #include <cstdlib>
 
 void printCallStack() {
@@ -282,7 +291,7 @@ void printCallStack() {
 int main() {
     cout << "========== Sanitizers 与内存调试 ==========" << endl;
     cout << "提示：这些 demo 需要用 -fsanitize 选项编译才能看到效果" << endl;
-    cout << "普通编译下，很多 bug 是"隐身"的" << endl;
+    cout << "普通编译下，很多 bug 是“隐身”的" << endl;
 
     asan_heap_overflow();
     asan_stack_overflow();

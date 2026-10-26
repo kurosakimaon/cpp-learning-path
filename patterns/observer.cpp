@@ -52,6 +52,7 @@
 #include <list>
 #include <algorithm>
 #include <functional>
+#include <atomic>
 #include <mutex>
 #include <thread>
 #include <cassert>
@@ -108,7 +109,10 @@ public:
     void notify() override {
         std::string data = "温度: " + std::to_string(temperature_) + "°C, "
                           + "湿度: " + std::to_string(humidity_) + "%";
-        for (auto& observer : observers_) {
+        // 先拷贝一份观察者列表：如果某个观察者在 onUpdate 里
+        // 调用 detach，直接遍历原 list 会使迭代器失效。
+        auto snapshot = observers_;
+        for (auto& observer : snapshot) {
             observer->onUpdate(data);
         }
     }
@@ -191,8 +195,9 @@ public:
     }
 
     void notify() override {
-        // 只通知，不推送数据
-        for (auto& observer : observers_) {
+        // 只通知，不推送数据；同样先拷贝列表，避免回调中 detach 导致迭代器失效
+        auto snapshot = observers_;
+        for (auto& observer : snapshot) {
             observer->onUpdate(this);
         }
     }
@@ -489,7 +494,7 @@ void testSignalSlot() {
             std::cout << "  [Logger槽] 记录日志: " << name << " clicked" << std::endl;
         }
     };
-    auto conn2 = button.onClicked.connect(Logger{});
+    [[maybe_unused]] auto conn2 = button.onClicked.connect(Logger{});
 
     // 点击按钮
     button.click();
@@ -547,7 +552,9 @@ void testThreadSafeObserver() {
     });
 
     // 订阅者2
-    auto sub2 = newsService.subscribe([](const NewsEvent& news) {
+    // Connection 只是订阅标识；销毁这个句柄不会自动退订，
+    // 需要显式调用 unsubscribe(sub2)
+    [[maybe_unused]] auto sub2 = newsService.subscribe([](const NewsEvent& news) {
         std::cout << "  [订阅者2] 收到 " << news.category << " 新闻: "
                   << news.headline << std::endl;
     });
@@ -588,6 +595,8 @@ void testThreadSafeObserver() {
     }
 
     std::cout << "  多线程测试完成（无死锁、无崩溃即为通过）" << std::endl;
+    std::cout << "  并发期间订阅者共收到 " << receivedCount.load()
+              << " 次通知（具体次数取决于调度，不要求固定值）" << std::endl;
 }
 
 int main() {

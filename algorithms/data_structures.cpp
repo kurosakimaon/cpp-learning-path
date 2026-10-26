@@ -20,6 +20,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <functional>
+#include <memory>
 
 using namespace std;
 
@@ -62,15 +63,16 @@ private:
     void expand() {
         //  新容量取原来的2倍（如果原来是0就取1）
         int newCapacity = (capacity == 0) ? 1 : capacity * 2;
-        T* newData = new T[newCapacity];
+        //  用 unique_ptr 临时托管新数组：如果元素复制赋值抛异常，
+        //  新数组会自动释放，不会泄漏（基本的异常安全）。
+        unique_ptr<T[]> newData(new T[newCapacity]);
         //  把老数据拷过去
         for (int i = 0; i < size; i++) {
             newData[i] = data[i];
         }
-        //  释放老内存
+        //  释放老内存，接管新内存
         delete[] data;
-        //  更新指针和容量
-        data = newData;
+        data = newData.release();
         capacity = newCapacity;
     }
 
@@ -101,7 +103,13 @@ public:
         if (size == 0) {
             throw out_of_range("Vector是空的，没法pop！");
         }
-        size--;  //  直接让size减1就行，元素不用真的销毁
+        //  注意：这里 new T[] 已经构造了全部 capacity 个元素，
+        //  所以只缩小 size 就是合法的，不能手动再调一次析构函数，
+        //  否则 delete[] 时会重复析构。
+        //  这是简化实现：被弹出元素的资源要等整个数组销毁或扩容时
+        //  才释放；标准 vector 用 allocator 区分“已构造区间”，
+        //  可以立刻析构被删除的元素。
+        size--;
     }
 
     //  随机访问（可读可写）
@@ -417,6 +425,11 @@ public:
         delete[] data;
     }
 
+    //  拥有裸指针，默认浅拷贝会导致 double free；本示例不实现深拷贝，
+    //  直接禁用拷贝。
+    MyCircularQueue(const MyCircularQueue&) = delete;
+    MyCircularQueue& operator=(const MyCircularQueue&) = delete;
+
     //  入队：加到队尾
     bool enqueue(const T& val) {
         if (isFull()) return false;  //  满了就加不进去
@@ -716,8 +729,8 @@ private:
     //  这里用简单的取模法，实际工程中哈希函数要复杂得多
     int hash(const K& key) const {
         //  C++的std::hash可以给很多类型算哈希值
-        hash<K> hasher;
-        return hasher(key) % table.size();
+        std::hash<K> hasher;
+        return static_cast<int>(hasher(key) % table.size());
     }
 
     //  扩容+重新哈希
@@ -1184,12 +1197,27 @@ void testHeap() {
     cout << "\n  ★ 小应用：Top K 问题" << endl;
     cout << "    在数组 [5,3,8,1,10,7,2,15,4,12] 中找最大的3个：" << endl;
     vector<int> bigNums = {5, 3, 8, 1, 10, 7, 2, 15, 4, 12};
-    MyMaxHeap topHeap(bigNums);
-    cout << "    最大的3个：";
-    for (int i = 0; i < 3; i++) {
-        cout << topHeap.pop() << " ";
+    //  正确姿势：维护一个大小为 K 的“小顶堆”。
+    //  堆顶是当前 K 个候选里最小的；新元素比堆顶大就替换它。
+    //  时间 O(n log K)，额外空间 O(K)，不需要把整个数组建成堆。
+    const int K = 3;
+    priority_queue<int, vector<int>, greater<int>> minHeap;
+    for (int x : bigNums) {
+        if (static_cast<int>(minHeap.size()) < K) {
+            minHeap.push(x);
+        } else if (x > minHeap.top()) {
+            minHeap.pop();
+            minHeap.push(x);
+        }
+    }
+    cout << "    最大的3个（从小到大）：";
+    while (!minHeap.empty()) {
+        cout << minHeap.top() << " ";
+        minHeap.pop();
     }
     cout << endl;
+    cout << "    说明：用大小为 K 的小顶堆，时间复杂度 O(n log K)，" << endl;
+    cout << "         比“全部建堆再弹 K 次”的 O(n + K log n) 更适合海量数据。" << endl;
 }
 
 // ============================================================================
@@ -1238,7 +1266,7 @@ void testHeap() {
 //  │  - 对应STL：std::map, std::set（底层是红黑树）              │
 //  │                                                             │
 //  │  【堆 Heap】                                                │
-//  │  - 优点：找最大/最小O(1)，插入删除O(log n)，数组实现省空间  │
+//  │  - 优点：取堆顶 O(1)（大顶堆取最大/小顶堆取最小），插入删除 O(log n) │
 //  │  - 缺点：不能查找任意元素，只能管堆顶                       │
 //  │  - 适用：优先级队列、Top K问题、堆排序                      │
 //  │  - 对应STL：std::priority_queue                             │

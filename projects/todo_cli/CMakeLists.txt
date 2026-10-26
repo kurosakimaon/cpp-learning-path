@@ -61,7 +61,9 @@ target_include_directories(todo_cli PRIVATE include)
 # 编译选项（根据编译器不同设置不同的警告）
 if(MSVC)
     # Visual Studio 的警告
-    target_compile_options(todo_cli PRIVATE /W4)
+    # 源码里有中文和符号，/utf-8 明确告诉 MSVC 源文件和执行字符集都是 UTF-8。
+    # 不加的话，MSVC 可能按本地代码页解释，字符串乱码甚至编译报错。
+    target_compile_options(todo_cli PRIVATE /W4 /utf-8)
 else()
     # GCC/Clang 的警告
     target_compile_options(todo_cli PRIVATE -Wall -Wextra -Wpedantic)
@@ -75,22 +77,28 @@ add_executable(test_task
     tests/test_task.cpp
     src/Task.cpp
     src/TaskList.cpp
+    src/FileStorage.cpp
 )
 
 target_include_directories(test_task PRIVATE include)
 
 if(MSVC)
-    target_compile_options(test_task PRIVATE /W4)
+    target_compile_options(test_task PRIVATE /W4 /utf-8)
 else()
     target_compile_options(test_task PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # ================================================================
-#  启用测试（可选）
+#  注册测试
 # ================================================================
-#  如果你想使用 CTest，可以打开下面这行
-# enable_testing()
-# add_test(NAME TaskTest COMMAND test_task)
+#  enable_testing() 会启用 CTest；add_test 把测试程序登记进去。
+#  之后在 build 目录运行 ctest --output-on-failure 即可。
+#  测试会写临时文件，所以工作目录指定为构建目录，避免污染源码目录。
+enable_testing()
+add_test(NAME TaskTest COMMAND test_task)
+set_tests_properties(TaskTest PROPERTIES
+    WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+)
 
 # ================================================================
 #  编译方法
@@ -102,13 +110,15 @@ endif()
 #    cmake ..
 #    make
 #    ./bin/todo_cli
+#    ctest --output-on-failure
 #
 #  Windows (Visual Studio):
 #    mkdir build
 #    cd build
 #    cmake ..
 #    cmake --build . --config Release
-#    Release\todo_cli.exe
+#    bin\Release\todo_cli.exe
+#    ctest -C Release --output-on-failure
 #
 #  Windows (MinGW):
 #    mkdir build
@@ -116,4 +126,5 @@ endif()
 #    cmake .. -G "MinGW Makefiles"
 #    mingw32-make
 #    bin\todo_cli.exe
+#    ctest --output-on-failure
 #

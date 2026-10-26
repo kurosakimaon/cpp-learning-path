@@ -42,18 +42,19 @@ int main() {
     ConsoleUI ui;
 
     // ---- 2. 启动时加载数据 ----
-    //  程序一启动就从文件读取已有的任务
+    //  首次运行时文件还不存在，这是正常的空列表；
+    //  如果文件存在却读不出来，必须停止启动，绝不能带着空列表继续，
+    //  否则退出时的保存会把原文件覆盖掉。
 
-    std::vector<Task> loaded_tasks;
-    if (storage.load(loaded_tasks)) {
-        // 把加载的任务加进去
-        // 注意：因为 addTask 会重新分配 ID，这里我们直接操作
-        // 实际项目中应该给 TaskList 加批量添加的方法
-        for (const auto& task : loaded_tasks) {
-            tasks.addTask(task);
-            // （ID 会被重新分配，这是简化版本的小问题）
-            // 优化思路：给 TaskList 加一个 importTasks 方法
+    if (storage.exists()) {
+        std::vector<Task> loaded_tasks;
+        if (!storage.load(loaded_tasks)) {
+            std::cerr << "启动失败：无法读取 " << storage.getFilename()
+                      << "。为避免覆盖原数据，程序将退出。" << std::endl;
+            return 1;
         }
+        // 导入时保留原 ID，保证重启后列表里的 ID 与文件一致
+        tasks.importTasks(loaded_tasks);
     }
 
     // ---- 3. 启动 UI 主循环 ----
@@ -61,8 +62,8 @@ int main() {
     ui.run(tasks, storage);
 
     // ---- 4. 退出 ----
-    //  退出前保存由 ExitCommand 负责
-    //  这里不用做什么
+    //  add/delete/complete 已经各自自动保存，退出时不再重写文件。
+    //  这样只读查看后退出，不会因为文件只读而误报“保存失败”。
 
     return 0;
 }

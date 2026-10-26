@@ -10,11 +10,14 @@
  * 5. 数值算法：reduce / transform_reduce / exclusive_scan / inclusive_scan
  * 6. 实际工程中的性能考量与调优建议
  *
- * 编译命令（需要 TBB 支持）:
+ * 编译命令（GCC/Clang 通常需要 TBB 支持）:
  *   g++ -std=c++17 -O2 parallel_algorithms.cpp -o parallel_algorithms -ltbb
- *   (Windows MSVC: 不需要额外库，标准库自带并行支持)
+ *   (具体是否需要 -ltbb、库名是什么，取决于标准库实现和发行版)
+ *   MSVC 提供执行策略重载，但并行执行支持不完整，可能按串行执行；
+ *   是否定义 __cpp_lib_parallel_algorithm 随版本而变，不能一概而论
  *
- * 如果没有 TBB，可以定义 NO_PARALLEL 宏来跳过并行演示部分
+ * 如果没有 TBB，可以加 -DNO_PARALLEL 跳过运行期的并行演示；
+ * 但如果标准库连执行策略重载都没有，本文件仍需条件编译或更换工具链
  */
 
 #include <iostream>
@@ -26,11 +29,12 @@
 #include <string>
 #include <execution>
 #include <cmath>
-#include <mutex>
 #include <atomic>
 
-// 检查是否支持并行策略（简单检测）
-#if defined(__cpp_lib_parallel_algorithm)
+// 检查是否声明支持并行策略（简单检测）
+// 注意：宏为真不代表后端一定真的并行；libstdc++ 未启用 TBB 时 par 会串行执行。
+// NO_PARALLEL 用于手动关闭运行期的并行演示，不能替代链接所需后端。
+#if defined(__cpp_lib_parallel_algorithm) && !defined(NO_PARALLEL)
 constexpr bool HAS_PARALLEL = true;
 #else
 constexpr bool HAS_PARALLEL = false;
@@ -52,20 +56,21 @@ namespace execution_policy {
 //    - 并行执行，多个线程同时处理不同元素
 //    - 元素处理顺序不确定
 //    - 用户代码不能有数据竞争（需要自己保证线程安全）
-//    - 异常会被捕获并调用 std::terminate（或传播给调用者，具体实现决定）
+//    - 若元素访问函数抛出异常，标准要求调用 std::terminate，不会向调用者传播
 //
 // 3. std::execution::parallel_unsequenced_policy (par_unseq)
 //    - 并行 + 向量化（SIMD）
 //    - 最宽松的策略，允许最大程度的优化
 //    - 元素处理不仅可以并行，还可以乱序、向量化
-//    - 限制最严格：不能分配内存、不能加锁、不能调用非向量化安全的函数
+//    - 限制最严格：不能加锁、不能调用向量化不安全的函数，
+//      也不要在其中分配内存（具体限制见标准 [algorithms.parallel.exec]）
 
 void demo_policy_concepts() {
     std::cout << "===== 1. 执行策略概念 =====\n";
 
     std::cout << "std::execution::seq (sequenced_policy)\n";
     std::cout << "  - 串行执行，顺序确定\n";
-    std::cout << "  - 等价于普通算法调用\n\n";
+    std::cout << "  - 语义上等同于普通算法调用（但仍属于标准执行策略）\n\n";
 
     std::cout << "std::execution::par (parallel_policy)\n";
     std::cout << "  - 多线程并行执行\n";
@@ -73,8 +78,8 @@ void demo_policy_concepts() {
 
     std::cout << "std::execution::par_unseq (parallel_unsequenced_policy)\n";
     std::cout << "  - 并行 + 向量化\n";
-    std::cout << "  - 限制最严格：不能分配/加锁/调用非向量化函数\n";
-    std::cout << "  - 性能最高，但约束最多\n";
+    std::cout << "  - 限制最严格：不能加锁、不能调用向量化不安全的函数\n";
+    std::cout << "  - 优化空间最大，但不保证一定最快\n";
 }
 
 } // namespace execution_policy
@@ -95,13 +100,13 @@ std::vector<int> generate_random_data(size_t size, int seed = 42) {
     return data;
 }
 
-// 工具函数：计时
+// 工具函数：计时（返回毫秒，保留小数，避免整数除法把加速比变成 0）
 template <typename Func>
-auto measure_time(Func&& func, const std::string& name) {
-    auto start = std::chrono::high_resolution_clock::now();
+double measure_time(Func&& func, const std::string& name) {
+    auto start = std::chrono::steady_clock::now();
     func();
-    auto end = std::chrono::high_resolution_clock::now();
-    auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
+    auto end = std::chrono::steady_clock::now();
+    std::chrono::duration<double, std::milli> duration = end - start;
     std::cout << "  " << name << ": " << duration.count() << " ms\n";
     return duration.count();
 }
@@ -114,7 +119,6 @@ void demo_parallel_sort() {
 
     auto data1 = generate_random_data(N);
     auto data2 = data1;
-    auto data3 = data1;
 
     // 串行排序
     auto t1 = measure_time([&]() {
@@ -168,7 +172,7 @@ void demo_parallel_for_each() {
                 });
         }, "par for_each");
 
-        if (t1 > 0) {
+        if (t1 > 0 && t2 > 0) {
             std::cout << "  加速比: " << (t1 / t2) << "x\n";
         }
     } else {
@@ -186,8 +190,8 @@ void demo_parallel_for_each() {
 namespace numeric_parallel {
 
 // 3.1 std::reduce vs std::accumulate
-// accumulate 是严格串行的，按顺序累加
-// reduce 可以并行，但要求操作满足结合律（顺序不影响结果）
+// accumulate 是严格串行的，按顺序左结合累加
+// reduce 可以并行，但要求操作满足结合律和交换律（合并顺序不确定）
 
 void demo_reduce() {
     std::cout << "\n===== 3.1 std::reduce 并行求和 =====\n";
@@ -210,13 +214,17 @@ void demo_reduce() {
         (void)sum;
     }, "reduce seq");
 
+    if (t1 > 0 && t2 > 0) {
+        std::cout << "  reduce seq 相对 accumulate: " << (t1 / t2) << "x\n";
+    }
+
     if constexpr (HAS_PARALLEL) {
         auto t3 = basic_parallel::measure_time([&]() {
             volatile double sum = std::reduce(std::execution::par, data.begin(), data.end(), 0.0);
             (void)sum;
         }, "reduce par");
 
-        if (t1 > 0) {
+        if (t1 > 0 && t3 > 0) {
             std::cout << "  相对 accumulate 加速比: " << (t1 / t3) << "x\n";
         }
     } else {
@@ -267,6 +275,10 @@ void demo_transform_reduce() {
         (void)s;
     }, "transform_reduce seq");
 
+    if (t1 > 0 && t2 > 0) {
+        std::cout << "  transform_reduce seq 相对普通循环: " << (t1 / t2) << "x\n";
+    }
+
     if constexpr (HAS_PARALLEL) {
         auto t3 = basic_parallel::measure_time([&]() {
             auto sum = std::transform_reduce(
@@ -280,7 +292,7 @@ void demo_transform_reduce() {
             (void)s;
         }, "transform_reduce par");
 
-        if (t1 > 0) {
+        if (t1 > 0 && t3 > 0) {
             std::cout << "  相对普通循环加速比: " << (t1 / t3) << "x\n";
         }
     }
@@ -336,10 +348,10 @@ void demo_data_race() {
     const size_t N = 100'000;
     std::vector<int> data(N, 1);
 
-    // 错误！多个线程同时写 sum，数据竞争
-    int sum = 0;
+    // 错误！多个线程同时写同一个 sum，数据竞争（未定义行为）：
+    // int sum = 0;
     // std::for_each(std::execution::par, data.begin(), data.end(),
-    //     [&sum](int x) { sum += x; });  // 数据竞争！未定义行为
+    //     [&sum](int x) { sum += x; });
 
     // 正确方式1：使用 std::reduce
     int correct_sum = std::reduce(std::execution::seq, data.begin(), data.end(), 0);
@@ -357,23 +369,22 @@ void demo_data_race() {
     }
 
     // 正确方式3：使用互斥锁（性能最差）
-    std::mutex mtx;
-    int mutex_sum = 0;
-    // （不演示了，因为太慢）
+    // 每次 += 都要加锁解锁，串行化程度高，通常比单线程还慢，不推荐
     std::cout << "正确方式3 (mutex): 性能最差，不推荐\n";
 }
 
 // 4.2 并行算法中的异常处理
-// 并行算法中如果有异常抛出，会调用 std::terminate（或由实现决定）
+// 标准执行策略下，如果元素访问函数抛出异常，会调用 std::terminate
 // 所以用户代码应尽量避免抛出异常
 
 void demo_exception_safety() {
     std::cout << "\n===== 4.2 异常安全 =====\n";
     std::cout << "并行算法中的异常：\n";
-    std::cout << "  - 标准要求：如果元素访问函数抛出异常，\n";
-    std::cout << "    调用 std::terminate （终止程序）\n";
+    std::cout << "  - 使用 par 或 par_unseq 时，如果元素访问函数抛出异常，\n";
+    std::cout << "    标准要求调用 std::terminate（不会把异常传播给调用者）\n";
     std::cout << "  - 建议：确保并行代码不抛出异常\n";
-    std::cout << "  - 可以用 noexcept 标记 lambda，编译器会优化\n";
+    std::cout << "  - 把 lambda 标记 noexcept 能表达“不抛异常”的意图，\n";
+    std::cout << "    但别指望它带来明显加速；一旦抛出仍会 terminate\n";
     std::cout << "  - 如果需要错误处理，考虑用错误码或原子标志位\n";
 }
 
@@ -381,8 +392,9 @@ void demo_exception_safety() {
 void demo_iterator_requirements() {
     std::cout << "\n===== 4.3 迭代器要求 =====\n";
     std::cout << "并行算法对迭代器的要求：\n";
-    std::cout << "  - par 策略：至少是前向迭代器 (ForwardIterator)\n";
-    std::cout << "  - par_unseq：必须是随机访问迭代器 (RandomAccessIterator)\n";
+    std::cout << "  - 执行策略重载通常要求至少是前向迭代器 (ForwardIterator)\n";
+    std::cout << "  - 算法本身的要求不变（如 sort 仍要求随机访问迭代器）\n";
+    std::cout << "  - par_unseq 只是允许向量化，并不会降低对迭代器的要求\n";
     std::cout << "  - 元素访问必须是独立的（不能有依赖关系）\n\n";
     std::cout << "不适合并行化的场景：\n";
     std::cout << "  - std::list（不是随机访问，且内存不连续）\n";
@@ -422,7 +434,7 @@ void demo_parallel_find() {
             (void)idx;
         }, "find par");
 
-        if (t1 > 0) {
+        if (t1 > 0 && t2 > 0) {
             std::cout << "  加速比: " << (t1 / t2) << "x\n";
         }
     } else {
@@ -453,7 +465,7 @@ void demo_parallel_count() {
             (void)c;
         }, "count_if par");
 
-        if (t1 > 0) {
+        if (t1 > 0 && t2 > 0) {
             std::cout << "  加速比: " << (t1 / t2) << "x\n";
         }
     }
@@ -489,7 +501,7 @@ void demo_parallel_transform() {
             );
         }, "transform par");
 
-        if (t1 > 0) {
+        if (t1 > 0 && t2 > 0) {
             std::cout << "  加速比: " << (t1 / t2) << "x\n";
         }
     }
@@ -544,7 +556,12 @@ void demo_performance_pitfalls() {
     std::cout << "陷阱4：过度并行\n";
     std::cout << "  - 嵌套并行（并行算法中再调用并行算法）\n";
     std::cout << "  - 可能导致线程爆炸和调度开销\n";
-    std::cout << "  - 建议：只在最外层使用并行\n";
+    std::cout << "  - 建议：只在最外层使用并行\n\n";
+
+    std::cout << "陷阱5：以为并行一定更快\n";
+    std::cout << "  - 加速比受核心数、内存带宽、缓存、调度开销限制\n";
+    std::cout << "  - 内存密集型任务可能几乎不加速，甚至比串行更慢\n";
+    std::cout << "  - 一定要用真实数据和真实硬件测量\n";
 }
 
 // 6.3 最佳实践清单
@@ -699,6 +716,10 @@ int main() {
     best_practices::demo_checklist();
 
     image_processing::demo_image_processing();
+
+    std::cout << "\n注意：上面的加速比受 CPU 核心数、内存带宽和并行调度开销影响。\n";
+    std::cout << "      内存密集型、小数据量或并行开销大的任务，可能没有加速，甚至变慢。\n";
+    std::cout << "      并行不是万能的，先用串行版本测量，再决定是否并行。\n";
 
     std::cout << "\n============================================\n";
     std::cout << "所有演示完成！\n";

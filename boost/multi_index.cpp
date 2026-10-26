@@ -32,6 +32,8 @@
 #include <iomanip>
 #include <chrono>
 #include <random>
+#include <iterator>
+#include <stdexcept>
 
 // ========== Boost 头文件说明 ==========
 // <boost/multi_index_container.hpp>     - multi_index_container 主模板
@@ -88,6 +90,8 @@ struct ByDept {};
 struct BySalary {};
 struct ByInsertion {};
 struct ByDeptSalary {};  // 复合键：部门+薪资
+struct ByPlaylistPosition {};  // 随机访问索引示例：下标
+struct ByPlaylistValue {};     // 随机访问索引示例：值
 
 // ============================================================
 // 三、多索引容器定义
@@ -197,13 +201,22 @@ void ordered_index_demo(const EmployeeContainer& db) {
         if (rank >= 5) break;  // 只显示前 5 名
     }
 
-    // 1.4 lower_bound / upper_bound
-    std::cout << "\n1.4 lower_bound / upper_bound (薪资 >= 15000):" << std::endl;
+    // 1.4 lower_bound / upper_bound（降序索引，方向与升序相反）
+    std::cout << "\n1.4 lower_bound / upper_bound（薪资降序）:" << std::endl;
+    // 比较器是 greater<double>，所以：
+    //   lower_bound(k) = 第一个 salary <= k 的元素
+    //   upper_bound(k) = 第一个 salary <  k 的元素
+    // 要取 salary >= 15000，区间应为 [begin(), upper_bound(15000))。
     auto lb = by_salary.lower_bound(15000.0);
-    auto ub = by_salary.upper_bound(12000.0);  // 注意：降序排列，upper_bound 更小
-    // 因为是降序，lower_bound(15000) 返回第一个 <= 15000 的位置
-    // 这里用 equal_range 更直观
-    std::cout << "  （降序索引的边界查询需要注意方向）" << std::endl;
+    auto ub = by_salary.upper_bound(15000.0);
+    std::cout << "  lower_bound(15000)（第一个 <= 15000）: ";
+    lb->print();
+    std::cout << "  upper_bound(15000)（第一个 <  15000）: ";
+    ub->print();
+    std::cout << "  salary >= 15000 的员工:" << std::endl;
+    for (auto it2 = by_salary.begin(); it2 != ub; ++it2) {
+        it2->print();
+    }
 
     // 1.5 按部门分组查询（非唯一索引）
     std::cout << "\n1.5 按部门分组（ByDept 索引）:" << std::endl;
@@ -295,7 +308,7 @@ void sequenced_index_demo(EmployeeContainer& db) {
     std::cout << "\n3.3 relocate 移动元素位置:" << std::endl;
     auto it = by_insertion.begin();
     auto last = --by_insertion.end();
-    by_insertion.relocate(by_insertion.begin(), last);  // 最后一个移到最前面
+    by_insertion.relocate(it, last);  // 最后一个移到最前面
     std::cout << "  将最后一个移到最前面后，第一个:" << std::endl;
     by_insertion.front().print();
 
@@ -316,6 +329,55 @@ void sequenced_index_demo(EmployeeContainer& db) {
     by_id.erase(1011);
     std::cout << "\n3.5 通过 ID 索引删除测试员工" << std::endl;
     std::cout << "  当前员工数: " << db.size() << std::endl;
+}
+
+// ============================================================
+// 七点五、随机访问索引：接口类似 std::vector
+// ============================================================
+void random_access_index_demo() {
+    std::cout << "\n--- 3.6 随机访问索引（random_access） ---" << std::endl;
+
+    // random_access 索引的接口接近 std::vector：
+    //   operator[] / at() 支持 O(1) 按下标访问，
+    //   push_back / reserve / capacity 也都有。
+    // 它和其他索引共享同一份元素，只是多提供一种“视图”。
+    using Playlist = mi::multi_index_container<
+        std::string,
+        mi::indexed_by<
+            mi::random_access<mi::tag<ByPlaylistPosition>>,
+            mi::ordered_unique<mi::tag<ByPlaylistValue>, mi::identity<std::string>>
+        >
+    >;
+
+    Playlist playlist;
+    playlist.push_back("晴天");
+    playlist.push_back("七里香");
+    playlist.push_back("夜曲");
+    playlist.push_back("稻香");
+
+    const auto& by_pos = playlist.get<ByPlaylistPosition>();
+    std::cout << "3.6.1 按下标访问（O(1)）:" << std::endl;
+    std::cout << "  by_pos[0]    = " << by_pos[0] << std::endl;
+    std::cout << "  by_pos.at(2) = " << by_pos.at(2) << std::endl;
+
+    // at() 越界抛 std::out_of_range；operator[] 不检查，越界是 UB
+    try {
+        std::cout << by_pos.at(10) << std::endl;
+    } catch (const std::out_of_range&) {
+        std::cout << "  at(10) 越界：抛出 std::out_of_range" << std::endl;
+    }
+
+    // 从值索引投影回位置索引，拿到下标
+    const auto& by_value = playlist.get<ByPlaylistValue>();
+    auto value_it = by_value.find("夜曲");
+    if (value_it != by_value.end()) {
+        auto pos_it = by_pos.iterator_to(*value_it);
+        std::cout << "3.6.2 从值索引投影回位置: \"夜曲\" 的下标 = "
+                  << std::distance(by_pos.begin(), pos_it) << std::endl;
+    }
+
+    std::cout << "3.6.3 容量: " << by_pos.capacity()
+              << "，大小: " << by_pos.size() << std::endl;
 }
 
 // ============================================================
@@ -340,10 +402,19 @@ void composite_key_demo(const EmployeeContainer& db) {
     // 4.2 复合键范围查询：研发部薪资在 15000-20000 之间的员工
     std::cout << "\n4.2 复合键范围查询（研发部，薪资 15000~20000）:" << std::endl;
 
-    // 使用 make_tuple 构造复合键进行查询
+    // range() 的参数是“边界谓词”，不是键值本身：
+    //   lower(k) 为 true 表示 k >= 下界（不在下界之前）
+    //   upper(k) 为 true 表示 k <= 上界（不在上界之后）
+    // 两者同时为 true 表示 k 落在区间内。注意名字容易误导，
+    // lower 并不是“k 小于下界”，upper 也不是“k 大于上界”。
+    // 复合键的键对象是 composite_key_result，这里用索引自带的 key_comp()
+    // 按索引顺序比较，避免手工拼比较逻辑时把降序方向写反。
+    auto comp = by_dept_salary.key_comp();
+    auto lower_key = boost::make_tuple(std::string("研发部"), 20000.0);
+    auto upper_key = boost::make_tuple(std::string("研发部"), 15000.0);
     auto range = by_dept_salary.range(
-        std::make_tuple("研发部", 20000.0),   // 上界（降序薪资，所以 20000 在前）
-        std::make_tuple("研发部", 15000.0)    // 下界
+        [comp, lower_key](const auto& k) { return !comp(k, lower_key); },
+        [comp, upper_key](const auto& k) { return !comp(upper_key, k); }
     );
 
     for (auto it = range.first; it != range.second; ++it) {
@@ -359,10 +430,11 @@ void composite_key_demo(const EmployeeContainer& db) {
 // replace：用一个新元素替换旧元素
 //
 // 两者的区别：
-//   - modify 更高效（只修改需要改变的字段）
-//   - replace 更安全（整体替换，不会有部分修改的中间状态）
-//   - 如果修改了键字段，modify 会重新排列元素位置
-//   - 如果修改导致键重复，modify 会失败并回滚
+//   - modify 原地修改，不构造整个新元素；若键发生变化，容器会把元素
+//     重新排到其他索引中的正确位置
+//   - replace 用新元素整体替换，需要拷贝/移动构造一个新值
+//   - 两者失败时语义相同：返回 false，并且该元素会被删除（不是回滚）
+//   - 想保留原值时，必须在调用前自己备份
 
 void modify_demo(EmployeeContainer& db) {
     std::cout << "\n--- 5. 元素修改：modify vs replace ---" << std::endl;
@@ -429,19 +501,28 @@ void modify_demo(EmployeeContainer& db) {
         it->print();
     }
 
-    // 5.4 modify 失败回滚（修改为重复键）
-    std::cout << "\n5.4 modify 失败自动回滚（键冲突）:" << std::endl;
+    // 5.4 modify 失败：元素会被删除，不会自动回滚
+    std::cout << "\n5.4 modify 失败（键冲突）:元素被删除,需手动恢复" << std::endl;
     it = by_id.find(1001);
     if (it != by_id.end()) {
-        int old_id = it->id;
+        Employee backup = *it;  // 想恢复就得自己先备份
         bool success = by_id.modify(it, [](Employee& e) {
             e.id = 1002;  // 与已有的 1002 冲突
         });
 
         std::cout << "  将 1001 改为 1002（重复键），成功: "
                   << std::boolalpha << success << std::endl;
-        std::cout << "  元素 ID 保持原值: " << it->id
-                  << "（自动回滚）" << std::endl;
+
+        // 注意：modify 失败后 it 已经失效，不能再解引用！
+        // Boost.MultiIndex 的语义是“失败即删除”，不是回滚。
+        std::cout << "  查找 1001: "
+                  << (by_id.find(1001) == by_id.end() ? "已被删除" : "仍存在")
+                  << std::endl;
+
+        by_id.insert(backup);  // 需要的话，自己把备份插回去
+        std::cout << "  手动插回备份后，查找 1001: "
+                  << (by_id.find(1001) != by_id.end() ? "已恢复" : "找不到")
+                  << std::endl;
     }
 }
 
@@ -466,7 +547,7 @@ void projection_demo(EmployeeContainer& db) {
 
         // 第二步：投影到薪资索引
         const auto& by_salary = db.get<BySalary>();
-        auto salary_it = by_salary.project<0>(name_it);  // 0 是 ById 的索引编号
+        auto salary_it = db.project<BySalary>(name_it);  // 投影到薪资索引
         // 或者用 tag：
         // auto salary_it = db.project<BySalary>(name_it);
 
@@ -485,7 +566,7 @@ void projection_demo(EmployeeContainer& db) {
 
     // 投影到 ID 索引并修改
     auto& by_id = db.get<ById>();
-    auto id_it = by_id.project<ByInsertion>(seq_it);
+    auto id_it = db.project<ById>(seq_it);
     by_id.modify(id_it, [](Employee& e) {
         e.salary += 500;
     });
@@ -506,37 +587,52 @@ void performance_demo(const EmployeeContainer& db) {
 
     const int iterations = 100000;
 
+    // 累计命中次数，防止 -O3 把“返回值没人用”的查找整个优化掉，
+    // 否则计时结果会出现 0 us 这种失真数据。
+    int ordered_hits = 0;
+    int hashed_hits = 0;
+    int linear_hits = 0;
+
     // 有序索引查找
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::steady_clock::now();
     for (int i = 0; i < iterations; ++i) {
-        by_id.find(1005);
+        if (by_id.find(1005) != by_id.end()) ++ordered_hits;
     }
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::steady_clock::now();
     auto ordered_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
     // 散列索引查找
-    start = std::chrono::high_resolution_clock::now();
+    start = std::chrono::steady_clock::now();
     for (int i = 0; i < iterations; ++i) {
-        by_name.find("钱七");
+        if (by_name.find("钱七") != by_name.end()) ++hashed_hits;
     }
-    end = std::chrono::high_resolution_clock::now();
+    end = std::chrono::steady_clock::now();
     auto hashed_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
     // 线性查找（序列索引，模拟没有索引的情况）
-    start = std::chrono::high_resolution_clock::now();
+    start = std::chrono::steady_clock::now();
     for (int i = 0; i < iterations; ++i) {
-        std::find_if(by_insertion.begin(), by_insertion.end(),
-                     [](const Employee& e) { return e.id == 1005; });
+        if (std::find_if(by_insertion.begin(), by_insertion.end(),
+                         [](const Employee& e) { return e.id == 1005; })
+            != by_insertion.end()) {
+            ++linear_hits;
+        }
     }
-    end = std::chrono::high_resolution_clock::now();
+    end = std::chrono::steady_clock::now();
     auto linear_time = std::chrono::duration_cast<std::chrono::microseconds>(end - start).count();
 
     std::cout << "  数据量: " << db.size() << " 条，查找 " << iterations << " 次" << std::endl;
     std::cout << "  有序索引 (O(log n)):  " << ordered_time << " us" << std::endl;
     std::cout << "  散列索引 (O(1)):      " << hashed_time << " us" << std::endl;
     std::cout << "  线性查找 (O(n)):      " << linear_time << " us" << std::endl;
-    std::cout << "  散列/有序 速度比: " << (double)ordered_time / hashed_time << "x" << std::endl;
-    std::cout << "  线性/有序 速度比: " << (double)linear_time / ordered_time << "x" << std::endl;
+    std::cout << "  三种方式命中次数（应相同）: "
+              << ordered_hits << " / " << hashed_hits << " / " << linear_hits << std::endl;
+    if (hashed_time > 0) {
+        std::cout << "  有序/散列 耗时比: " << (double)ordered_time / hashed_time << "x" << std::endl;
+    }
+    if (ordered_time > 0) {
+        std::cout << "  线性/有序 耗时比: " << (double)linear_time / ordered_time << "x" << std::endl;
+    }
 }
 
 // ============================================================
@@ -563,7 +659,7 @@ public:
 
         // 访问后移到头部（标记为最近使用）
         auto& by_seq = cache_.template get<BySeq>();
-        by_seq.relocate(by_seq.begin(), cache_.template project<ByKey>(it));
+        by_seq.relocate(by_seq.begin(), cache_.template project<BySeq>(it));
 
         return &it->value;
     }
@@ -577,7 +673,7 @@ public:
             // 更新值并移到头部
             by_key.modify(it, [&value](auto& item) { item.value = value; });
             auto& by_seq = cache_.template get<BySeq>();
-            by_seq.relocate(by_seq.begin(), cache_.template project<ByKey>(it));
+            by_seq.relocate(by_seq.begin(), cache_.template project<BySeq>(it));
         } else {
             // 检查容量
             if (cache_.size() >= capacity_) {
@@ -690,6 +786,9 @@ int main() {
 
     // 3. 序列索引
     sequenced_index_demo(db);
+
+    // 3.6 随机访问索引
+    random_access_index_demo();
 
     // 4. 复合键索引
     composite_key_demo(db);

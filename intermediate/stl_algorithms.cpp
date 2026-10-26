@@ -95,7 +95,8 @@ void printVec(const vector<int>& vec, const string& name = "vector")
 // sort：快速排序变种（introsort），平均O(n log n)，不稳定
 // stable_sort：归并排序，O(n log n)，稳定（相同元素相对顺序不变）
 // partial_sort：部分排序，前k个有序，O(n log k)
-// nth_element：第n小的元素就位，左边都比它小，右边都比它大
+// nth_element：第n小的元素就位，左边都不大于它，右边都不小于它
+//               （重复元素可能分布在两侧，不保证严格大小关系）
 // ============================================================
 
 void sortAlgorithms()
@@ -210,10 +211,19 @@ void findAlgorithms()
     cout << "\n  3.4 lower_bound / upper_bound" << endl;
     auto low = lower_bound(sorted.begin(), sorted.end(), 5);
     auto high = upper_bound(sorted.begin(), sorted.end(), 5);
-    cout << "  lower_bound(5) 指向第一个 >=5 的元素: " << *low
-         << " (索引 " << (low - sorted.begin()) << ")" << endl;
-    cout << "  upper_bound(5) 指向第一个 >5 的元素: " << *high
-         << " (索引 " << (high - sorted.begin()) << ")" << endl;
+    // 注意：找不到时返回 end()，必须先判断再解引用！
+    if (low != sorted.end()) {
+        cout << "  lower_bound(5) 指向第一个 >=5 的元素: " << *low
+             << " (索引 " << (low - sorted.begin()) << ")" << endl;
+    } else {
+        cout << "  lower_bound(5) 没找到 >=5 的元素（返回 end()）" << endl;
+    }
+    if (high != sorted.end()) {
+        cout << "  upper_bound(5) 指向第一个 >5 的元素: " << *high
+             << " (索引 " << (high - sorted.begin()) << ")" << endl;
+    } else {
+        cout << "  upper_bound(5) 没找到 >5 的元素（返回 end()）" << endl;
+    }
     cout << "  等于5的元素有 " << (high - low) << " 个" << endl;
 
     // 3.5 equal_range = lower_bound + upper_bound

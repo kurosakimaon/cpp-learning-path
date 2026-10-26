@@ -18,11 +18,11 @@
  * 1. 将与特定状态相关的行为局部化，使得状态转换显式化
  * 2. 消除了庞大的条件分支语句
  * 3. 状态对象可以被共享（享元）
- * 4. 符合单一职责原则和开闭原则
+ * 4. 状态相关行为局部化，新增状态类本身不需要改动已有状态类
  *
  * 【缺点】
  * 1. 增加了状态类的数量，系统类和对象的个数都会增加
- * 2. 对开闭原则的支持不太好（新增状态可能需要修改其他状态类的转换逻辑）
+ * 2. 对开闭原则的支持有限：新增状态往往需要修改其他状态类中的转换逻辑
  * 3. 状态模式的结构与实现都较为复杂
  *
  * 【与策略模式的区别】
@@ -67,12 +67,24 @@ public:
     virtual void refund(Order& order) = 0;    // 退款
 };
 
+// 状态工厂：定义在具体状态类之后，供状态转换使用
+std::shared_ptr<IOrderState> paidState();
+std::shared_ptr<IOrderState> cancelledState();
+std::shared_ptr<IOrderState> shippedState();
+std::shared_ptr<IOrderState> deliveredState();
+std::shared_ptr<IOrderState> refundingState();
+std::shared_ptr<IOrderState> refundedState();
+
 // 订单上下文
 class Order {
 public:
     Order() : state_(nullptr) {}
 
     void setState(std::shared_ptr<IOrderState> state) {
+        if (!state) {
+            std::cout << "  [订单状态] 错误：状态不能为空，忽略本次设置" << std::endl;
+            return;
+        }
         if (state_) {
             std::cout << "  [订单状态] " << state_->getName() << " -> "
                       << state->getName() << std::endl;
@@ -86,14 +98,24 @@ public:
         return state_ ? state_->getName() : "无状态";
     }
 
-    // 操作委托给状态对象
-    void pay() { state_->pay(*this); }
-    void cancel() { state_->cancel(*this); }
-    void ship() { state_->ship(*this); }
-    void deliver() { state_->deliver(*this); }
-    void refund() { state_->refund(*this); }
+    // 操作委托给状态对象。未设置状态时直接报错，
+    // 而不是解引用空指针；状态对象内部也可能调用 setState。
+    bool hasState() const { return static_cast<bool>(state_); }
+    void pay() { if (requireState("支付")) state_->pay(*this); }
+    void cancel() { if (requireState("取消")) state_->cancel(*this); }
+    void ship() { if (requireState("发货")) state_->ship(*this); }
+    void deliver() { if (requireState("签收")) state_->deliver(*this); }
+    void refund() { if (requireState("退款")) state_->refund(*this); }
 
 private:
+    bool requireState(const char* action) const {
+        if (!state_) {
+            std::cout << "  [操作] 错误：订单尚未设置状态，无法" << action << std::endl;
+            return false;
+        }
+        return true;
+    }
+
     std::shared_ptr<IOrderState> state_;
 };
 
@@ -344,6 +366,14 @@ private:
     CancelledState() = default;
 };
 
+// 状态工厂定义：复用各状态类的单例实例
+std::shared_ptr<IOrderState> paidState() { return PaidState::instance(); }
+std::shared_ptr<IOrderState> cancelledState() { return CancelledState::instance(); }
+std::shared_ptr<IOrderState> shippedState() { return ShippedState::instance(); }
+std::shared_ptr<IOrderState> deliveredState() { return DeliveredState::instance(); }
+std::shared_ptr<IOrderState> refundingState() { return RefundingState::instance(); }
+std::shared_ptr<IOrderState> refundedState() { return RefundedState::instance(); }
+
 // ============================================================
 // 2. 状态转换表（表格驱动状态机）
 // ============================================================
@@ -463,7 +493,17 @@ public:
     virtual void enter(GameAI& ai) = 0;     // 进入状态
     virtual void update(GameAI& ai) = 0;    // 更新状态
     virtual void exit(GameAI& ai) = 0;      // 退出状态
+
+    // 终止状态（死亡）不允许再切换到别的状态
+    virtual bool isTerminal() const { return false; }
 };
+
+// AI 状态工厂：定义在具体状态类之后
+std::shared_ptr<IAIState> patrolState();
+std::shared_ptr<IAIState> chaseState();
+std::shared_ptr<IAIState> attackState();
+std::shared_ptr<IAIState> fleeState();
+std::shared_ptr<IAIState> deadState();
 
 // AI角色
 class GameAI {
@@ -473,6 +513,14 @@ public:
     }
 
     void changeState(std::shared_ptr<IAIState> newState) {
+        // 已经处于终止状态（死亡）时，不允许再切换到其他状态
+        if (currentState_ && currentState_->isTerminal()) {
+            return;
+        }
+        // 血量归零后只允许进入死亡状态
+        if (isDead() && !newState->isTerminal()) {
+            return;
+        }
         if (currentState_) {
             std::cout << "  [AI " << name_ << "] 退出 " << currentState_->getName() << std::endl;
             currentState_->exit(*this);
@@ -492,11 +540,19 @@ public:
     const std::string& getName() const { return name_; }
     int getHealth() const { return health_; }
     void takeDamage(int damage) {
+        if (isDead()) return;  // 已经死亡，不再重复扣血
         health_ = std::max(0, health_ - damage);
         std::cout << "  [AI " << name_ << "] 受到 " << damage << " 点伤害，剩余HP: "
                   << health_ << "/" << maxHealth_ << std::endl;
+        if (health_ == 0) {
+            changeState(deadState());  // 血量归零 -> 自动进入死亡状态
+        }
     }
     void heal(int amount) {
+        if (isDead()) {
+            std::cout << "  [AI " << name_ << "] 已死亡，无法恢复HP" << std::endl;
+            return;
+        }
         health_ = std::min(maxHealth_, health_ + amount);
         std::cout << "  [AI " << name_ << "] 恢复 " << amount << " 点HP，当前HP: "
                   << health_ << "/" << maxHealth_ << std::endl;
@@ -520,11 +576,11 @@ private:
 };
 
 // 具体状态：巡逻
-class PatrolState : public IAIState, public std::enable_shared_from_this<PatrolState> {
+class PatrolState : public IAIState {
 public:
     std::string getName() const override { return "巡逻状态"; }
 
-    void enter(GameAI& ai) override {
+    void enter(GameAI&) override {
         std::cout << "    开始在区域内巡逻..." << std::endl;
     }
 
@@ -550,22 +606,14 @@ public:
     void exit(GameAI&) override {
         std::cout << "    停止巡逻" << std::endl;
     }
-
-    static std::shared_ptr<PatrolState> instance() {
-        static auto inst = std::shared_ptr<PatrolState>(new PatrolState());
-        return inst;
-    }
-
-private:
-    PatrolState() = default;
 };
 
 // 具体状态：追击
-class ChaseState : public IAIState, public std::enable_shared_from_this<ChaseState> {
+class ChaseState : public IAIState {
 public:
     std::string getName() const override { return "追击状态"; }
 
-    void enter(GameAI& ai) override {
+    void enter(GameAI&) override {
         std::cout << "    开始追击玩家！" << std::endl;
     }
 
@@ -602,22 +650,16 @@ public:
         chaseCount_ = 0;
     }
 
-    static std::shared_ptr<ChaseState> instance() {
-        static auto inst = std::shared_ptr<ChaseState>(new ChaseState());
-        return inst;
-    }
-
 private:
-    ChaseState() = default;
     int chaseCount_ = 0;
 };
 
 // 具体状态：攻击
-class AttackState : public IAIState, public std::enable_shared_from_this<AttackState> {
+class AttackState : public IAIState {
 public:
     std::string getName() const override { return "攻击状态"; }
 
-    void enter(GameAI& ai) override {
+    void enter(GameAI&) override {
         std::cout << "    进入攻击姿态！" << std::endl;
     }
 
@@ -653,22 +695,16 @@ public:
         attackCount_ = 0;
     }
 
-    static std::shared_ptr<AttackState> instance() {
-        static auto inst = std::shared_ptr<AttackState>(new AttackState());
-        return inst;
-    }
-
 private:
-    AttackState() = default;
     int attackCount_ = 0;
 };
 
 // 具体状态：逃跑
-class FleeState : public IAIState, public std::enable_shared_from_this<FleeState> {
+class FleeState : public IAIState {
 public:
     std::string getName() const override { return "逃跑状态"; }
 
-    void enter(GameAI& ai) override {
+    void enter(GameAI&) override {
         std::cout << "    玩命逃跑中！" << std::endl;
     }
 
@@ -688,22 +724,18 @@ public:
     }
 
     void exit(GameAI&) override {
-    }
-
-    static std::shared_ptr<FleeState> instance() {
-        static auto inst = std::shared_ptr<FleeState>(new FleeState());
-        return inst;
+        fleeCount_ = 0;
     }
 
 private:
-    FleeState() = default;
     int fleeCount_ = 0;
 };
 
 // 具体状态：死亡
-class DeadState : public IAIState, public std::enable_shared_from_this<DeadState> {
+class DeadState : public IAIState {
 public:
     std::string getName() const override { return "死亡状态"; }
+    bool isTerminal() const override { return true; }
 
     void enter(GameAI& ai) override {
         std::cout << "    AI " << ai.getName() << " 被击败了！" << std::endl;
@@ -716,15 +748,14 @@ public:
     void exit(GameAI&) override {
         // 不会退出死亡状态
     }
-
-    static std::shared_ptr<DeadState> instance() {
-        static auto inst = std::shared_ptr<DeadState>(new DeadState());
-        return inst;
-    }
-
-private:
-    DeadState() = default;
 };
+
+// AI 状态工厂：每个 AI 拥有独立的状态对象，计数器互不影响
+std::shared_ptr<IAIState> patrolState() { return std::make_shared<PatrolState>(); }
+std::shared_ptr<IAIState> chaseState() { return std::make_shared<ChaseState>(); }
+std::shared_ptr<IAIState> attackState() { return std::make_shared<AttackState>(); }
+std::shared_ptr<IAIState> fleeState() { return std::make_shared<FleeState>(); }
+std::shared_ptr<IAIState> deadState() { return std::make_shared<DeadState>(); }
 
 // ============================================================
 // 测试代码
@@ -795,7 +826,7 @@ void testGameAI() {
     std::cout << "\n========== 游戏AI状态机测试 ==========" << std::endl;
 
     GameAI enemy("哥布林", 100);
-    enemy.changeState(PatrolState::instance());
+    enemy.changeState(patrolState());
 
     std::cout << "\n--- 第1回合：巡逻 ---" << std::endl;
     enemy.update();
@@ -827,9 +858,19 @@ void testGameAI() {
     std::cout << "  AI状态: " << enemy.getStateName() << std::endl;
     std::cout << "  AI血量: " << enemy.getHealth() << "/100" << std::endl;
 
+    std::cout << "\n--- 第15回合：致命一击，进入死亡状态 ---" << std::endl;
+    enemy.takeDamage(100);  // 血量归零 -> 自动进入死亡状态
+    enemy.update();         // 死亡状态不再行动
+    enemy.setPlayerNearby(true);
+    enemy.update();         // 即使玩家靠近，也不会离开死亡状态
+    enemy.heal(50);         // 死亡后不能回血
+    std::cout << "  AI状态: " << enemy.getStateName() << std::endl;
+    std::cout << "  AI血量: " << enemy.getHealth() << "/100" << std::endl;
+
     std::cout << "\n  游戏AI状态机展示了状态模式的典型应用" << std::endl;
     std::cout << "  每个状态封装了进入/更新/退出的行为" << std::endl;
     std::cout << "  状态转换条件清晰，易于扩展新状态" << std::endl;
+    std::cout << "  死亡是终止状态，进入后不能再切换到其他状态" << std::endl;
 }
 
 int main() {
@@ -845,7 +886,7 @@ int main() {
     std::cout << "状态转换表：表格驱动，规则清晰，易于维护" << std::endl;
     std::cout << "游戏AI：状态模式的典型应用，enter/update/exit三方法" << std::endl;
     std::cout << "vs策略模式：状态有转换关系，策略平等独立" << std::endl;
-    std::cout << "设计原则：单一职责、开闭原则" << std::endl;
+    std::cout << "设计原则：状态行为局部化（单一职责）；开闭原则仅部分满足" << std::endl;
 
     return 0;
 }

@@ -19,6 +19,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <map>
 #include <algorithm>
 #include <cstring>
 #include <chrono>
@@ -131,6 +132,9 @@ void demo_parameter_pattern() {
 }
 
 // 1.4 字符串解析实战：分割路径
+// 注意：返回的每个 string_view 都指向 path 内部，调用方必须保证 path 比
+// 返回的视图活得更久。下面这种用法会让所有视图悬空：
+//   auto parts = split_path(std::string("/a/b"));  // 临时 string 语句结束即销毁
 std::vector<std::string_view> split_path(std::string_view path) {
     std::vector<std::string_view> components;
     size_t start = 0;
@@ -190,9 +194,9 @@ void demo_lifetime_traps() {
     std::string s = "hello";
     std::string_view sv = s;
     std::cout << "  初始: sv = " << sv << "\n";
-    s += " world";  // s 可能重新分配内存，sv 变成悬空
-    std::cout << "  s += \"world\" 后，sv 可能失效（取决于 SSO 和 reallocation）\n";
-    std::cout << "  （不要依赖修改后的 string_view）\n\n";
+    s += " world";  // 追加可能重新分配，使 sv 指向已释放的旧缓冲区
+    std::cout << "  s += \"world\" 后，sv 可能已失效（标准不保证仍然有效）\n";
+    std::cout << "  （本机即使看起来能读，也不要依赖修改后的 string_view）\n\n";
 
     std::cout << "安全的使用场景：\n";
     std::cout << "  1. 作为函数参数（只在函数内部使用）\n";
@@ -207,8 +211,8 @@ void demo_conversions() {
 
     // string -> string_view：隐式转换（安全）
     std::string s = "hello";
-    std::string_view sv = s;  // OK，隐式转换
-    std::cout << "string -> string_view: 隐式转换，安全\n";
+    std::string_view sv = s;  // OK，但仅限 s 存活且不被修改期间
+    std::cout << "string -> string_view: 隐式转换（注意 s 的生命周期）\n";
 
     // string_view -> string：显式构造（有拷贝）
     std::string s2(sv);  // OK，显式构造，会拷贝数据
@@ -228,31 +232,33 @@ void demo_performance() {
     std::string long_str(1000, 'x');
 
     // string 参数（可能产生临时对象）
-    auto start1 = std::chrono::high_resolution_clock::now();
+    auto start1 = std::chrono::steady_clock::now();
     for (int i = 0; i < iterations; ++i) {
         // 模拟一个接受 string 的函数
         auto func = [](const std::string& s) { return s.size(); };
         volatile size_t s = func(long_str.substr(0, 100));
         (void)s;
     }
-    auto end1 = std::chrono::high_resolution_clock::now();
+    auto end1 = std::chrono::steady_clock::now();
     auto t1 = std::chrono::duration_cast<std::chrono::milliseconds>(end1 - start1);
 
     // string_view 参数（零拷贝）
-    auto start2 = std::chrono::high_resolution_clock::now();
+    auto start2 = std::chrono::steady_clock::now();
     for (int i = 0; i < iterations; ++i) {
         auto func = [](std::string_view s) { return s.size(); };
         std::string_view sv = long_str;
         volatile size_t s = func(sv.substr(0, 100));
         (void)s;
     }
-    auto end2 = std::chrono::high_resolution_clock::now();
+    auto end2 = std::chrono::steady_clock::now();
     auto t2 = std::chrono::duration_cast<std::chrono::milliseconds>(end2 - start2);
 
     std::cout << "string + substr: " << t1.count() << " ms\n";
     std::cout << "string_view + substr: " << t2.count() << " ms\n";
-    if (t1.count() > 0) {
+    if (t1.count() > 0 && t2.count() > 0) {
         std::cout << "性能差异约 " << (t1.count() * 1.0 / t2.count()) << "x\n";
+    } else {
+        std::cout << "（耗时太短，无法计算稳定的倍率）\n";
     }
 }
 
@@ -338,18 +344,24 @@ void demo_path_normalization() {
     fs::path sub = "/usr/local/bin/gcc";
     std::cout << "\nbase = " << base << "\n";
     std::cout << "sub = " << sub << "\n";
-    std::cout << "sub 以 base 开头? " << std::boolalpha
-              << (sub.string().rfind(base.string(), 0) == 0) << "\n";
+    // 按路径组件比较，而不是按字符串前缀比较。
+    // 字符串前缀会把 "/usr/locally" 误判为以 "/usr/local" 开头。
+    auto mismatch = std::mismatch(base.begin(), base.end(),
+                                  sub.begin(), sub.end());
+    bool startsWith = (mismatch.first == base.end());
+    std::cout << "sub 以 base 开头? " << std::boolalpha << startsWith << "\n";
 }
 
 // 2.4 跨平台注意事项
 void demo_cross_platform() {
     std::cout << "\n===== 2.4 跨平台注意事项 =====\n";
 
-    std::cout << "path 类会自动处理路径分隔符:\n";
-    std::cout << "  - 在 Windows 上，/ 会被转换为 \\\n";
-    std::cout << "  - 在 Linux/Mac 上，\\ 会被转换为 /\n";
-    std::cout << "  - 推荐使用 / 作为分隔符（可移植）\n\n";
+    std::cout << "path 存储的是原生格式，不会自动替换已有分隔符:\n";
+    std::cout << "  - Windows 的 API 同时接受 / 和 \\ 作为分隔符；\n";
+    std::cout << "    path 构造/string() 不会把所有 / 自动改写成 \\\n";
+    std::cout << "  - POSIX 上反斜杠 \\ 可以是普通文件名字符，不是分隔符\n";
+    std::cout << "  - 要统一成当前平台的原生分隔符，可调用 make_preferred()\n";
+    std::cout << "  - 推荐在源码中使用 / 作为通用分隔符（可移植）\n\n";
 
     std::cout << "常用路径:\n";
     std::cout << "  current_path(): " << fs::current_path() << "\n";
@@ -407,24 +419,25 @@ void demo_recursive_iteration() {
     int total_files = 0;
     int total_dirs = 0;
 
-    // 注意：递归遍历可能很深，这里用 depth 做限制
-    for (const auto& entry : fs::recursive_directory_iterator(
+    // 注意：递归遍历可能很深，这里用迭代器的 depth() 做限制
+    for (auto it = fs::recursive_directory_iterator(
              dir,
              fs::directory_options::skip_permission_denied
-         )) {
+         );
+         it != fs::recursive_directory_iterator(); ++it) {
+        const auto& entry = *it;
         if (entry.is_directory()) {
             ++total_dirs;
             // 打印缩进表示深度
-            std::string indent(entry.depth() * 2, ' ');
+            std::string indent(it.depth() * 2, ' ');
             std::cout << indent << "[DIR] " << entry.path().filename() << "\n";
         } else {
             ++total_files;
         }
 
-        // 限制深度，避免遍历太深
-        if (entry.depth() >= 2) {
-            // disable_recursion_pending() 可以跳过当前目录的子目录
-            // 但这是在进入目录前调用的，这里只是演示
+        // 限制深度：到达第 2 层后，不再递归进入更深的子目录
+        if (it.depth() >= 2) {
+            it.disable_recursion_pending();
         }
     }
 
@@ -499,8 +512,9 @@ void demo_file_status() {
     // 最后修改时间
     auto ftime = fs::last_write_time(p);
     // C++20 之前 last_write_time 的时间点类型不易转换为人类可读格式
-    // 这里只演示 API 存在
-    std::cout << "  last_write_time(): (文件时间点类型)\n";
+    // 这里打印内部时钟计数，只演示 API 和类型
+    std::cout << "  last_write_time(): " << ftime.time_since_epoch().count()
+              << " (文件时钟计数)\n";
 
     // 文件权限
     auto perms = fs::status(p).permissions();
@@ -575,7 +589,7 @@ void demo_error_handling() {
     // 方式1：异常方式（默认）
     std::cout << "方式1：异常处理\n";
     try {
-        fs::file_size("/nonexistent/path/file.txt");
+        (void)fs::file_size("/nonexistent/path/file.txt");
     } catch (const fs::filesystem_error& e) {
         std::cout << "  捕获异常: " << e.what() << "\n";
         std::cout << "  错误码: " << e.code() << "\n";

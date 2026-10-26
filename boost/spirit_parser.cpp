@@ -48,7 +48,9 @@
 #include <boost/spirit/home/x3.hpp>
 #include <boost/spirit/home/x3/support/ast/variant.hpp>
 #include <boost/fusion/include/adapt_struct.hpp>
+#include <boost/fusion/include/at_c.hpp>
 #include <boost/fusion/include/io.hpp>
+#include <boost/variant/static_visitor.hpp>
 
 namespace x3 = boost::spirit::x3;
 namespace ascii = boost::spirit::x3::ascii;
@@ -138,6 +140,11 @@ namespace calc {
     // 语义动作中使用 x3::_val(ctx) 表示当前规则的属性值
     // x3::_attr(ctx) 表示匹配到的属性
 
+    // 重要：规则定义中一旦出现语义动作，X3 会关闭该规则的自动属性
+    // 传播（整个 RHS 的 has_action 为 true）。因此第一个操作数也必须
+    // 用动作显式写入 _val，否则它会被直接丢弃，结果永远是 0。
+    auto const copy_val = [](auto& ctx) { x3::_val(ctx) = x3::_attr(ctx); };
+
     // 因子解析器（递归需要用规则）
     struct expression_class;
     struct term_class;
@@ -150,24 +157,24 @@ namespace calc {
 
     // 表达式定义
     auto const expression_def =
-        term
+        term[copy_val]
         >> *(   ('+' >> term)[([](auto& ctx) { x3::_val(ctx) += x3::_attr(ctx); })]
             |   ('-' >> term)[([](auto& ctx) { x3::_val(ctx) -= x3::_attr(ctx); })]
             )
         ;
 
     auto const term_def =
-        factor
+        factor[copy_val]
         >> *(   ('*' >> factor)[([](auto& ctx) { x3::_val(ctx) *= x3::_attr(ctx); })]
             |   ('/' >> factor)[([](auto& ctx) { x3::_val(ctx) /= x3::_attr(ctx); })]
             )
         ;
 
     auto const factor_def =
-        x3::double_
-        |   '(' >> expression >> ')'
+        x3::double_[copy_val]
+        |   ('(' >> expression >> ')')[copy_val]
         |   ('-' >> factor)[([](auto& ctx) { x3::_val(ctx) = -x3::_attr(ctx); })]
-        |   ('+' >> factor)
+        |   ('+' >> factor)[copy_val]
         ;
 
     // 将规则与定义绑定
@@ -270,13 +277,12 @@ BOOST_FUSION_ADAPT_STRUCT(ast::assignment, name, value)
 // ============================================================
 // 四、AST 求值器（访问者模式）
 // ============================================================
-// 使用 std::visit + 重载 lambda 实现 AST 求值
-// 这是 C++17 的 variant 访问模式
-
-class ASTEvaluator {
+// 使用 boost::apply_visitor + 重载 operator() 实现 AST 求值
+// 注意：x3::variant 基于 boost::variant，不能用 std::visit
+class ASTEvaluator : public boost::static_visitor<double> {
 public:
     double evaluate(const ast::expression& expr) {
-        return std::visit(*this, expr);
+        return boost::apply_visitor(*this, expr);
     }
 
     void assign(const std::string& name, double value) {
@@ -327,10 +333,19 @@ private:
 //   var x = 10
 //   var y = x + 5
 //   result = x * y + 3
+//
+// 语句之间用分号或换行分隔，缩进空格会被跳过。
+// 注意：这里不能用 ascii::space 做 skipper，因为它会吞掉换行，
+// 让“换行分隔语句”失效；blank 只跳过空格和制表符。
+//
+// 递归 AST 节点无法依靠属性自动传播来构造（number/variable 与
+// expression 变体不是同一类型），因此各条规则都挂语义动作，
+// 由动作显式地往 x3::_val(ctx) 里写 AST 节点。
 
 namespace dsl {
 
     // 规则类（用于错误信息中的规则名称）
+    struct statements_class;
     struct statement_class;
     struct expression_class;
     struct term_class;
@@ -338,49 +353,114 @@ namespace dsl {
     struct variable_class;
 
     // 规则定义（属性类型即 AST 节点类型）
+    x3::rule<statements_class, ast::statement_list> const statements("statements");
     x3::rule<statement_class, ast::assignment> const statement("statement");
     x3::rule<expression_class, ast::expression> const expression("expression");
     x3::rule<term_class, ast::expression> const term("term");
     x3::rule<factor_class, ast::expression> const factor("factor");
     x3::rule<variable_class, std::string> const variable("variable");
 
+    // ---- 语义动作：把匹配到的属性转换成 AST 节点 ----
+
+    auto const make_number = [](auto& ctx) {
+        x3::_val(ctx) = ast::number{x3::_attr(ctx)};
+    };
+
+    auto const make_variable = [](auto& ctx) {
+        x3::_val(ctx) = ast::variable{x3::_attr(ctx)};
+    };
+
+    auto const copy_expression = [](auto& ctx) {
+        x3::_val(ctx) = x3::_attr(ctx);
+    };
+
+    auto const make_negated = [](auto& ctx) {
+        x3::_val(ctx) = ast::unary_op{
+            '-', std::make_shared<ast::expression>(x3::_attr(ctx))
+        };
+    };
+
+    auto const make_sum = [](auto& ctx) {
+        x3::_val(ctx) = ast::binary_op{
+            std::make_shared<ast::expression>(x3::_val(ctx)), '+',
+            std::make_shared<ast::expression>(x3::_attr(ctx))
+        };
+    };
+
+    auto const make_difference = [](auto& ctx) {
+        x3::_val(ctx) = ast::binary_op{
+            std::make_shared<ast::expression>(x3::_val(ctx)), '-',
+            std::make_shared<ast::expression>(x3::_attr(ctx))
+        };
+    };
+
+    auto const make_product = [](auto& ctx) {
+        x3::_val(ctx) = ast::binary_op{
+            std::make_shared<ast::expression>(x3::_val(ctx)), '*',
+            std::make_shared<ast::expression>(x3::_attr(ctx))
+        };
+    };
+
+    auto const make_quotient = [](auto& ctx) {
+        x3::_val(ctx) = ast::binary_op{
+            std::make_shared<ast::expression>(x3::_val(ctx)), '/',
+            std::make_shared<ast::expression>(x3::_attr(ctx))
+        };
+    };
+
+    auto const make_assignment = [](auto& ctx) {
+        // 序列属性是 fusion::vector<std::string, ast::expression>
+        auto const& attr = x3::_attr(ctx);
+        x3::_val(ctx) = ast::assignment{
+            boost::fusion::at_c<0>(attr),
+            boost::fusion::at_c<1>(attr)
+        };
+    };
+
     // 变量名：字母开头，后跟字母数字下划线
     auto const variable_def =
         x3::lexeme[  // lexeme: 内部不跳过空格
-            (x3::alpha | '_') >> *(x3::alnum | '_')
+            (x3::alpha | x3::char_('_')) >> *(x3::alnum | x3::char_('_'))
         ];
 
     // 因子：数字 | 变量 | 括号表达式 | 一元 +/-
     auto const factor_def =
-            x3::double_
-        |   variable
-        |   '(' >> expression >> ')'
-        |   (x3::char_('-') > factor)  // > 是 expect：失败则报错
-        |   (x3::char_('+') > factor)
+            x3::double_[make_number]
+        |   variable[make_variable]
+        |   (x3::lit('(') > expression > x3::lit(')'))[copy_expression]
+        |   (x3::lit('-') > factor)[make_negated]  // > 是 expect：失败则报错
+        |   (x3::lit('+') > factor)[copy_expression]
         ;
 
     // 项：因子的乘除
     auto const term_def =
-        factor >> *(
-                (x3::char_('*') > factor)
-            |   (x3::char_('/') > factor)
+        factor[copy_expression]
+        >> *(
+                (x3::lit('*') > factor)[make_product]
+            |   (x3::lit('/') > factor)[make_quotient]
         );
 
     // 表达式：项的加减
     auto const expression_def =
-        term >> *(
-                (x3::char_('+') > term)
-            |   (x3::char_('-') > term)
+        term[copy_expression]
+        >> *(
+                (x3::lit('+') > term)[make_sum]
+            |   (x3::lit('-') > term)[make_difference]
         );
 
     // 赋值语句：变量 = 表达式
     auto const statement_def =
-        variable >> '=' >> expression
+        (variable >> x3::lit('=') > expression)[make_assignment]
+        ;
+
+    // 语句列表：分号或换行分隔（连续的分隔符允许多个空行）
+    auto const statements_def =
+        statement % +(x3::eol | x3::lit(';'))
         ;
 
     // 绑定规则与定义
     BOOST_SPIRIT_DEFINE(
-        statement, expression, term, factor, variable
+        statements, statement, expression, term, factor, variable
     )
 
 } // namespace dsl
@@ -407,20 +487,27 @@ ParseResult parse_dsl(const std::string& input) {
     result.success = false;
     result.error_pos = 0;
 
-    auto begin = input.begin();
-    auto end = input.end();
+    // 去掉首尾空白（包括原始字符串开头的换行和缩进）
+    size_t first = input.find_first_not_of(" \t\r\n");
+    size_t last = input.find_last_not_of(" \t\r\n");
+    if (first == std::string::npos) {
+        result.error_message = "输入为空";
+        return result;
+    }
 
-    // 使用迭代器记录位置
+    auto begin = input.cbegin() + static_cast<std::ptrdiff_t>(first);
+    auto end = input.cbegin() + static_cast<std::ptrdiff_t>(last + 1);
     auto iter = begin;
 
     try {
         ast::statement_list stmts;
 
-        // 解析多条语句，以分号或换行分隔
+        // 解析多条语句，以分号或换行分隔。
+        // skipper 用 blank 而不是 ascii::space：后者会吞掉换行。
         bool ok = x3::phrase_parse(
             iter, end,
-            *(dsl::statement % (x3::lit(';') | x3::eol)),
-            ascii::space,
+            dsl::statements,
+            x3::blank,
             stmts
         );
 
@@ -429,12 +516,12 @@ ParseResult parse_dsl(const std::string& input) {
             result.statements = std::move(stmts);
         } else {
             result.success = false;
-            result.error_pos = iter - begin;
+            result.error_pos = static_cast<size_t>(iter - input.cbegin());
             result.error_message = "解析未完成，剩余输入";
         }
     } catch (const x3::expectation_failure<decltype(iter)>& e) {
         result.success = false;
-        result.error_pos = e.where() - begin;
+        result.error_pos = static_cast<size_t>(e.where() - input.cbegin());
         result.error_message = "期望 '" + std::string(e.which().begin(), e.which().end())
                              + "' 在 '" + std::string(e.where(), end).substr(0, 20) + "'";
     }
@@ -498,8 +585,9 @@ void ast_and_dsl_demo() {
     ParseResult bad_result = parse_dsl(bad_code);
     if (!bad_result.success) {
         std::cout << "  捕获错误: " << bad_result.error_message << std::endl;
-        std::cout << "  位置: " << std::string(bad_code.size(), ' ') << "^\n";
+        std::cout << "  位置: 第 " << bad_result.error_pos << " 个字符" << std::endl;
         std::cout << "         " << bad_code << std::endl;
+        std::cout << "         " << std::string(bad_result.error_pos, ' ') << "^" << std::endl;
     }
 }
 

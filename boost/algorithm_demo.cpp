@@ -46,9 +46,13 @@
 
 // Boost.Algorithm 字符串算法
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/cxx11/all_of.hpp>
+#include <boost/algorithm/cxx11/any_of.hpp>
+#include <boost/algorithm/cxx11/none_of.hpp>
 // 其他算法
 #include <boost/algorithm/clamp.hpp>
 #include <boost/algorithm/minmax.hpp>
+#include <boost/algorithm/minmax_element.hpp>
 #include <boost/algorithm/hex.hpp>
 
 namespace ba = boost::algorithm;
@@ -139,7 +143,7 @@ void demo_case_conversion() {
     std::cout << "    \"" << a << "\" 和 \"" << b << "\"\n";
     std::cout << "    普通比较 == : " << std::boolalpha << (a == b) << "\n";
     std::cout << "    iequals       : " << ba::iequals(a, b) << "\n";
-    std::cout << "    iless         : " << ba::iless(a, b) << "\n";
+    std::cout << "    iless（字典序）: " << ba::ilexicographical_compare(a, b) << "\n";
 
     // 字符串比较的 i 前缀版本（i = case-insensitive）
     std::cout << "\n  不区分大小写的字典序:\n";
@@ -189,27 +193,28 @@ void demo_string_predicates() {
     std::cout << "\n  equals(\"Hello, World!\") : "
               << ba::equals(s, "Hello, World!") << "\n";
 
-    // all：所有字符都满足条件
+    // all_of / any_of / none_of
     std::string digits = "12345";
     std::string mixed = "12a45";
     auto is_digit = [](char c) { return std::isdigit(c) != 0; };
-    std::cout << "\n  all（所有字符都满足条件）:\n";
+    std::cout << "\n  all_of（所有字符都满足条件）:\n";
     std::cout << "    \"" << digits << "\" 全是数字? "
-              << ba::all(digits, is_digit) << "\n";
+              << ba::all_of(digits, is_digit) << "\n";
     std::cout << "    \"" << mixed << "\" 全是数字? "
-              << ba::all(mixed, is_digit) << "\n";
+              << ba::all_of(mixed, is_digit) << "\n";
 
-    // any / none
+    // any_of / none_of
     auto is_upper = [](char c) { return std::isupper(c) != 0; };
-    std::cout << "\n  any（任意一个满足）: \"" << s << "\" 有大写字母? "
-              << ba::any(s, is_upper) << "\n";
+    std::cout << "\n  any_of（任意一个满足）: \"" << s << "\" 有大写字母? "
+              << ba::any_of(s, is_upper) << "\n";
 
     std::string lower_str = "hello";
-    std::cout << "  none（没有一个满足）: \"" << lower_str << "\" 没有大写? "
-              << ba::none(lower_str, is_upper) << "\n";
+    std::cout << "  none_of（没有一个满足）: \"" << lower_str << "\" 没有大写? "
+              << ba::none_of(lower_str, is_upper) << "\n";
 
     std::cout << "\n  注：C++11 已经有 std::all_of/any_of/none_of，\n";
-    std::cout << "     但 Boost 提供了字符串专用的便捷版本\n";
+    std::cout << "     Boost.Algorithm 的版本不是字符串专用，而是接受 range 的通用版本，\n";
+    std::cout << "     可以直接传字符串/容器，不必手写 begin()/end()。\n";
 }
 
 // ============================================================================
@@ -400,7 +405,7 @@ void demo_join() {
     std::cout << "\n===== 7. 字符串连接（join）=====\n";
 
     std::vector<std::string> words = {"Hello", "World", "Boost", "Algorithm"};
-    std::list<int> numbers = {1, 2, 3, 4, 5};
+    std::list<std::string> numbers = {"1", "2", "3", "4", "5"};
 
     // 基本用法
     std::string joined = ba::join(words, ", ");
@@ -410,8 +415,8 @@ void demo_join() {
     std::cout << "  用 \" - \" 连接: " << ba::join(words, " - ") << "\n";
     std::cout << "  用空字符串连接:   " << ba::join(words, "") << "\n";
 
-    // 也可以连接非字符串容器（会转成字符串）
-    std::cout << "\n  连接数字列表: " << ba::join(numbers, "+") << "\n";
+    // 也可以连接其他字符串容器
+    std::cout << "\n  连接字符串列表: " << ba::join(numbers, "+") << "\n";
 
     // join_if：按条件连接
     // 比如只连接长度大于 5 的单词
@@ -447,14 +452,18 @@ void demo_other_algorithms() {
     std::cout << "    用户输入 " << user_input << "，限制后 " << percent << "%\n";
 
     // minmax：同时求最小和最大值
-    auto mm = ba::minmax(3, 7);
+    // 注意：minmax 返回的是 const 引用元组，实参不能是临时量，
+    // 否则函数返回后引用悬空（boost::minmax(3, 7) 是未定义行为）。
+    int minmax_a = 3, minmax_b = 7;
+    auto mm = boost::minmax(minmax_a, minmax_b);
     std::cout << "\n  minmax(3, 7):\n";
     std::cout << "    min = " << mm.get<0>() << "\n";
     std::cout << "    max = " << mm.get<1>() << "\n";
 
     // 也可以用于容器
     std::vector<int> v = {5, 2, 8, 1, 9, 3, 7};
-    auto range_mm = ba::minmax_element(v.begin(), v.end());
+    // 注意：minmax_element 在 boost 命名空间，不在 boost::algorithm
+    auto range_mm = boost::minmax_element(v.begin(), v.end());
     std::cout << "\n  容器 minmax_element:\n";
     std::cout << "    min = " << *range_mm.first << "\n";
     std::cout << "    max = " << *range_mm.second << "\n";
@@ -566,8 +575,8 @@ void laoshifu_says() {
     std::cout << "\n";
     std::cout << "  好消息是，C++ 标准库也在不断补这些东西：\n";
     std::cout << "  - C++17: std::clamp\n";
-    std::cout << "  - C++20: starts_with, ends_with, contains\n";
-    std::cout << "  - C++23: contains for string_view\n";
+    std::cout << "  - C++20: starts_with, ends_with\n";
+    std::cout << "  - C++23: contains（string 和 string_view 都有）\n";
     std::cout << "  说明这些功能确实是刚需。\n";
     std::cout << "\n";
     std::cout << "  建议：\n";

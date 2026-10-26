@@ -28,7 +28,7 @@
  *
  * 【现代C++实现方式】
  * 1. 链式调用 / Fluent Interface - 流式API设计
- * 2. 模板建造者 - 编译期构建复杂对象
+ * 2. 模板建造者 - 编译期跟踪/校验配置
  * 3. 与lambda结合 - 灵活的构建步骤
  */
 
@@ -39,6 +39,9 @@
 #include <sstream>
 #include <cassert>
 #include <functional>
+#include <type_traits>
+#include <utility>
+#include <stdexcept>
 
 // ============================================================
 // 产品类：计算机（复杂对象）
@@ -72,6 +75,9 @@ public:
         oss << "\n  总价: ¥" << calculatePrice();
         return oss.str();
     }
+
+    // 供建造者校验：至少配置了 CPU 和内存才算可用
+    bool isConfigured() const { return !cpu_.empty() && ramGB_ > 0; }
 
     int calculatePrice() const {
         int price = 0;
@@ -142,6 +148,9 @@ public:
     }
 
     std::unique_ptr<Computer> getResult() override {
+        if (!computer_) {
+            throw std::logic_error("GamingComputerBuilder: 产品已被取走，不能重复构建");
+        }
         return std::move(computer_);
     }
 
@@ -168,6 +177,9 @@ public:
     }
 
     std::unique_ptr<Computer> getResult() override {
+        if (!computer_) {
+            throw std::logic_error("OfficeComputerBuilder: 产品已被取走，不能重复构建");
+        }
         return std::move(computer_);
     }
 
@@ -183,6 +195,9 @@ public:
     }
 
     std::unique_ptr<Computer> build() {
+        if (!builder_) {
+            throw std::logic_error("ComputerDirector: 还没设置建造者");
+        }
         // 按照标准顺序构建
         builder_->buildMotherboard();
         builder_->buildCPU();
@@ -249,16 +264,18 @@ public:
 
     // 构建完成，返回产品
     std::unique_ptr<Computer> build() {
+        if (!computer_) {
+            throw std::logic_error("FluentComputerBuilder: 产品已被取走，不能重复构建");
+        }
         validate();
         return std::move(computer_);
     }
 
 private:
-    // 构建前验证
+    // 构建前验证：CPU 和内存是必需项
     void validate() const {
-        // 简单的验证逻辑
-        if (computer_->calculatePrice() == 1600) { // 只有基础配件
-            // 不抛出异常，仅示例
+        if (!computer_->isConfigured()) {
+            throw std::logic_error("配置不完整：至少需要 CPU 和内存");
         }
     }
 
@@ -270,13 +287,15 @@ private:
 // ============================================================
 
 /**
- * 利用C++模板，可以在编译期构建对象。
- * 这对于配置对象、策略对象等场景非常有用。
+ * 利用C++模板，在编译期跟踪“哪些配置已经设置”，并在调用 build() 时做检查。
+ *
+ * 注意：所谓“编译期构建”指的是配置状态和校验发生在编译期，
+ * 真正的 Computer 对象仍然是在运行时创建的。
  *
  * 模板建造者的优势：
- * 1. 零运行时开销
- * 2. 编译期验证配置的正确性
- * 3. 可以根据配置生成不同的代码
+ * 1. 无虚函数、无运行时多态开销
+ * 2. 编译期验证配置的完整性（缺少 CPU 或内存时 build() 编译失败）
+ * 3. 可以根据配置类型生成不同的代码
  */
 
 // 编译期配置标记
@@ -288,6 +307,11 @@ struct HasRAM {};
 template <typename... Configs>
 class TemplateComputerBuilder {
 public:
+    TemplateComputerBuilder() = default;
+
+    TemplateComputerBuilder(const std::string& cpu, const std::string& gpu, int ram)
+        : cpu_(cpu), gpu_(gpu), ram_(ram) {}
+
     // 每个with方法返回一个新的建造者类型，添加对应的配置标记
     auto withCPU(const std::string& cpu) {
         cpu_ = cpu;
@@ -325,13 +349,6 @@ public:
     }
 
 private:
-    // 允许不同模板参数的建造者访问私有成员
-    template <typename...>
-    friend class TemplateComputerBuilder;
-
-    TemplateComputerBuilder(const std::string& cpu, const std::string& gpu, int ram)
-        : cpu_(cpu), gpu_(gpu), ram_(ram) {}
-
     std::string cpu_;
     std::string gpu_;
     int ram_ = 0;
@@ -344,15 +361,15 @@ public:
     TemplateComputerBuilder() = default;
 
     auto withCPU(const std::string& cpu) {
-        return TemplateComputerBuilder<HasCPU>{}.withCPU(cpu);
+        return TemplateComputerBuilder<HasCPU>{cpu, "", 0};
     }
 
     auto withGPU(const std::string& gpu) {
-        return TemplateComputerBuilder<HasGPU>{}.withGPU(gpu);
+        return TemplateComputerBuilder<HasGPU>{"", gpu, 0};
     }
 
     auto withRAM(int gb) {
-        return TemplateComputerBuilder<HasRAM>{}.withRAM(gb);
+        return TemplateComputerBuilder<HasRAM>{"", "", gb};
     }
 
     // 缺少配置时调用build会编译失败
@@ -437,7 +454,7 @@ void testTemplateBuilder() {
         .build();  // 错误：缺少RAM配置
     */
 
-    std::cout << "  (模板建造者在编译期验证配置完整性)" << std::endl;
+    std::cout << "  (模板建造者在编译期跟踪配置，缺少必需项时 build() 无法编译)" << std::endl;
 }
 
 int main() {
@@ -451,7 +468,7 @@ int main() {
     std::cout << "核心思想：将复杂对象的构建过程与表示分离" << std::endl;
     std::cout << "传统建造者：Director控制构建顺序，Builder实现具体构建" << std::endl;
     std::cout << "流式建造者：链式调用API，灵活简洁，现代C++最常用" << std::endl;
-    std::cout << "模板建造者：编译期构建，零运行时开销，可做编译期验证" << std::endl;
+    std::cout << "模板建造者：编译期跟踪/校验配置，对象仍在运行时创建" << std::endl;
     std::cout << "适用场景：对象构造复杂、参数多、需要按步骤构建" << std::endl;
 
     return 0;

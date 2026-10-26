@@ -236,7 +236,7 @@
     <p>
       调试能力是程序员的核心竞争力之一。再厉害的程序员也写不出零 bug 的代码，
       但厉害的程序员能快速定位并修复 bug。本模块从最基础的 printf 调试讲起，
-      到 GDB/VS 调试器的深度使用，再到 Sanitizer 动态分析工具、静态分析工具，
+      到 GDB/VS 调试器的深度使用，再到 Sanitizer 动态分析、性能分析工具，
       以及各种调试技巧和方法论，帮你建立一套完整的调试知识体系。
     </p>
     <p style="margin-top: 10px;">
@@ -244,7 +244,7 @@
       你就能<strong>又快又准地干掉各种奇葩 bug</strong>。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #2c3e50, #4ca1af); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(44, 62, 80, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(44, 62, 80, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #2c3e50, #4ca1af); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(44, 62, 80, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(44, 62, 80, 0.3)';">
         📖 学习指南
       </a>
       <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
@@ -422,11 +422,11 @@
       <div class="tool-grid">
         <div class="tool-item">
           <h4>🛡️ AddressSanitizer <span class="stars">⭐⭐⭐⭐⭐</span></h4>
-          <p>内存错误检测器。越界、释放后使用、重复释放、内存泄漏…一抓一个准。性能开销约 2 倍。</p>
+          <p>内存错误检测器。越界、释放后使用、重复释放…一抓一个准；泄漏检测在 Linux/macOS 上随 ASan 可用，Windows 上不要依赖。性能开销约 2 倍。</p>
         </div>
         <div class="tool-item">
           <h4>⚠️ UndefinedBehaviorSanitizer <span class="stars">⭐⭐⭐⭐</span></h4>
-          <p>未定义行为检测器。整数溢出、除零、移位溢出、空指针解引用…C++ 里各种 UB 都能找。</p>
+          <p>未定义行为检测器。能查有符号整数溢出、非法移位、除零、对齐错误等部分 UB；不检测未初始化读取，也不是所有 UB 都能覆盖。</p>
         </div>
         <div class="tool-item">
           <h4>🧵 ThreadSanitizer <span class="stars">⭐⭐⭐⭐</span></h4>
@@ -449,6 +449,7 @@ g++ -g -O1 -fsanitize=thread main.cpp -o app
 #   -g                    调试信息（报错有行号）
 #   -O1                   优化级别（平衡性能和调试信息）
 #   -fno-omit-frame-pointer  保留帧指针（调用栈更准确）</code></pre>
+      <p style="color: var(--ink-muted); font-size: 13px;">平台提示：以上命令适用于 Linux/macOS 的 GCC/Clang。MinGW 通常不带 sanitizer 运行时，链接会失败；Windows 可用 MSVC 的 ASan，或在 WSL/Linux 中编译。</p>
 
       <div class="danger-box">
         <strong>⚠️ 注意</strong>

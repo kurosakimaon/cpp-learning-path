@@ -59,6 +59,12 @@ int main() {
     std::cout << "  实验功能：未启用" << std::endl;
 #endif
 
+    // 这个宏由 target_compile_definitions 直接传入，不经过 config.h
+#ifdef CMAKE_DEFINITION_DEMO
+    std::cout << "  target_compile_definitions 生效：CMAKE_DEFINITION_DEMO="
+              << CMAKE_DEFINITION_DEMO << std::endl;
+#endif
+
     std::cout << std::endl;
 
     // ---- 测试计算函数 ----

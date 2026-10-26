@@ -19,7 +19,9 @@
  *   - 更成熟稳定，在旧编译器和旧平台上兼容性更好
  *
  * 编译命令（示例）：
- *   g++ -std=c++17 filesystem.cpp -o filesystem -lboost_system -lboost_filesystem
+ *   Linux:        g++ -std=c++17 filesystem.cpp -o filesystem -lboost_filesystem
+ *   MinGW/MSYS2:  g++ -std=c++17 filesystem.cpp -o filesystem -lboost_filesystem-mt
+ *   （Windows 预编译库常带 -mt 后缀，以实际库文件名为准）
  */
 
 #include <iostream>
@@ -31,12 +33,11 @@
 #include <algorithm>
 #include <iomanip>
 
-// ========== Boost 头文件说明 ==========
-// <boost/filesystem.hpp>       - Filesystem 总头文件
-// <boost/filesystem/path.hpp>  - path 类：路径表示与操作
-// <boost/filesystem/operations.hpp> - 文件系统操作函数
-// <boost/filesystem/fstream.hpp>    - 文件流与 path 的集成
-// <boost/system/error_code.hpp>     - 错误码
+// ========== Boost 头文件 ==========
+#include <boost/filesystem.hpp>
+#include <boost/filesystem/fstream.hpp>
+#include <boost/system/error_code.hpp>
+
 namespace fs = boost::filesystem;
 using boost::system::error_code;
 using boost::system::system_error;
@@ -200,7 +201,9 @@ void directory_iteration_demo(const fs::path& test_dir) {
          it != fs::recursive_directory_iterator(); ++it) {
         if (fs::is_regular_file(it->path())) {
             ++file_count;
-            std::cout << "  文件: " << it->path().relative_path()
+            // 注意：relative_path() 只是去掉根名/根目录，不会去掉 test_dir。
+            // 要显示“相对于 test_dir”的路径，用 lexically_relative()。
+            std::cout << "  文件: " << it->path().lexically_relative(test_dir)
                       << " (" << fs::file_size(it->path()) << " bytes)" << std::endl;
         }
     }
@@ -296,10 +299,10 @@ void file_operations_demo(const fs::path& test_dir) {
     std::cout << "  复制: " << src.filename() << " -> " << dst.filename() << std::endl;
     std::cout << "  目标存在: " << fs::exists(dst) << std::endl;
 
-    // copy_option::overwrite_if_exists：覆盖已存在的文件
-    // copy_option::skip_if_exists：跳过已存在的文件
+    // copy_options::overwrite_existing：覆盖已存在的文件
+    // copy_options::skip_existing：跳过已存在的文件（目标保持原样）
     std::ofstream(src.string(), std::ios::app) << " updated";
-    fs::copy_file(src, dst, fs::copy_option::overwrite_if_exists);
+    fs::copy_file(src, dst, fs::copy_options::overwrite_existing);
     std::cout << "  覆盖复制完成" << std::endl;
 
     // 5.2 目录复制
@@ -403,8 +406,8 @@ void misc_demo(const fs::path& test_dir) {
     std::cout << "  生成的唯一文件名: " << unique << std::endl;
     // % 会被替换为随机十六进制字符，适合创建临时文件
 
-    // 7.5 相对路径计算
-    std::cout << "\n7.5 路径等价性:" << std::endl;
+    // 7.5 路径比较与等价性
+    std::cout << "\n7.5 路径比较与等价性:" << std::endl;
     fs::path p1 = test_dir / "source.txt";
     fs::path p2 = test_dir / "." / "source.txt";
     std::cout << "  p1 = " << p1.filename() << std::endl;

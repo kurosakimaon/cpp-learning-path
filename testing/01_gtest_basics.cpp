@@ -5,9 +5,19 @@
 // 编译命令（需要先安装 Google Test）：
 //   g++ -std=c++17 01_gtest_basics.cpp -lgtest -lgtest_main -lpthread -o demo
 //
-// 安装 GTest（Ubuntu）：
+// 安装 GTest（Ubuntu 20.04+ 的 libgtest-dev 已带预编译库）：
 //   sudo apt-get install libgtest-dev
-//   cd /usr/src/gtest && sudo cmake . && sudo make && sudo cp lib/*.a /usr/lib
+// 如果发行版只提供源码，可进入 /usr/src/googletest 用 CMake 构建后安装：
+//   cd /usr/src/googletest && sudo cmake -S . -B build && sudo cmake --build build
+//   sudo cmake --install build
+// CMake 项目也可以直接用 find_package(GTest REQUIRED)。
+//
+// 注意：本文件有 2 个“故意失败”的用例，用于演示断言失败时的输出：
+//   AssertVsExpectTest.DemonstrateDifference
+//   CustomMessageTest.ShowCustomInfoOnFailure
+// 跑完整套件时看到 2 个失败是预期行为，不是代码坏了。
+// 只跑其余用例：
+//   demo --gtest_filter=-AssertVsExpectTest.DemonstrateDifference:CustomMessageTest.ShowCustomInfoOnFailure
 //
 // ============================================================
 
@@ -75,7 +85,8 @@ public:
 //   测试套件名 = 被测类/模块名
 //   测试用例名 = 功能描述 + 预期结果
 //
-// 注意：GTest 的测试用例是按字母顺序执行的，不要依赖执行顺序！
+// 注意：GTest 默认按测试在源码中的定义顺序执行；
+// 加 --gtest_shuffle 后顺序随机，因此测试之间不要依赖执行顺序！
 
 // 测试套件：StringUtilsTest
 // 测试用例：测试 isEmpty 函数

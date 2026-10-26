@@ -16,6 +16,7 @@
 #include <atomic>
 #include <numeric>
 #include <algorithm>
+#include <set>
 
 using namespace std;
 
@@ -80,6 +81,9 @@ private:
 public:
     // ---- 构造函数：创建指定数量的工作线程 ----
     explicit ThreadPool(size_t num_threads) {
+        if (num_threads == 0) {
+            throw invalid_argument("线程池至少需要 1 个工作线程");
+        }
         for (size_t i = 0; i < num_threads; ++i) {
             workers.emplace_back([this, i]() {
                 // 每个工作线程的主循环
@@ -110,6 +114,8 @@ public:
                     try {
                         task();
                     } catch (const exception& e) {
+                        // packaged_task 会把任务里的异常存进 future，
+                        // 由 future.get() 重新抛出；这里只兜底其他异常。
                         cerr << "线程" << i << "执行任务时异常: " << e.what() << endl;
                     }
                 }
@@ -216,7 +222,7 @@ void demo_basic_usage() {
 // ============================================================
 
 // 计算数组某一段的和
-long long partial_sum(const vector<int>& arr, size_t start, size_t end) {
+long long sum_range(const vector<int>& arr, size_t start, size_t end) {
     long long sum = 0;
     for (size_t i = start; i < end; ++i) {
         sum += arr[i];
@@ -236,7 +242,7 @@ void demo_parallel_sum() {
 
     // ---- 单线程求和（作为基准） ----
     auto start = chrono::steady_clock::now();
-    long long single_sum = partial_sum(arr, 0, N);
+    long long single_sum = sum_range(arr, 0, N);
     auto end = chrono::steady_clock::now();
     auto single_time = chrono::duration<double, milli>(end - start).count();
     cout << "单线程求和: " << single_sum << "，耗时: " << single_time << "ms" << endl;
@@ -254,7 +260,7 @@ void demo_parallel_sum() {
         size_t start_idx = i * block_size;
         size_t end_idx = (i == num_threads - 1) ? N : (i + 1) * block_size;
         futures.emplace_back(
-            pool.enqueue(partial_sum, cref(arr), start_idx, end_idx)
+            pool.enqueue(sum_range, cref(arr), start_idx, end_idx)
         );
     }
 
@@ -312,7 +318,7 @@ void demo_async_tasks() {
     }
 
     cout << "你看，虽然来了10个请求，但同时处理的只有3个，" << endl;
-    cout << "系统不会被冲垮，这就是线程池的"限流"作用。" << endl;
+    cout << "系统不会被冲垮，这就是线程池的“限流”作用。" << endl;
 }
 
 // ============================================================
@@ -360,8 +366,13 @@ void demo_thread_count_tuning() {
         return fib(n);
     };
 
-    // 用不同线程数测试
-    for (int num_threads : {1, 2, 4}) {
+    // 用不同线程数测试：包含本机核心数和超订阅情况
+    set<unsigned> thread_counts{1, 2, 4};
+    if (cpu_cores > 0) {
+        thread_counts.insert(cpu_cores);
+        thread_counts.insert(cpu_cores * 2);
+    }
+    for (unsigned num_threads : thread_counts) {
         ThreadPool pool(num_threads);
 
         auto start = chrono::steady_clock::now();
@@ -376,7 +387,8 @@ void demo_thread_count_tuning() {
         cout << "  " << num_threads << "线程: " << time << "ms" << endl;
     }
 
-    cout << "\nCPU密集型：线程数接近核心数时性能最好，再多反而下降。" << endl;
+    cout << "\nCPU密集型：线程数接近可用核心数时通常最好，超订阅可能下降。" << endl;
+    cout << "（具体结果受调度、超线程、其他负载影响，以本机实测为准）" << endl;
 
     // ---- IO密集型任务 ----
     cout << "\n--- IO密集型任务（模拟等待） ---" << endl;
@@ -493,13 +505,16 @@ void demo_various_tasks() {
         return a + b;
     }, 10, 20);
 
-    // 任务3：带引用参数（要用 ref 包装）
+    // 任务3：lambda 按引用捕获外部变量
     int counter = 0;
     mutex mtx;
     auto f3 = pool.enqueue([&counter, &mtx]() {
         lock_guard<mutex> lock(mtx);
         counter += 100;
     });
+    // 补充：如果任务函数的形参本身是引用，要用 std::ref 包装，
+    // 否则 bind 会拷贝实参，改不到原变量：
+    //   pool.enqueue([](int& c) { c += 1; }, std::ref(counter));
 
     // 任务4：异常处理
     auto f4 = pool.enqueue([]() -> int {
@@ -585,7 +600,7 @@ int main() {
     cout << "   怎么实现一个有界队列（有最大容量限制）？" << endl;
     cout << "   队列满了的时候，提交任务的行为应该是怎样的？" << endl;
     cout << "" << endl;
-    cout << "5. 查一下什么是"工作窃取"（Work Stealing）：" << endl;
+    cout << "5. 查一下什么是“工作窃取”（Work Stealing）：" << endl;
     cout << "   为什么有的线程池每个线程有自己的队列？" << endl;
     cout << "   这和只有一个全局队列的方案比有什么优缺点？" << endl;
 

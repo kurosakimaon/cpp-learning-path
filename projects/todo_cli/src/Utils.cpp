@@ -8,6 +8,7 @@
 #include <sstream>
 #include <ctime>
 #include <iomanip>
+#include <vector>
 
 namespace todo {
 namespace utils {

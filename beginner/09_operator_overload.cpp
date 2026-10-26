@@ -55,8 +55,21 @@ private:
     double imag;   // 虚部
 
 public:
-    // 构造函数
-    Complex(double r = 0, double i = 0) : real(r), imag(i) {}
+    // 构造函数：指针成员必须初始化，否则析构/赋值时会 delete 野指针
+    Complex(double r = 0, double i = 0) : real(r), imag(i), note(nullptr) {}
+
+    // 拷贝构造：深拷贝 note（否则两个对象会共享同一块内存，析构时重复释放）
+    Complex(const Complex& other) : real(other.real), imag(other.imag), note(nullptr) {
+        if (other.note) {
+            size_t len = strlen(other.note) + 1;
+            note = new char[len];
+            strcpy(note, other.note);
+        }
+    }
+
+    ~Complex() {
+        delete[] note;
+    }
 
     // 打印复数
     void print() const {
@@ -126,10 +139,13 @@ private:
 public:
     // 设置备注
     void setNote(const char* n) {
-        if (note) delete[] note;
-        int len = strlen(n) + 1;
-        note = new char[len];
-        strcpy_s(note, len, n);
+        // 先分配复制，成功后再释放旧的（避免 new 抛异常丢数据，
+        // 也避免 n 指向自身旧缓冲区时出现 use-after-free）
+        size_t len = strlen(n) + 1;
+        char* fresh = new char[len];
+        strcpy(fresh, n);
+        delete[] note;
+        note = fresh;
     }
 
     const char* getNote() const {
@@ -143,28 +159,26 @@ public:
             return *this;  // 是就直接返回，不然释放了自己的内存就完蛋了
         }
 
-        // 第二步：释放自己原来的资源
-        if (note) {
-            delete[] note;
-            note = nullptr;
+        // 第二步：先准备新资源（new 失败时原对象保持不变）
+        char* fresh = nullptr;
+        if (other.note) {
+            size_t len = strlen(other.note) + 1;
+            fresh = new char[len];
+            strcpy(fresh, other.note);
         }
 
-        // 第三步：复制数据
+        // 第三步：替换旧资源并复制数据
+        delete[] note;
+        note = fresh;
         real = other.real;
         imag = other.imag;
-
-        if (other.note) {
-            int len = strlen(other.note) + 1;
-            note = new char[len];
-            strcpy_s(note, len, other.note);
-        }
 
         // 第四步：返回 *this（支持链式赋值 a = b = c）
         return *this;
     }
 
-    // 别忘了构造函数里要初始化 note
-    // （上面的构造函数没加，这里补一下概念，实际例子里会处理）
+    // 注意：有指针成员、自定义了析构/拷贝/赋值的类，要遵守“三法则”
+    // （C++11 起还可补充移动构造与移动赋值，即“五法则”）
 
     // ========================================================================
     // 六、自增自减运算符（++ --）

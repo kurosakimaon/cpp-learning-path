@@ -3,10 +3,29 @@
 // ================================================================
 
 #include "CommandFactory.h"
+#include "Utils.h"
 #include <sstream>
 #include <cctype>
+#include <charconv>
+#include <system_error>
 
 namespace todo {
+
+namespace {
+
+// 解析任务 ID：必须整段都是数字、成功转换，且大于 0。
+// 不能用 std::stoi 直接转：它只读前缀，"1.5" 会悄悄变成 1，"3xyz" 会变成 3。
+bool parseTaskId(const std::string& text, int& id) {
+    if (text.empty()) {
+        return false;
+    }
+    const char* first = text.data();
+    const char* last = first + text.size();
+    auto [ptr, ec] = std::from_chars(first, last, id);
+    return ec == std::errc{} && ptr == last && id > 0;
+}
+
+} // namespace
 
 // ================================================================
 //  辅助：分割字符串
@@ -22,7 +41,8 @@ std::vector<std::string> CommandFactory::splitArgs(const std::string& input) {
 
         if (c == '"') {
             in_quotes = !in_quotes;
-        } else if (c == ' ' && !in_quotes) {
+        } else if (std::isspace(static_cast<unsigned char>(c)) && !in_quotes) {
+            // 空格、Tab 等都算分隔符
             if (!current.empty()) {
                 args.push_back(current);
                 current.clear();
@@ -64,29 +84,21 @@ std::unique_ptr<Command> CommandFactory::parse(const std::string& input) {
         return parseAddCommand(cmd_args);
     }
     else if (cmd == "delete" || cmd == "del" || cmd == "d") {
-        if (cmd_args.empty()) {
+        int id = 0;
+        if (cmd_args.empty() || !parseTaskId(cmd_args[0], id)) {
             return nullptr;
         }
-        try {
-            int id = std::stoi(cmd_args[0]);
-            return std::make_unique<DeleteCommand>(id);
-        } catch (...) {
-            return nullptr;
-        }
+        return std::make_unique<DeleteCommand>(id);
     }
     else if (cmd == "list" || cmd == "ls" || cmd == "l") {
         return parseListCommand(cmd_args);
     }
     else if (cmd == "complete" || cmd == "done" || cmd == "c") {
-        if (cmd_args.empty()) {
+        int id = 0;
+        if (cmd_args.empty() || !parseTaskId(cmd_args[0], id)) {
             return nullptr;
         }
-        try {
-            int id = std::stoi(cmd_args[0]);
-            return std::make_unique<CompleteCommand>(id);
-        } catch (...) {
-            return nullptr;
-        }
+        return std::make_unique<CompleteCommand>(id);
     }
     else if (cmd == "save" || cmd == "s") {
         return std::make_unique<SaveCommand>();
@@ -130,24 +142,35 @@ std::unique_ptr<Command> CommandFactory::parseAddCommand(const std::vector<std::
     size_t i = 0;
 
     while (i < args.size()) {
-        if (args[i] == "-p" && i + 1 < args.size()) {
+        if (args[i] == "-p") {
+            if (i + 1 >= args.size()) {
+                return nullptr;  // -p 后面缺少值
+            }
             // 优先级
             std::string p = args[i + 1];
             for (char& c : p) c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
             if (p == "high" || p == "h") priority = Priority::High;
+            else if (p == "medium" || p == "m") priority = Priority::Medium;
             else if (p == "low" || p == "l") priority = Priority::Low;
-            else priority = Priority::Medium;
+            else return nullptr;  // 不认识的优先级不能悄悄当成中优先级
             i += 2;
-        } else if (args[i] == "-d" && i + 1 < args.size()) {
+        } else if (args[i] == "-d") {
+            if (i + 1 >= args.size()) {
+                return nullptr;
+            }
             // 截止日期
             due_date = args[i + 1];
             i += 2;
-        } else if (args[i] == "-t" && i + 1 < args.size()) {
+        } else if (args[i] == "-t") {
+            if (i + 1 >= args.size()) {
+                return nullptr;
+            }
             // 标签（逗号分隔）
             std::string tags_str = args[i + 1];
             std::string tag;
             std::istringstream iss(tags_str);
             while (std::getline(iss, tag, ',')) {
+                tag = utils::trim(tag);
                 if (!tag.empty()) tags.push_back(tag);
             }
             i += 2;
@@ -158,11 +181,12 @@ std::unique_ptr<Command> CommandFactory::parseAddCommand(const std::vector<std::
         }
     }
 
-    // 拼接标题
+    // 拼接标题，并去掉首尾空白；全是空白的标题没有意义
     for (size_t j = 0; j < title_parts.size(); ++j) {
         if (j > 0) title += " ";
         title += title_parts[j];
     }
+    title = utils::trim(title);
 
     if (title.empty()) {
         return nullptr;
@@ -182,17 +206,27 @@ std::unique_ptr<Command> CommandFactory::parseListCommand(const std::vector<std:
 
     size_t i = 0;
     while (i < args.size()) {
-        if (args[i] == "-sort" && i + 1 < args.size()) {
-            cmd->setSortBy(args[i + 1]);
+        if (args[i] == "-sort") {
+            if (i + 1 >= args.size()) {
+                return nullptr;  // -sort 后面缺少值
+            }
+            const std::string& sort_by = args[i + 1];
+            if (sort_by != "id" && sort_by != "priority" && sort_by != "date") {
+                return nullptr;  // 拼错的排序方式不能悄悄退回按 ID
+            }
+            cmd->setSortBy(sort_by);
             i += 2;
-        } else if (args[i] == "-tag" && i + 1 < args.size()) {
+        } else if (args[i] == "-tag") {
+            if (i + 1 >= args.size()) {
+                return nullptr;  // -tag 后面缺少值
+            }
             cmd->setFilterTag(args[i + 1]);
             i += 2;
         } else if (args[i] == "-pending") {
             cmd->setShowPendingOnly(true);
             ++i;
         } else {
-            ++i;  // 忽略未知参数
+            return nullptr;  // 未知选项
         }
     }
 

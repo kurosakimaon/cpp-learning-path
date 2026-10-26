@@ -7,6 +7,9 @@
 #    libmathutils.a / libmathutils.so   数学计算库
 #    libstringutils.a / libstringutils.so 字符串处理库
 #
+#  动态库在 Windows（MinGW）上会生成 mathutils.dll + 导入库，
+#  在 macOS 上是 .dylib，Makefile 会自动判断当前平台。
+#
 #  然后写一个主程序，链接这两个库。
 #
 #  用法：
@@ -65,9 +68,48 @@ MAIN_OBJ := main.o
 STATIC_MATH_LIB   := libmathutils.a
 STATIC_STRING_LIB := libstringutils.a
 
-# 动态库
-SHARED_MATH_LIB   := libmathutils.so
-SHARED_STRING_LIB := libstringutils.so
+# 动态库：Linux 是 .so，macOS 是 .dylib，Windows 是 .dll
+# 这里按当前平台自动选择，免得在 Windows 上生成一个假的 .so。
+UNAME_S := $(shell uname -s 2>/dev/null)
+
+ifeq ($(OS),Windows_NT)
+    WINDOWS := 1
+endif
+ifneq (,$(findstring MINGW,$(UNAME_S)))
+    WINDOWS := 1
+endif
+ifneq (,$(findstring MSYS,$(UNAME_S)))
+    WINDOWS := 1
+endif
+ifneq (,$(findstring CYGWIN,$(UNAME_S)))
+    WINDOWS := 1
+endif
+
+ifeq ($(WINDOWS),1)
+    SHARED_EXT := dll
+    SHARED_MATH_LIB   := mathutils.dll
+    SHARED_STRING_LIB := stringutils.dll
+    # Windows 链接 DLL 时要同时生成导入库，可执行文件链接的是导入库
+    SHARED_LDFLAGS = -shared -Wl,--out-implib,lib$(basename $@).dll.a
+    APP_SHARED_LIBS := libmathutils.dll.a libstringutils.dll.a
+    RPATH_FLAGS :=
+else ifeq ($(UNAME_S),Darwin)
+    SHARED_EXT := dylib
+    SHARED_MATH_LIB   := libmathutils.dylib
+    SHARED_STRING_LIB := libstringutils.dylib
+    SHARED_LDFLAGS = -dynamiclib -Wl,-install_name,@rpath/$(notdir $@)
+    APP_SHARED_LIBS := -L. -lmathutils -lstringutils
+    RPATH_FLAGS := -Wl,-rpath,@loader_path
+else
+    SHARED_EXT := so
+    SHARED_MATH_LIB   := libmathutils.so
+    SHARED_STRING_LIB := libstringutils.so
+    # 带上 SONAME，可执行文件里记录的才是库名而不是某个路径
+    SHARED_LDFLAGS = -shared -Wl,-soname,$(notdir $@)
+    APP_SHARED_LIBS := -L. -lmathutils -lstringutils
+    # $ORIGIN 表示“可执行文件所在目录”，注意 Makefile 里要写 $$ORIGIN
+    RPATH_FLAGS := -Wl,-rpath,'$$ORIGIN'
+endif
 
 
 # ============================================================
@@ -124,9 +166,11 @@ $(STATIC_STRING_LIB): $(STRING_OBJS)
 	@echo "✅ 静态库 $@ 生成完成"
 
 # 链接静态库生成可执行文件
+# 这里直接写 .a 的路径，避免同目录同时存在 .so/.dll 时
+# -l 优先选到动态库，导致“静态版”其实没静态链接。
 app_static: $(MAIN_OBJ) $(STATIC_MATH_LIB) $(STATIC_STRING_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN_OBJ) \
-		-L. -lmathutils -lstringutils
+		$(STATIC_MATH_LIB) $(STATIC_STRING_LIB)
 	@echo "✅ 静态链接可执行文件 $@ 生成完成"
 
 
@@ -167,10 +211,13 @@ app_static: $(MAIN_OBJ) $(STATIC_MATH_LIB) $(STATIC_STRING_LIB)
 #       sudo ldconfig
 #
 #    3. 编译时加 -Wl,-rpath,/path/to/lib（把库路径写进可执行文件）
-#       g++ main.o -L. -lxxx -Wl,-rpath,. -o app
+#       g++ main.o -L. -lxxx -Wl,-rpath,'$ORIGIN' -o app
 #       -Wl 的意思是把后面的参数传给链接器 ld
+#       $ORIGIN 表示“可执行文件所在目录”，比写死绝对路径更耐搬。
 #
-#  咱们这个例子用第 3 种方法，最方便。
+#  咱们这个例子在 Linux 用第 3 种方法，路径写成 $ORIGIN；
+#  macOS 用 @loader_path；Windows 不需要 rpath，DLL 和 exe
+#  放在同一目录，系统会先去 exe 所在目录找。
 
 shared: app_shared
 
@@ -191,23 +238,19 @@ STRING_OBJS_SHARED := string_utils.pic.o
 
 # 数学动态库
 $(SHARED_MATH_LIB): $(MATH_OBJS_SHARED)
-	$(CXX) -shared -o $@ $^
+	$(CXX) $(SHARED_LDFLAGS) -o $@ $^
 	@echo "✅ 动态库 $@ 生成完成"
 
 # 字符串动态库
 $(SHARED_STRING_LIB): $(STRING_OBJS_SHARED)
-	$(CXX) -shared -o $@ $^
+	$(CXX) $(SHARED_LDFLAGS) -o $@ $^
 	@echo "✅ 动态库 $@ 生成完成"
 
 # 链接动态库生成可执行文件
+# Windows 链接导入库；Linux/macOS 用 -l 找 .so/.dylib。
 app_shared: $(MAIN_OBJ) $(SHARED_MATH_LIB) $(SHARED_STRING_LIB)
 	$(CXX) $(CXXFLAGS) -o $@ $(MAIN_OBJ) \
-		-L. -lmathutils -lstringutils \
-		-Wl,-rpath,.
-#		       ^
-#		       |
-#		       +-- 把当前目录写进可执行文件的库搜索路径里
-#		           这样运行的时候就能找到 .so 了
+		$(APP_SHARED_LIBS) $(RPATH_FLAGS)
 	@echo "✅ 动态链接可执行文件 $@ 生成完成"
 
 
@@ -239,7 +282,8 @@ run_shared: app_shared
 # ============================================================
 
 clean:
-	rm -f *.o *.a *.so app_static app_shared
+	rm -f *.o *.a *.so *.dylib *.dll *.dll.a app_static app_shared \
+		app_static.exe app_shared.exe
 	@echo "清理完成！"
 
 

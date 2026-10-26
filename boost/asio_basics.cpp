@@ -2,24 +2,27 @@
  * Boost.Asio 基础与进阶用法 Demo
  *
  * 知识点覆盖：
- *   1. io_context 核心：事件循环、run()/poll()、work_guard、多线程并发
+ *   1. io_context 核心：事件循环、run()/poll()、restart()、多线程并发
  *   2. 同步 TCP echo 服务器与客户端
  *   3. 异步 TCP echo 服务器：async_accept / async_read / async_write
+ *      （composed operations 与缓冲区生命周期）
  *   4. strand：串行化异步操作，保证线程安全
  *   5. 定时器（steady_timer）：同步/异步等待、取消、周期性定时器
  *   6. 错误处理：error_code、异常、错误类别
- *   7. 异步操作链（Composed Operations）：链式回调与回调地狱的规避
- *   8. Buffer 与 streambuf 的使用
+ *   7. Buffer 与 streambuf：内存视图 vs 拥有存储的流缓冲区
+ *   8. work_guard：防止 io_context 提前退出
  *
  * Boost 优势：
- *   - Boost.Asio 是 C++ 网络编程的事实标准，已被纳入 C++20 标准提案
+ *   - Boost.Asio 是 C++ 网络编程的事实标准，也是 Networking TS 的参考实现；
+ *     但 std::net 至今仍未正式进入 C++ 标准（C++20/23/26 都没有网络库）
  *   - 跨平台：Windows / Linux / macOS 统一接口
  *   - 支持同步/异步、TCP/UDP/ICMP、SSL、串口等多种协议
  *   - Proactor 模式设计，性能优异
  *   - 与 Boost 其他库（SmartPtr、Bind、Coroutine）深度集成
  *
- * 编译命令（示例）：
- *   g++ -std=c++17 asio_basics.cpp -o asio_basics -lboost_system -lboost_thread -lpthread
+ * 编译命令（Asio 在 Boost 1.90 是头文件实现，不需要 -lboost_system）：
+ *   Linux:  g++ -std=c++17 asio_basics.cpp -o asio_basics -pthread
+ *   MinGW:  g++ -std=c++17 asio_basics.cpp -o asio_basics -lws2_32 -lmswsock
  */
 
 #include <iostream>
@@ -112,16 +115,30 @@ std::string sync_echo_client(short port, const std::string& message) {
     // 发送数据
     asio::write(socket, asio::buffer(message));
 
-    // 读取回显
+    // 读取回显。read_some 只保证“至少读到一点”，
+    // 一次调用可能只拿到消息的一部分，必须循环读到完整长度。
     std::array<char, 1024> buffer;
+    std::string reply;
     error_code ec;
-    size_t len = socket.read_some(asio::buffer(buffer), ec);
+    while (reply.size() < message.size()) {
+        size_t len = socket.read_some(asio::buffer(buffer), ec);
+        if (ec == asio::error::eof) {
+            break;
+        }
+        if (ec) {
+            throw boost::system::system_error(ec);
+        }
+        if (len == 0) {
+            break;
+        }
+        reply.append(buffer.data(), len);
+    }
 
     // 主动关闭连接
     socket.shutdown(tcp::socket::shutdown_both);
     socket.close();
 
-    return std::string(buffer.data(), len);
+    return reply;
 }
 
 // ============================================================
@@ -129,6 +146,11 @@ std::string sync_echo_client(short port, const std::string& message) {
 // ============================================================
 // 异步模型基于 Proactor 模式，单线程即可处理大量并发连接。
 // 关键概念：回调函数（handler）、io_context 事件循环、异步操作链。
+//
+// 补充：async_write / async_read / async_read_until 都是“组合操作”
+// (composed operations)。它们内部可能多次调用 *_some 版本，直到
+// 整个缓冲区处理完才调用一次 handler。因此传给组合操作的缓冲区
+// 必须在 handler 被调用前一直有效（不能是即将销毁的局部变量）。
 
 class AsyncEchoSession : public std::enable_shared_from_this<AsyncEchoSession> {
 public:
@@ -292,28 +314,42 @@ public:
     }
 
     // 4.3 周期性定时器（通过递归 async_wait 实现）
+    //
+    // 关键：异步 handler 在函数返回之后才执行，它引用的状态必须一直存活。
+    // 这里用 shared_ptr<State> 让每一轮 handler 持有一份状态，最后一轮结束后
+    // 引用计数归零、自动释放。若把 handler 写成局部 std::function 再按引用
+    // 捕获（[=, &handler]），函数一返回引用就悬空，程序会崩溃。
     void periodic_timer_demo(int count, std::function<void()> on_done) {
-        auto timer = std::make_shared<asio::steady_timer>(io_);
-        auto counter = std::make_shared<int>(0);
+        struct State {
+            asio::steady_timer timer;
+            int total;
+            int current = 0;
+            std::function<void()> on_done;
 
-        std::function<void(const error_code&)> handler;
-        handler = [=, &handler](const error_code& ec) mutable {
-            if (ec) return;
+            State(asio::io_context& io, int total_, std::function<void()> done)
+                : timer(io), total(total_), on_done(std::move(done)) {}
 
-            ++(*counter);
-            std::cout << "  [Timer] 周期定时器第 " << *counter << " 次触发" << std::endl;
+            void arm(std::shared_ptr<State> self) {
+                timer.expires_after(200ms);
+                timer.async_wait([self](const error_code& ec) {
+                    if (ec) return;
 
-            if (*counter < count) {
-                timer->expires_after(200ms);
-                timer->async_wait(handler);
-            } else {
-                std::cout << "  [Timer] 周期定时器结束" << std::endl;
-                if (on_done) on_done();
+                    ++self->current;
+                    std::cout << "  [Timer] 周期定时器第 " << self->current
+                              << " 次触发" << std::endl;
+
+                    if (self->current < self->total) {
+                        self->arm(self);  // 把 self 继续传下去，保持状态存活
+                    } else {
+                        std::cout << "  [Timer] 周期定时器结束" << std::endl;
+                        if (self->on_done) self->on_done();
+                    }
+                });
             }
         };
 
-        timer->expires_after(200ms);
-        timer->async_wait(handler);
+        auto state = std::make_shared<State>(io_, count, std::move(on_done));
+        state->arm(state);
     }
 
 private:
@@ -335,11 +371,13 @@ void error_handling_demo() {
     std::cout << "5.1 error_code 方式:" << std::endl;
     {
         tcp::socket socket(io);
-        tcp::endpoint endpoint(asio::ip::address::from_string("127.0.0.1"), 9999);
+        tcp::endpoint endpoint(asio::ip::make_address("127.0.0.1"), 9999);
         error_code ec;
         socket.connect(endpoint, ec);
         if (ec) {
-            std::cout << "  连接失败 (预期): " << ec.message() << std::endl;
+            // Windows 的 ec.message() 返回系统 ANSI 编码（中文系统为 GBK），
+            // 在 UTF-8 终端直接输出会乱码，所以这里以错误码为主。
+            std::cout << "  连接失败 (预期): 端口 9999 没有服务监听" << std::endl;
             std::cout << "  错误值: " << ec.value() << std::endl;
             std::cout << "  错误类别: " << ec.category().name() << std::endl;
         }
@@ -350,24 +388,59 @@ void error_handling_demo() {
     {
         try {
             tcp::socket socket(io);
-            tcp::endpoint endpoint(asio::ip::address::from_string("127.0.0.1"), 9999);
+            tcp::endpoint endpoint(asio::ip::make_address("127.0.0.1"), 9999);
             socket.connect(endpoint);  // 失败会抛出 boost::system::system_error
         } catch (const boost::system::system_error& e) {
-            std::cout << "  捕获异常 (预期): " << e.what() << std::endl;
-            std::cout << "  error_code: " << e.code().value() << " - " << e.code().message() << std::endl;
+            std::cout << "  捕获 system_error (预期)，错误码: "
+                      << e.code().value() << std::endl;
+            std::cout << "  错误类别: " << e.code().category().name() << std::endl;
         }
     }
 }
 
 // ============================================================
-// 六、Work Guard：保持 io_context 运行
+// 六、Buffer 与 streambuf
+// ============================================================
+void buffer_demo() {
+    std::cout << "\n--- 7. Buffer 与 streambuf ---" << std::endl;
+
+    // asio::buffer 不拥有内存，只是对一段连续内存的视图。
+    // 视图有效的前提是底层内存仍然存活。
+    std::string text = "Hello, Asio";
+    auto const_buf = asio::buffer(text);
+    std::cout << "  buffer(string) 大小: "
+              << asio::buffer_size(const_buf) << std::endl;
+
+    std::array<char, 32> raw{};
+    auto mutable_buf = asio::buffer(raw);
+    std::cout << "  buffer(array) 大小: "
+              << asio::buffer_size(mutable_buf) << std::endl;
+
+    // asio::streambuf 拥有内部存储，适合“读多少不确定”的场景，
+    // 常与 read_until / async_read_until 配合按行或按分隔符读取。
+    asio::streambuf sb;
+    std::ostream os(&sb);
+    os << "first line\nsecond line\n";
+
+    std::istream is(&sb);
+    std::string line;
+    std::getline(is, line);
+    std::cout << "  streambuf 读出一行: " << line << std::endl;
+    std::cout << "  剩余可读字节: " << sb.size() << std::endl;
+
+    std::cout << "  区别：buffer 只是视图，不复制也不拥有数据；"
+              << "streambuf 拥有缓冲区，可动态增长" << std::endl;
+}
+
+// ============================================================
+// 七、Work Guard：保持 io_context 运行
 // ============================================================
 // io_context::run() 在没有待处理工作时会立即返回。
 // 使用 work_guard 可以让 io_context 即使暂无任务也保持运行状态，
 // 等待后续任务的到来。这在多线程服务器中非常重要。
 
 void work_guard_demo() {
-    std::cout << "\n--- 6. work_guard 保持 io_context 运行 ---" << std::endl;
+    std::cout << "\n--- 8. work_guard 保持 io_context 运行 ---" << std::endl;
 
     asio::io_context io;
 
@@ -498,21 +571,20 @@ int main() {
         asio::io_context io;
         StrandDemo demo(io);
 
-        // 多线程运行 io_context
+        // 先投递任务，再启动 io_context。
+        // 反过来的话，工作线程可能在任务入队前就执行完 run() 并退出，
+        // 导致只有部分任务被执行（甚至一个都没执行）。
+        for (int i = 0; i < 6; ++i) {
+            demo.increment("任务" + std::to_string(i + 1));
+        }
+
+        // 多线程运行 io_context，strand 保证 6 个 handler 不会并发执行
         std::vector<std::thread> threads;
         for (int i = 0; i < 3; ++i) {
             threads.emplace_back([&io]() { io.run(); });
         }
 
-        // 提交多个任务，strand 保证它们串行执行
-        for (int i = 0; i < 6; ++i) {
-            demo.increment("任务" + std::to_string(i + 1));
-        }
-
-        // 等待任务完成
-        std::this_thread::sleep_for(200ms);
-        io.stop();
-
+        // 6 个任务全部完成后 run() 才会返回，join 即可等待它们结束
         for (auto& t : threads) t.join();
 
         std::cout << "  最终 counter = " << demo.counter() << " (预期 6)" << std::endl;
@@ -549,7 +621,12 @@ int main() {
     error_handling_demo();
 
     // --------------------------------------------------------
-    // 7. Work Guard
+    // 7. Buffer 与 streambuf
+    // --------------------------------------------------------
+    buffer_demo();
+
+    // --------------------------------------------------------
+    // 8. Work Guard
     // --------------------------------------------------------
     work_guard_demo();
 
@@ -563,7 +640,10 @@ int main() {
     std::cout << "  4. 定时器支持同步/异步、取消、周期性触发" << std::endl;
     std::cout << "  5. error_code 优于异常，尤其在异步场景下" << std::endl;
     std::cout << "  6. work_guard 防止 io_context 提前退出" << std::endl;
-    std::cout << "  7. C++20 标准库已纳入 std::asio（基于 Boost.Asio）" << std::endl;
+    std::cout << "  7. C++ 标准库至今没有网络库；Asio 是 Networking TS 的参考实现，"
+              << "std::net 尚未正式进入标准" << std::endl;
+    std::cout << "  8. buffer 是内存视图，streambuf 拥有存储；组合操作期间缓冲区必须保持有效"
+              << std::endl;
 
     std::cout << "\n========== Demo 结束 ==========" << std::endl;
     return 0;

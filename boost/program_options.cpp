@@ -20,7 +20,9 @@
  *   - C++ 标准库中至今无对应功能
  *
  * 编译命令（示例）：
- *   g++ -std=c++17 program_options.cpp -o program_options -lboost_program_options
+ *   Linux:        g++ -std=c++17 program_options.cpp -o program_options -lboost_program_options
+ *   MinGW/MSYS2:  g++ -std=c++17 program_options.cpp -o program_options -lboost_program_options-mt
+ *   （Windows 预编译库常带 -mt 后缀，以实际库文件名为准）
  */
 
 #include <iostream>
@@ -29,6 +31,8 @@
 #include <fstream>
 #include <sstream>
 #include <algorithm>
+#include <cctype>
+#include <cstdlib>   // std::getenv
 
 // ========== Boost 头文件说明 ==========
 // <boost/program_options.hpp>        - 总头文件
@@ -80,7 +84,10 @@ void validate(boost::any& v, const std::vector<std::string>& values,
 
     // 自定义解析逻辑
     std::string lower = s;
-    std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+    std::transform(lower.begin(), lower.end(), lower.begin(),
+                   [](unsigned char c) {
+                       return static_cast<char>(std::tolower(c));
+                   });
 
     if (lower == "trace")        v = LogLevel::Trace;
     else if (lower == "debug")   v = LogLevel::Debug;
@@ -106,26 +113,47 @@ struct IPAddress {
     }
 };
 
+// 严格解析 IPv4：必须正好四段十进制数字，用点分隔，每段 0-255。
+// 不能用 sscanf("%d.%d.%d.%d")：它读到第四个数就返回 4，
+// "1.2.3.4junk"、"1.2.3.4.5" 都会被当成合法地址。
+bool parseIPv4(const std::string& s, int (&octets)[4]) {
+    size_t pos = 0;
+    for (int i = 0; i < 4; ++i) {
+        if (pos >= s.size() ||
+            !std::isdigit(static_cast<unsigned char>(s[pos]))) {
+            return false;
+        }
+
+        int value = 0;
+        while (pos < s.size() &&
+               std::isdigit(static_cast<unsigned char>(s[pos]))) {
+            value = value * 10 + (s[pos] - '0');
+            if (value > 255) {
+                return false;
+            }
+            ++pos;
+        }
+        octets[i] = value;
+
+        if (i < 3) {
+            if (pos >= s.size() || s[pos] != '.') {
+                return false;
+            }
+            ++pos;
+        }
+    }
+    return pos == s.size();
+}
+
 void validate(boost::any& v, const std::vector<std::string>& values,
               IPAddress*, int) {
     po::validators::check_first_occurrence(v);
     const std::string& s = po::validators::get_single_string(values);
 
     IPAddress ip;
-    int count = sscanf(s.c_str(), "%d.%d.%d.%d",
-                       &ip.octets[0], &ip.octets[1],
-                       &ip.octets[2], &ip.octets[3]);
-
-    if (count != 4) {
+    if (!parseIPv4(s, ip.octets)) {
         throw po::validation_error(po::validation_error::invalid_option_value,
                                    s, "IP address");
-    }
-
-    for (int i = 0; i < 4; ++i) {
-        if (ip.octets[i] < 0 || ip.octets[i] > 255) {
-            throw po::validation_error(po::validation_error::invalid_option_value,
-                                       s, "IP octet out of range");
-        }
     }
 
     v = ip;
@@ -181,18 +209,17 @@ void create_sample_config(const std::string& path) {
     std::ofstream f(path);
     f << "# Boost.Program_options 示例配置文件\n";
     f << "# 格式：key = value\n";
+    f << "# 键名必须和代码里的长选项名完全一致（用连字符 -，不是下划线 _）。\n";
+    f << "# 本示例不用 [section]：section 会拼成 section.key，和注册的 key 对不上。\n";
     f << "\n";
-    f << "[server]\n";
     f << "host = 0.0.0.0\n";
     f << "port = 9090\n";
-    f << "log_level = info\n";
+    f << "log-level = info\n";
     f << "verbose = 1\n";
-    f << "\n";
-    f << "[advanced]\n";
-    f << "max_connections = 500\n";
+    f << "max-connections = 500\n";
     f << "timeout = 60\n";
-    f << "log_file = /var/log/app.log\n";
-    f << "bind_ip = 127.0.0.1\n";
+    f << "log-file = /var/log/app.log\n";
+    f << "bind-ip = 127.0.0.1\n";
     f.close();
     std::cout << "  已生成示例配置文件: " << path << std::endl;
 }
@@ -208,14 +235,14 @@ bool parse_config(int argc, char* argv[], AppConfig& config) {
     // 选项描述对象是可组合的，可以分块定义后合并。
 
     // 通用选项组（--help, --version, --config 等）
-    po::options_description generic("通用选项");
+    po::options_description generic("通用选项", 120);
     generic.add_options()
         ("help,h", "显示帮助信息")
         ("version,v", "显示版本信息")
         ("config,c", po::value<std::string>(), "指定配置文件路径");
 
     // 服务器配置组
-    po::options_description server_opts("服务器配置");
+    po::options_description server_opts("服务器配置", 120);
     server_opts.add_options()
         ("host,H",
          po::value<std::string>(&config.host)->default_value("127.0.0.1"),
@@ -234,7 +261,7 @@ bool parse_config(int argc, char* argv[], AppConfig& config) {
          "以守护进程模式运行");
 
     // 高级选项组
-    po::options_description advanced_opts("高级选项");
+    po::options_description advanced_opts("高级选项", 120);
     advanced_opts.add_options()
         ("max-connections,m",
          po::value<int>(&config.max_connections)->default_value(100),
@@ -271,7 +298,10 @@ bool parse_config(int argc, char* argv[], AppConfig& config) {
     cmdline_options.add(generic).add(server_opts).add(advanced_opts).add(hidden);
 
     // 用于 --help 显示的选项（不包含 hidden）
-    po::options_description visible_options;
+    // Boost 按“字节数”计算列宽，中文描述容易被默认的 80 列截断，
+    // 甚至把一个 UTF-8 汉字切成两半（终端里显示为乱码）。
+    // 这里把行宽调大，先保证输出不被截断；中文列对齐仍不完美。
+    po::options_description visible_options(120);
     visible_options.add(generic).add(server_opts).add(advanced_opts);
 
     // --------------------------------------------------------
@@ -309,8 +339,9 @@ bool parse_config(int argc, char* argv[], AppConfig& config) {
             std::cout << "  读取配置文件: " << config_file << std::endl;
 
             // 配置文件解析
-            // 注意：配置文件中的选项名使用下划线，不是连字符
-            // 例如：max-connections -> max_connections
+            // 注意：键名必须和长选项名完全一致，例如 max-connections，
+            // 写成 max_connections 不会被自动转换，会报“unrecognised option”。
+            // 如果写了 [server] 段，键名会变成 server.host，同样对不上。
             po::options_description config_file_options;
             config_file_options.add(server_opts).add(advanced_opts);
 
@@ -320,21 +351,28 @@ bool parse_config(int argc, char* argv[], AppConfig& config) {
                 return false;
             }
 
-            // 解析配置文件，allow_unregistered 允许配置文件中有未定义的选项
-            po::store(po::parse_config_file(ifs, config_file_options, true), vm);
+            // allow_unregistered=false：配置写错时立刻报错，而不是悄悄忽略
+            po::store(po::parse_config_file(ifs, config_file_options, false), vm);
         }
 
         // --------------------------------------------------------
         // 5.6 环境变量解析
         // --------------------------------------------------------
-        // 可以从环境变量中读取选项值，优先级低于命令行但高于默认值
-        // 环境变量名通常大写，使用下划线分隔
-        std::cout << "  检查环境变量 APP_PORT..." << std::endl;
+        // 可以从环境变量中读取选项值，优先级低于命令行但高于默认值。
+        // 环境变量名和选项名通常不一样，需要提供一个映射函数。
         po::options_description env_opts;
         env_opts.add_options()
-            ("APP_PORT", po::value<int>(), "端口");
-        // 实际使用时调用 po::parse_environment
-        // 这里为了演示稳定性，不实际读取环境变量
+            ("port", po::value<int>(), "端口（来自环境变量 APP_PORT）");
+
+        po::store(po::parse_environment(
+                      env_opts,
+                      [](const std::string& name) -> std::string {
+                          return name == "APP_PORT" ? "port" : std::string();
+                      }),
+                  vm);
+        std::cout << "  已检查环境变量 APP_PORT"
+                  << (std::getenv("APP_PORT") ? "（已设置）" : "（未设置）")
+                  << std::endl;
 
         // --------------------------------------------------------
         // 5.7 notify：应用解析结果到绑定变量
@@ -365,7 +403,7 @@ bool parse_config(int argc, char* argv[], AppConfig& config) {
         }
 
     } catch (const po::error& e) {
-        std::cerr << "命令行解析错误: " << e.what() << std::endl;
+        std::cerr << "参数解析错误: " << e.what() << std::endl;
         std::cerr << "使用 --help 查看帮助信息" << std::endl;
         return false;
     }
@@ -379,11 +417,12 @@ bool parse_config(int argc, char* argv[], AppConfig& config) {
 void option_types_demo() {
     std::cout << "\n--- 选项类型详解 ---" << std::endl;
 
-    po::options_description desc("选项类型示例");
+    // 行宽同样调大，避免中文描述被按字节截断
+    po::options_description desc("选项类型示例", 120);
     int int_val = 0;
     std::string str_val;
     bool flag = false;
-    bool switch_flag = false;
+    bool zero_flag = false;
     std::vector<int> int_list;
     std::vector<std::string> str_list;
 
@@ -400,9 +439,10 @@ void option_types_demo() {
         ("flag,f", po::bool_switch(&flag),
          "布尔开关选项")
 
-        // 4. zero_tokens（隐式值，选项后可不跟值）
-        ("switch_opt", po::bool_switch(&switch_flag)->implicit_value(true),
-         "带隐式值的开关")
+        // 4. zero_tokens：选项出现时只取隐式值，不消耗后面的 token
+        ("zero_opt,z",
+         po::value<bool>(&zero_flag)->implicit_value(true)->zero_tokens(),
+         "显式使用 zero_tokens 的开关")
 
         // 5. multitoken：一个选项可以跟多个值（如 --list a b c）
         ("int-list", po::value<std::vector<int>>(&int_list)->multitoken(),
@@ -419,14 +459,15 @@ void option_types_demo() {
     std::cout << desc << std::endl;
 
     // 演示 composing 和 multitoken 的区别
-    std::cout << "  multitoken: --list 1 2 3 (一个选项后跟多个值)" << std::endl;
+    std::cout << "  multitoken: --int-list 1 2 3 (一个选项后跟多个值)" << std::endl;
     std::cout << "  composing:  -I a -I b -I c (选项可重复，值累积)" << std::endl;
+    std::cout << "  implicit_value: -O 等价于 -O2，也可以写 -O3" << std::endl;
 }
 
 // ============================================================
 // Demo 入口函数
 // ============================================================
-int main(int argc, char* argv[]) {
+int main() {
     std::cout << "========== Boost.Program_options 解析 Demo ==========" << std::endl;
 
     // --------------------------------------------------------
@@ -498,7 +539,7 @@ int main(int argc, char* argv[]) {
         desc.add_options()("port", po::value<int>(), "port");
         po::variables_map vm;
         try {
-            po::store(po::command_line_parser(2, const_cast<char**>(bad_argv))
+            po::store(po::command_line_parser(3, const_cast<char**>(bad_argv))
                           .options(desc).run(), vm);
             po::notify(vm);
         } catch (const po::invalid_option_value& e) {

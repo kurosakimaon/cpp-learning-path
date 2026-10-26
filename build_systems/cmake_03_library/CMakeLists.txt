@@ -15,8 +15,11 @@ project(LibraryDemo)
 # 这命令告诉 CMake："去子目录里找另一个 CMakeLists.txt 来处理"。
 # 大项目就是这么组织的——每个模块一个子目录，各管各的。
 #
-# 注意顺序：mathlib 要放在 app 前面，因为 app 依赖 mathlib。
-# 就像盖楼，得先打地基，再盖上面的。
+# 这里先加 mathlib 再加 app，读起来和依赖方向一致。
+# 注意：CMake 会在生成阶段解析目标，所以“库目标写在后面”
+# 本身不会导致 "Target not found"；真正不能反的是
+# add_executable / add_library 与 target_* 命令的顺序——
+# 必须先创建目标，再给这个目标设置属性。
 #
 add_subdirectory(mathlib)   # 先构建数学库
 add_subdirectory(app)       # 再构建应用程序

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <thread>
 #include <atomic>
+#include <bitset>
 #include <vector>
 #include <mutex>
 #include <chrono>
@@ -34,13 +35,15 @@ using namespace std;
 void demo_race_condition() {
     cout << "\n=== 演示1：普通int vs 原子int（竞态条件） ===" << endl;
 
-    int normal_counter = 0;          // 普通int，多线程同时写会出问题
+    // 用 volatile 只是防止编译器把整个循环优化成“加 100000”这一条指令，
+    // 让竞态更容易被观察到。volatile 不是同步手段，也不提供原子性！
+    volatile int normal_counter = 0; // 普通int，多线程同时写会出问题
     const int iterations = 100000;   // 每个线程累加次数
     const int num_threads = 10;      // 线程数
 
     vector<thread> threads;
 
-    // 用普通 int 累加（会丢数！）
+    // 用普通 int 累加（可能丢数！）
     auto start = chrono::steady_clock::now();
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([&normal_counter, iterations]() {
@@ -52,10 +55,16 @@ void demo_race_condition() {
     for (auto& t : threads) t.join();
     auto end = chrono::steady_clock::now();
 
+    const int expected = num_threads * iterations;
     cout << "普通int结果: " << normal_counter
-         << " (预期: " << num_threads * iterations << ")"
+         << " (预期: " << expected << ")"
          << "，耗时: " << chrono::duration<double, milli>(end - start).count() << "ms" << endl;
-    cout << "你看，结果不对吧？这就是竞态条件的威力。" << endl;
+    if (normal_counter != expected) {
+        cout << "你看，结果少了！多个线程的读-改-写互相覆盖，这就是竞态条件。" << endl;
+    } else {
+        cout << "这次结果碰巧对了，但别高兴：无同步的并发读写是数据竞争（UB），" << endl;
+        cout << "结果不可预测，换个编译器/优化级别/机器就可能出错。" << endl;
+    }
 }
 
 // ---- 正确示范：atomic<int> 计数器（线程安全） ----
@@ -144,7 +153,8 @@ void demo_atomic_operations() {
     bool success = a.compare_exchange_strong(expected, 100);
     cout << "CAS(期望32, 设置100): " << (success ? "成功" : "失败")
          << "，当前值: " << a.load()
-         << "，expected被更新为: " << expected << endl;
+         << "，expected 现在为: " << expected
+         << (success ? "（成功时保持不变）" : "（失败时被更新为当前值）") << endl;
 
     // 再试一次，这次期望的值是对的
     expected = 100;
@@ -223,7 +233,7 @@ void demo_memory_order() {
     reader.join();
 
     cout << "acquire/release 保证了：写线程 release 之前的所有写，" << endl;
-    cout << "都能被读线程 acquire 之后看到。这就是"同步"的含义。" << endl;
+    cout << "都能被读线程 acquire 之后看到。这就是“同步”的含义。" << endl;
 }
 
 // ---- 示例：relaxed 只保证原子性，不保证顺序 ----
@@ -342,10 +352,14 @@ void demo_spinlock() {
 // 但你放的时候要确认你看到的那个"最上面的盘子"还在最上面，
 // 不然别人可能已经放了新盘子了。
 //
-// 注意：这是一个简化版的无锁栈，存在ABA问题。
-// ABA问题就是：你以为值是A，但实际上它变成了B又变回了A，
-// 这时CAS会误以为没变，实际上中间已经发生了变化。
-// 解决ABA问题通常用"标记指针"（tagged pointer）或Hazard Pointer。
+// 注意：本演示的节点只分配、不复用，所以这里不会出现 ABA。
+// ABA 是"值从 A 变成 B 又变回 A"导致 CAS 误判；如果允许 delete 后
+// 复用同一地址，就必须用标记指针（tagged pointer）或 Hazard Pointer 防护。
+//
+// 另外，本演示故意不释放弹出的节点。因为另一个线程可能已经读到
+// 同一个 old_head，正准备访问 old_head->next；此时 delete 会造成
+// use-after-free。真实的无锁栈必须配合 Hazard Pointer、epoch 回收
+// 等安全内存回收方案，不能随手 delete。
 // ============================================================
 
 template <typename T>
@@ -378,13 +392,17 @@ public:
 
     // 弹栈（返回指针，空栈返回 nullptr）
     bool pop(T& result) {
-        Node* old_head = head.load(memory_order_relaxed);
+        // 必须用 acquire 读取栈顶：push 用 release 发布节点，
+        // 只有 acquire 才能保证随后读取 old_head->next 是安全的。
+        Node* old_head = head.load(memory_order_acquire);
 
-        // CAS 循环：尝试把栈顶改成 old_head->next
+        // CAS 循环：尝试把栈顶改成 old_head->next。
+        // 失败时也会把 old_head 更新为新的 head；失败序同样用 acquire，
+        // 保证下一轮读取新节点的 next 前已完成同步。
         while (old_head != nullptr &&
                !head.compare_exchange_weak(old_head, old_head->next,
                                            memory_order_acquire,
-                                           memory_order_relaxed)) {
+                                           memory_order_acquire)) {
             // 失败的话，old_head 已经被更新为新的 head 了
             // 继续尝试
         }
@@ -394,10 +412,12 @@ public:
         }
 
         result = old_head->data;
-        // 注意：这里直接 delete 有风险！
-        // 无锁数据结构的内存回收是个大难题（Hazard Pointer, Epoch Based Reclamation...）
-        // 简化版里我们先这样，实际工程中需要更安全的内存回收方案
-        delete old_head;
+
+        // 注意：这里故意不 delete old_head！
+        // 另一个线程可能刚读到同一个指针，正在用 old_head->next 做 CAS，
+        // 这时 delete 会导致 use-after-free（即使本题的数据从不复用）。
+        // 真实的无锁数据结构需要 Hazard Pointer / epoch 回收等方案来安全释放内存。
+        // 本演示的代价是少量内存泄漏，仅用于说明 CAS 栈的结构。
         return true;
     }
 
@@ -464,8 +484,10 @@ void demo_lock_free_stack() {
          << (total_popped.load() + remaining == total_pushed.load() ? "一致" : "不一致") << endl;
 
     cout << "\n无锁栈原理：push 和 pop 都用 CAS 操作栈顶指针，" << endl;
-    cout << "完全不用锁，多个线程可以同时操作。" << endl;
-    cout << "但要注意：无锁编程水很深，ABA问题、内存回收都是大坑，" << endl;
+    cout << "栈操作本身没有加锁，多个线程可以同时操作。" << endl;
+    cout << "但本演示为安全起见不释放弹出节点（会泄漏少量内存），" << endl;
+    cout << "真实实现必须解决内存回收问题，否则会 use-after-free。" << endl;
+    cout << "ABA问题、内存回收都是大坑，" << endl;
     cout << "实际项目中优先用成熟的库（比如 Intel TBB），别自己造轮子。" << endl;
 }
 
@@ -474,14 +496,17 @@ void demo_lock_free_stack() {
 // ============================================================
 // 老师傅画个表帮你理解：
 //
-// 内存序                    | 保证程度 | 性能 | 适用场景
-// --------------------------|---------|------|--------------------------
-// memory_order_seq_cst      | 最强    | 最慢 | 默认值，99%情况用这个
-// memory_order_acq_rel      | 较强    | 中   | 同时需要acquire和release
-// memory_order_acquire      | 读侧同步 | 中   | 读操作，配合release写
-// memory_order_release      | 写侧同步 | 中   | 写操作，配合acquire读
-// memory_order_consume      | 较弱    | 快   | 数据依赖场景（很少用）
-// memory_order_relaxed      | 最弱    | 最快 | 只需要原子性，不需要顺序
+// 内存序                    | 保证程度 | 适用场景
+// --------------------------|---------|--------------------------
+// memory_order_seq_cst      | 最强    | 默认值，99%情况用这个
+// memory_order_acq_rel      | 较强    | 同时需要 acquire 和 release
+// memory_order_acquire      | 读侧同步 | 读操作，配合 release 写
+// memory_order_release      | 写侧同步 | 写操作，配合 acquire 读
+// memory_order_consume      | 语义复杂 | 主流实现等同 acquire，不推荐使用
+// memory_order_relaxed      | 最弱    | 只需要原子性，不需要顺序
+//
+// 注意：这张表只描述“约束强弱”，不是性能承诺。不同 CPU、
+// 编译器和竞争程度下，各内存序的开销可能几乎没有差别。
 //
 // 老师傅的口诀：
 //   - 拿不准就用 seq_cst，慢是慢点，但不会错
@@ -490,7 +515,7 @@ void demo_lock_free_stack() {
 // ============================================================
 
 void demo_seq_cst_vs_relaxed_perf() {
-    cout << "\n=== 演示8：不同内存序的性能对比 ===" << endl;
+    cout << "\n=== 演示8：不同内存序的开销观察（仅供参考）===" << endl;
 
     const int iterations = 10000000;
     atomic<int> counter{0};
@@ -515,8 +540,12 @@ void demo_seq_cst_vs_relaxed_perf() {
     auto relaxed_time = chrono::duration<double, milli>(end - start).count();
     cout << "relaxed:  " << relaxed_time << "ms" << endl;
 
-    cout << "relaxed 比 seq_cst 快 " << (seq_cst_time / relaxed_time) << " 倍左右" << endl;
-    cout << "（注意：单线程下差距可能不大，多线程竞争时差距更明显）" << endl;
+    if (relaxed_time > 0) {
+        cout << "耗时比 seq_cst/relaxed = " << (seq_cst_time / relaxed_time) << endl;
+    }
+    cout << "单线程下两者接近是正常的：x86 上两种 fetch_add 往往都编译成" << endl;
+    cout << "同一条 lock xadd，真正的差别在跨线程可见性与重排约束，" << endl;
+    cout << "不能据此断言 relaxed 一定更快，也不能用它替代正确的同步。" << endl;
 }
 
 // ============================================================
@@ -567,16 +596,16 @@ int main() {
     cout << "\n============================================================" << endl;
     cout << "  小练习" << endl;
     cout << "============================================================" << endl;
-    cout << "1. 用 atomic<bool> 和 CAS 实现一个简单的"开关"，" << endl;
+    cout << "1. 用 atomic<bool> 和 CAS 实现一个简单的“开关”，" << endl;
     cout << "   多个线程同时尝试打开开关，只有第一个能成功。" << endl;
     cout << "" << endl;
     cout << "2. 改造自旋锁，加入 backoff 策略：" << endl;
     cout << "   自旋几次后，如果还拿不到锁，就 sleep 一小会儿再试。" << endl;
     cout << "   （提示：用 std::this_thread::yield() 或 sleep_for）" << endl;
     cout << "" << endl;
-    cout << "3. 思考一下：我们的无锁栈 pop 函数里直接 delete old_head，" << endl;
-    cout << "   为什么这在多线程环境下可能有问题？（提示：ABA问题）" << endl;
-    cout << "   查一下 Hazard Pointer 是怎么解决这个问题的。" << endl;
+    cout << "3. 思考一下：我们的无锁栈 pop 函数里如果直接 delete old_head，" << endl;
+    cout << "   为什么会 use-after-free？（提示：别的线程可能还拿着这个指针）" << endl;
+    cout << "   ABA 问题和这是两回事：查一下两者分别怎么解决（Hazard Pointer 等）。" << endl;
     cout << "" << endl;
     cout << "4. 用 atomic 实现一个简单的引用计数智能指针的雏形，" << endl;
     cout << "   支持多线程安全的引用计数增减。" << endl;

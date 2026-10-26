@@ -91,7 +91,10 @@ public:
 // 提示：用 DEBUG_VAR 打印中间变量看看
 int buggySum(int arr[], int size) {
     int sum = 0;
-    for (int i = 1; i <= size; i++) {  // ← 这里有问题！
+    // 这个版本只保留"漏掉 arr[0]"的 bug，便于安全地运行。
+    // 经典错误写法还有 i <= size，那会越界读取 arr[size]（未定义行为），
+    // 这里故意不那样写，避免演示程序自己踩内存。
+    for (int i = 1; i < size; i++) {
         sum += arr[i];
     }
     return sum;
@@ -117,6 +120,9 @@ int debuggedSum(int arr[], int size) {
 
 // 目标：把字符串中的空格替换成 %20（URL编码）
 // 这个实现有 bug，你找找看
+// 提示：重点不是"越界"——std::string::operator[](size()) 是合法的，
+// 返回 '\0'；这里的问题是循环多走了一次，结果末尾多了一个 '\0' 字符，
+// result.size() 也比正确结果大 1。
 std::string buggyUrlEncode(const std::string& input) {
     std::string result;
     for (size_t i = 0; i <= input.size(); i++) {  // ← 有问题
@@ -208,12 +214,16 @@ int debuggedBinarySearch(const std::vector<int>& arr, int target) {
 //  发布版（定义 NDEBUG）下 assert 会被完全移除，不影响性能
 //
 //  什么时候用 assert：
-//    - 函数入口检查参数有效性（非空指针、范围合法等）
-//    - 检查不变量（比如链表的大小应该等于节点数）
+//    - 检查程序内部的不变量（比如链表的大小应该等于节点数）
 //    - 检查"不可能发生"的情况（比如 switch 的 default）
+//    - 记录调用方必须满足的前置条件
+//  注意：assert 不是给用户输入做校验的！发布版（定义 NDEBUG）会把 assert
+//  完全移除，如果用它检查外部数据，非法输入就会一路放行。对来自用户/
+//  文件/网络的数据，应该显式检查并返回错误码或抛出异常。
 
 void processArray(int* arr, int size) {
-    // 前置条件检查
+    // 前置条件：这两个 assert 只表达"内部调用约定"，
+    // 调用方必须保证；不能替代对外部输入的运行时校验。
     assert(arr != nullptr && "数组指针不能为空");
     assert(size > 0 && "数组大小必须大于0");
 
@@ -250,7 +260,7 @@ void demoBinaryDebugging() {
 //  printf 调试看起来很土，但其实非常有效：
 //
 //  1. 不需要任何工具，任何环境都能用
-//  2. 输出是确定性的，不会因为调试器改变程序行为
+//  2. 通常不会像调试器那样改变程序的控制流，但输出本身仍会影响时序和性能
 //  3. 适合复现概率低的 bug（跑一晚上，看日志）
 //
 //  但它也有缺点：

@@ -389,11 +389,11 @@ const algorithms = {
   shell: {
     name: '希尔排序',
     best: 'O(n log n)',
-    avg: 'O(n^1.3)',
+    avg: '取决于增量序列',
     worst: 'O(n²)',
     space: 'O(1)',
     stable: '不稳定',
-    desc: '插入排序的改进版。先按较大的间隔排序，逐步缩小间隔，最后做一次插入排序。<br><strong>思路：</strong>分组插入排序 → 缩小间隔 → 再分组 → 直到间隔为1。<br><strong>特点：</strong>比插入排序快，又比快速排序简单。中等规模数据的好选择。'
+    desc: '插入排序的改进版。先按较大的间隔排序，逐步缩小间隔，最后做一次插入排序。<br><strong>思路：</strong>分组插入排序 → 缩小间隔 → 再分组 → 直到间隔为1。<br><strong>特点：</strong>比插入排序快，又比快速排序简单。复杂度取决于增量序列，本页用的折半增量最坏 O(n²)。'
   },
   merge: {
     name: '归并排序',
@@ -409,9 +409,9 @@ const algorithms = {
     best: 'O(n log n)',
     avg: 'O(n log n)',
     worst: 'O(n²)',
-    space: 'O(log n)',
+    space: 'O(log n)，最坏 O(n)',
     stable: '不稳定',
-    desc: '分治思想的另一种实现。选一个基准值（pivot），把数组分成小于pivot和大于pivot的两部分，递归排。<br><strong>思路：</strong>选基准 → 分区（小的左，大的右）→ 递归左右。<br><strong>特点：</strong>平均性能最好，是实际中最常用的排序算法。std::sort 基本就是用它。'
+    desc: '分治思想的另一种实现。选一个基准值（pivot），把数组分成小于pivot和大于pivot的两部分，递归排。<br><strong>思路：</strong>选基准 → 分区（小的左，大的右）→ 递归左右。<br><strong>特点：</strong>平均性能最好，是实际中最常用的排序算法。std::sort 基本就是用它。递归栈平均 O(log n)，极端划分下最坏 O(n)。'
   },
   heap: {
     name: '堆排序',
@@ -420,14 +420,14 @@ const algorithms = {
     worst: 'O(n log n)',
     space: 'O(1)',
     stable: '不稳定',
-    desc: '利用堆这种数据结构。先建大顶堆，然后不断把堆顶（最大值）和末尾交换，再调整堆。<br><strong>思路：</strong>建堆 → 取堆顶 → 交换到末尾 → 调整堆 → 重复。<br><strong>特点：</strong>时间稳定，空间O(1)。适合Top K问题（找最大的K个元素）。'
+    desc: '利用堆这种数据结构。先建大顶堆，然后不断把堆顶（最大值）和末尾交换，再调整堆。<br><strong>思路：</strong>建堆 → 取堆顶 → 交换到末尾 → 调整堆 → 重复。<br><strong>特点：</strong>时间稳定，空间O(1)。Top K 问题更适合维护一个大小为 K 的堆（O(n log K)），不必对整个数组做堆排序。'
   },
   counting: {
     name: '计数排序',
     best: 'O(n+k)',
     avg: 'O(n+k)',
     worst: 'O(n+k)',
-    space: 'O(k)',
+    space: 'O(n+k)',
     stable: '稳定',
     desc: '非比较排序。统计每个值出现的次数，然后按顺序输出。<br><strong>思路：</strong>计数 → 前缀和 → 反向填充（保证稳定性）。<br><strong>特点：</strong>速度快，但只适用于整数且范围不大的情况。k是数据范围大小。'
   }

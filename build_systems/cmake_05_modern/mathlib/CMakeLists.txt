@@ -7,6 +7,7 @@
 # ---- 创建库目标 ----
 add_library(mathlib STATIC
     src/math_tools.cpp
+    src/internal_utils.cpp
 )
 
 # ============================================================
@@ -120,7 +121,9 @@ target_compile_features(mathlib PUBLIC cxx_std_17)
 #  不需要强加给用我的人。每个人的警告策略可能不一样。
 #
 target_compile_options(mathlib PRIVATE
-    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wpedantic>
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall>
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wextra>
+    $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wpedantic>
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
 )
 

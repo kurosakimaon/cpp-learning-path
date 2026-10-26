@@ -29,7 +29,20 @@ CXXFLAGS = -Wall -g -std=c++11
 OBJS = main.o utils.o
 
 # 最终生成的可执行文件名
-TARGET = app
+# Windows 上的 g++ 会生成 app.exe，目标名必须带 .exe。
+UNAME_S := $(shell uname -s 2>/dev/null)
+ifeq ($(OS),Windows_NT)
+    EXE := .exe
+else ifneq (,$(findstring MINGW,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring MSYS,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring CYGWIN,$(UNAME_S)))
+    EXE := .exe
+else
+    EXE :=
+endif
+TARGET := app$(EXE)
 
 # 链接选项（这个示例暂时不用，先放这儿占个位置）
 LDFLAGS =
@@ -139,7 +152,7 @@ utils.o: utils.cpp utils.h
 # clean：清理生成的文件
 # ============================================================
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) app app.exe
 	@echo "清理完毕，目录干干净净！"
 #
 # rm -f 是 Linux/Mac 的删除命令
@@ -172,6 +185,7 @@ BINDIR = $(PREFIX)/bin
 
 install: $(TARGET)
 	@echo "正在安装到 $(BINDIR) ..."
+	install -d $(BINDIR)
 	cp $(TARGET) $(BINDIR)/$(TARGET)
 	@echo "安装完成！"
 #

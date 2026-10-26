@@ -5,6 +5,7 @@
 
 #include <iostream>
 #include <string>
+#include <cstring>
 #include <vector>
 #include <algorithm>
 #include <iterator>
@@ -83,6 +84,14 @@ public:
     ~MyArray() {
         delete[] data;
     }
+
+    // 这个类拥有裸指针，默认拷贝是"浅拷贝"：
+    // 两个对象会指向同一块内存，析构时 delete[] 两次 → 未定义行为，
+    // 常见表现是崩溃或堆损坏。
+    // 正确做法是写深拷贝（重新 new[] 再复制），这里先禁用拷贝，
+    // 避免示例本身教出双重释放的 bug。
+    MyArray(const MyArray&) = delete;
+    MyArray& operator=(const MyArray&) = delete;
 
     // 添加元素
     void push_back(const T& value) {
@@ -315,7 +324,8 @@ void demo_algorithm() {
 
     auto it = find(v.begin(), v.end(), 7);  // 找值为7的元素
     if (it != v.end()) {
-        cout << "  找到了 7，位置是第 " << (it - v.begin()) << " 个" << endl;
+        cout << "  找到了 7，下标是 " << (it - v.begin())
+             << "（从 0 数），即第 " << (it - v.begin() + 1) << " 个" << endl;
     } else {
         cout << "  没找到 7" << endl;
     }
@@ -502,8 +512,9 @@ int main() {
  *
  * 【几个注意点】
  *
- * 1. vector 的 [] 不会做边界检查，越界了直接崩（和数组一样）。
- *    怕出错就用 at()，会抛异常。
+ * 1. vector 的 [] 不会做边界检查，越界是未定义行为
+ *    （可能崩溃，也可能看起来没事，和数组一样）。
+ *    怕出错就用 at()，会抛 std::out_of_range 异常。
  *
  * 2. 迭代器失效问题：对 vector 做插入、删除、扩容操作后，
  *    之前的迭代器可能就失效了，别再用了。

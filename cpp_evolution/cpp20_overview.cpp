@@ -145,7 +145,9 @@ void demo_concepts() {
 //  主要好处：
 //    1. 不用写 begin/end 了：ranges::sort(v);
 //    2. 管道式写法：数据像流水一样经过一道道处理
-//    3. 惰性求值：直到需要结果的时候才计算，效率高
+//    3. 惰性求值：视图不急着算，不会为每一步创建临时容器
+//       注意：惰性不等于更快——每个元素多了一层间接调用，
+//       是否提速要看具体场景，必要时实测。
 //
 
 void demo_ranges() {
@@ -170,9 +172,10 @@ void demo_ranges() {
 
     // ---- Ranges 写法（C++20）----
     // 管道式：数据从左往右流，经过一道道"视图"
-    // views::filter  —— 筛选
+    // views::filter    —— 筛选
     // views::transform —— 转换
-    // views::sort    —— 排序（用 ranges::sort）
+    // 注意：标准库没有 views::sort！排序用的是算法 ranges::sort，
+    //      算法会真正改动元素，不是惰性视图。
     cout << "\n  【Ranges 管道式写法】找偶数、平方、排序：" << endl;
 
     auto result = nums
@@ -200,7 +203,8 @@ void demo_ranges() {
     cout << "  为什么好？" << endl;
     cout << "    - 代码更简洁：不用写 begin/end" << endl;
     cout << "    - 可读性更强：管道式写法，数据流向一目了然" << endl;
-    cout << "    - 惰性求值：视图不立即计算，效率更高" << endl;
+    cout << "    - 惰性求值：视图不立即计算，避免中间临时容器" << endl;
+    cout << "      （但不保证更快，简单场景下传统写法可能更直接）" << endl;
     cout << "    - 组合更灵活：各种 view 可以随意组合" << endl;
 }
 
@@ -310,7 +314,8 @@ void demo_modules() {
     cout << endl;
 
     cout << "  新式写法（模块）：" << endl;
-    cout << "    import <iostream>;    // 导入标准库模块" << endl;
+    cout << "    import <iostream>;    // 导入标准库头单元（header unit）" << endl;
+    cout << "    import std;           // C++23 的标准库模块（支持仍有限）" << endl;
     cout << "    import my_module;     // 导入自定义模块" << endl;
     cout << endl;
 
@@ -334,6 +339,59 @@ void demo_modules() {
     cout << "  注意：模块的构建系统支持还在完善中，" << endl;
     cout << "  不同编译器的用法略有差异。" << endl;
     cout << "  新项目可以尝试，老项目慢慢来。" << endl;
+}
+
+// ----------------------------------------------------------------
+//  5. C++20 其他值得知道的特性
+// ----------------------------------------------------------------
+//
+//  这页是“速览”，不展开讲，但至少要知道它们存在。
+//
+
+void demo_cpp20_others() {
+    cout << "\n======== C++20 其他常用特性 ========" << endl;
+    cout << endl;
+
+    cout << "  1. 【三路比较 <=>】" << endl;
+    cout << "     auto operator<=>(const T&) const = default;" << endl;
+    cout << "     一行自动生成 <、<=、>、>=（== 仍要单独写 = default）。" << endl;
+    cout << endl;
+
+    cout << "  2. 【指定初始化器】" << endl;
+    cout << "     Point p{.x = 1, .y = 2};" << endl;
+    cout << "     必须按成员声明顺序写，不能和位置初始化混用。" << endl;
+    cout << endl;
+
+    cout << "  3. 【consteval / constinit】" << endl;
+    cout << "     consteval：必须在编译期求值；" << endl;
+    cout << "     constinit：保证变量在编译期完成初始化，但仍可修改。" << endl;
+    cout << endl;
+
+    cout << "  4. 【std::span】" << endl;
+    cout << "     连续内存的“视图”，可指向数组/vector 的一段，" << endl;
+    cout << "     不拥有数据，传参时比 (指针, 长度) 安全、比拷贝容器高效。" << endl;
+    cout << endl;
+
+    cout << "  5. 【std::format】（C++20，输出用 C++23 的 std::print）" << endl;
+    cout << "     format 生成字符串，print/println 直接输出，见后面的演示。" << endl;
+    cout << endl;
+
+    cout << "  6. 【std::jthread】" << endl;
+    cout << "     析构时自动 join 的线程，还带 stop_token 协作式停止。" << endl;
+    cout << endl;
+
+    cout << "  7. 【原子等待/通知】" << endl;
+    cout << "     atomic::wait / notify_one / notify_all（C++20），" << endl;
+    cout << "     不用忙等，也不用额外条件变量。" << endl;
+    cout << endl;
+
+    cout << "  8. 【字符串和容器小工具】" << endl;
+    cout << "     string/string_view 的 starts_with、ends_with；" << endl;
+    cout << "     map/set 的 contains；std::source_location、std::bit_cast、std::popcount。" << endl;
+    cout << endl;
+
+    cout << "  9. 【chrono 日历和时区】" << endl;
+    cout << "     C++20 加入 year_month_day、zoned_time 等，日期处理不再靠猜。" << endl;
 }
 
 // ================================================================
@@ -390,10 +448,12 @@ void demo_expected() {
     cout << endl;
 
     cout << "  为什么好？" << endl;
-    cout << "    - 错误处理更明确：函数可能返回什么错误，一看就知道" << endl;
-    cout << "    - 类型安全：编译器帮你检查有没有处理错误" << endl;
-    cout << "    - 比异常轻量：没有栈展开的开销" << endl;
-    cout << "    - 比错误码直观：不会忘，也不会和正常值混淆" << endl;
+    cout << "    - 错误处理更明确：成功值和错误类型都写在 expected<T, E> 里" << endl;
+    cout << "    - 类型安全：错误不会和正常值混淆，编译器保证类型正确" << endl;
+    cout << "    - 但注意：C++ 不会强制你检查错误分支！" << endl;
+    cout << "      忽略返回值或只取值不查错，仍然可以编译（这一点和 Rust 不同）" << endl;
+    cout << "    - 比异常轻量：正常路径没有栈展开的开销" << endl;
+    cout << "    - 比错误码直观：成功/错误放在同一个返回值里，不容易弄混" << endl;
 }
 
 // ----------------------------------------------------------------
@@ -478,12 +538,13 @@ void demo_mdspan() {
     cout << "    vector<int> data = {1,2,3, 4,5,6, 7,8,9};" << endl;
     cout << endl;
     cout << "    // 用 mdspan 把它看成 3x3 的二维数组" << endl;
-    cout << "    std::mdspan<int, std::extents<size_t, 3, 3>> mat(data.data());" << endl;
+    cout << "    std::mdspan<int, std::extents<std::size_t, 3, 3>> mat(data.data());" << endl;
     cout << endl;
-    cout << "    // 像二维数组一样访问" << endl;
-    cout << "    cout << mat[0][0];  // 1" << endl;
-    cout << "    cout << mat[1][2];  // 6" << endl;
-    cout << "    cout << mat[2][1];  // 8" << endl;
+    cout << "    // 像二维数组一样访问（C++23 的多维下标：mat[i, j]）" << endl;
+    cout << "    cout << mat[0, 0];  // 1" << endl;
+    cout << "    cout << mat[1, 2];  // 6" << endl;
+    cout << "    cout << mat[2, 1];  // 8" << endl;
+    cout << "    // 注意：不是 mat[0][0]！mdspan 没有返回“行视图”的 operator[]" << endl;
     cout << endl;
 
     cout << "  为什么好？" << endl;
@@ -504,8 +565,9 @@ void demo_cpp23_others() {
     cout << endl;
 
     cout << "  1. 【if consteval】" << endl;
-    cout << "     判断当前是否在编译期求值，" << endl;
-    cout << "     让 consteval 函数里可以有不同的编译期/运行期路径。" << endl;
+    cout << "     在 constexpr 函数里判断“当前是不是编译期求值”，" << endl;
+    cout << "     从而分别走编译期/运行期两条路径。" << endl;
+    cout << "     （consteval 函数本身只能在编译期执行，不存在运行期分支）" << endl;
     cout << endl;
 
     cout << "  2. 【std::string::contains()】" << endl;
@@ -520,9 +582,10 @@ void demo_cpp23_others() {
     cout << "     例如：auto v = src | views::transform(...) | ranges::to<vector>();" << endl;
     cout << endl;
 
-    cout << "  4. 【auto() / auto{}】" << endl;
-    cout << "     用 auto 构造临时对象，" << endl;
-    cout << "     不用写长长的类型名。" << endl;
+    cout << "  4. 【auto(x) / auto{x}】" << endl;
+    cout << "     得到表达式的一个按值拷贝（decay-copy），" << endl;
+    cout << "     类型由表达式自动推导，常用于泛型代码里显式复制。" << endl;
+    cout << "     例如：auto copy = auto(x);  // 拷贝，不会得到引用" << endl;
     cout << endl;
 
     cout << "  5. 【更完善的 constexpr 支持】" << endl;
@@ -531,9 +594,22 @@ void demo_cpp23_others() {
     cout << endl;
 
     cout << "  6. 【std::flat_map / std::flat_set】" << endl;
-    cout << "     基于有序数组的 map/set，" << endl;
-    cout << "     内存连续，缓存友好，查找快。" << endl;
-    cout << "     （适合数据量不大但频繁查找的场景）" << endl;
+    cout << "     基于有序数组的 map/set，内存连续，缓存友好。" << endl;
+    cout << "     查找仍是 O(log n)，但插入/删除要挪动元素，是 O(n)；" << endl;
+    cout << "     适合“读多写少、数据量不大”的场景。" << endl;
+    cout << endl;
+
+    cout << "  7. 【std::to_underlying / std::unreachable】" << endl;
+    cout << "     to_underlying 取枚举的底层整型；unreachable 标记不可达代码。" << endl;
+    cout << endl;
+
+    cout << "  8. 【std::stacktrace】" << endl;
+    cout << "     标准库终于能直接抓调用栈了（实现支持程度不一）。" << endl;
+    cout << endl;
+
+    cout << "  9. 【更多 range 适配器】" << endl;
+    cout << "     views::zip（把多个范围打包）、views::enumerate（带下标遍历）、" << endl;
+    cout << "     views::join_with、views::chunk 等，写法更接近 Python。" << endl;
 }
 
 // ================================================================
@@ -555,6 +631,7 @@ int main() {
     demo_ranges();
     demo_coroutines();
     demo_modules();
+    demo_cpp20_others();
 
     // ---- C++23 特性 ----
     demo_expected();

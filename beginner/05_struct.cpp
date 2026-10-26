@@ -102,8 +102,10 @@ void printStudentPtr(const Student *s)
 // 修改结构体的函数（用引用传递最方便）
 void upgradeStudent(Student &s)
 {
-    if (s.grade < 'D') {
-        s.grade--;  // 等级提升：B变A，C变B
+    // 注意不能只写 grade < 'D'：'A' 的编码比 'D' 小，
+    // 那样 'A'-- 会变成 '@'，越改越差。这里显式排除 'A'。
+    if (s.grade > 'A' && s.grade <= 'D') {
+        s.grade--;  // 等级提升：D变C，C变B，B变A
         s.score += 5;  // 加5分
     }
 }

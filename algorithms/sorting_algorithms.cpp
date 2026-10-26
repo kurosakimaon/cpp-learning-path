@@ -19,6 +19,7 @@
 #include <iomanip>
 #include <string>
 #include <functional>
+#include <utility>
 
 using namespace std;
 
@@ -65,9 +66,10 @@ vector<int> generateReversedArray(int n) {
 using SortFunc = function<void(vector<int>&)>;
 
 double measureTime(SortFunc sortFn, vector<int> arr) {
-    auto start = chrono::high_resolution_clock::now();
+    // steady_clock 保证单调，不受系统时间调整影响
+    auto start = chrono::steady_clock::now();
     sortFn(arr);
-    auto end = chrono::high_resolution_clock::now();
+    auto end = chrono::steady_clock::now();
     chrono::duration<double, milli> duration = end - start;
     return duration.count();
 }
@@ -261,7 +263,8 @@ void shellSort(vector<int>& arr) {
 //  【空间复杂度】O(n) （合并时需要额外的临时数组）
 //
 //  老师傅说：归并排序虽然空间开销大一点，但它稳定啊！
-//  而且它是链表排序的最佳选择，链表归并不需要额外空间。
+//  而且它是链表排序的最佳选择：链表归并只需改指针，不需要数组那样的
+//  O(n) 辅助数组；但递归版仍有 O(log n) 调用栈（自底向上迭代可做到 O(1)）。
 //
 // ============================================================================
 
@@ -271,8 +274,8 @@ void merge(vector<int>& arr, int left, int mid, int right) {
     vector<int> leftArr(arr.begin() + left, arr.begin() + mid + 1);
     vector<int> rightArr(arr.begin() + mid + 1, arr.begin() + right + 1);
 
-    int i = 0;  //  左数组指针
-    int j = 0;  //  右数组指针
+    size_t i = 0;  //  左数组指针
+    size_t j = 0;  //  右数组指针
     int k = left;  //  合并后数组的当前位置
 
     //  两个数组都还有元素，谁小取谁
@@ -460,9 +463,9 @@ void heapSort(vector<int>& arr) {
 //  你就拿10个盒子编号1到10，把球扔进对应编号的盒子里，
 //  最后按1到10的顺序从盒子里把球倒出来，就排好了！
 //
-//  【稳定性】可以做到稳定
+//  【稳定性】稳定（借助前缀和 + 从后往前放置，相等元素保持原顺序）
 //  【时间复杂度】O(n + k)，其中k是数据的范围（最大值-最小值+1）
-//  【空间复杂度】O(k)
+//  【空间复杂度】O(n + k)（计数数组 + 输出数组）
 //
 //  老师傅提醒：计数排序虽快，但有前提条件——
 //  数据范围不能太大，而且最好是整数。
@@ -481,22 +484,28 @@ void countingSort(vector<int>& arr) {
         if (num > maxVal) maxVal = num;
     }
 
-    int range = maxVal - minVal + 1;  //  数据范围
-    vector<int> count(range, 0);      //  计数数组
+    long long range = static_cast<long long>(maxVal) - minVal + 1;  //  数据范围
+    vector<int> count(static_cast<size_t>(range), 0);              //  计数数组
 
     //  第一步：统计每个数出现的次数
     for (int num : arr) {
-        count[num - minVal]++;  //  减去minVal，让下标从0开始
+        count[num - minVal]++;
     }
 
-    //  第二步：按计数结果回填
-    int index = 0;
-    for (int i = 0; i < range; i++) {
-        while (count[i] > 0) {
-            arr[index++] = i + minVal;
-            count[i]--;
-        }
+    //  第二步：前缀和，算出每个值在输出数组中的结束位置
+    for (size_t i = 1; i < count.size(); i++) {
+        count[i] += count[i - 1];
     }
+
+    //  第三步：从后往前扫描，把元素放到对应位置
+    //  从后往前是为了保持相等元素的原有相对顺序（稳定）
+    vector<int> output(arr.size());
+    for (int i = static_cast<int>(arr.size()) - 1; i >= 0; i--) {
+        int pos = --count[arr[i] - minVal];
+        output[pos] = arr[i];
+    }
+
+    arr = std::move(output);
 }
 
 // ============================================================================
@@ -553,7 +562,7 @@ void runPerformanceTests() {
 //  验证排序是否正确
 // ============================================================================
 bool isSorted(const vector<int>& arr) {
-    for (int i = 1; i < arr.size(); i++) {
+    for (size_t i = 1; i < arr.size(); i++) {
         if (arr[i] < arr[i - 1]) return false;
     }
     return true;
@@ -627,13 +636,13 @@ void runCorrectnessTests() {
 //  │  2. 归并排序：                                               │
 //  │     - 稳定！而且时间稳定是O(n log n)                        │
 //  │     - 缺点：需要O(n)额外空间                                 │
-//  │     - 链表排序的首选（不需要额外空间）                      │
+//  │     - 链表排序首选（无需O(n)辅助数组；递归栈O(logn)）        │
 //  │     - 外部排序（数据太大装不下内存）也常用归并思路           │
 //  │                                                             │
 //  │  3. 堆排序：                                                 │
 //  │     - 时间稳定O(n log n)，原地排序                          │
 //  │     - 但实际平均比快排慢一些，缓存不友好                     │
-//  │     - 适合"找Top K"这种问题，不用全排序                      │
+//  │     - Top K 更适合用大小为 K 的堆，不必对整个数组排序        │
 //  │                                                             │
 //  └─────────────────────────────────────────────────────────────┘
 //
@@ -641,7 +650,8 @@ void runCorrectnessTests() {
 //  │  三、其他特殊排序                                            │
 //  ├─────────────────────────────────────────────────────────────┤
 //  │                                                             │
-//  │  希尔排序：插入排序的升级版，时间O(n^1.3)左右                │
+//  │  希尔排序：插入排序升级版，复杂度取决于增量序列              │
+//  │             本文件的折半增量最坏 O(n²)                       │
 //  │     代码量小，适合嵌入式等资源受限场景                       │
 //  │                                                             │
 //  │  计数排序：非比较排序，O(n + k)                              │

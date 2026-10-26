@@ -20,6 +20,7 @@
 #include <type_traits>
 #include <initializer_list>
 #include <utility>
+#include <memory>
 
 // ============================================================
 // 第一部分：auto 类型推导进阶
@@ -36,7 +37,10 @@ struct TypePrinter;  // 故意不定义，用于通过编译错误查看 T 的�
 int  getValue() { return 42; }
 int& getRef()   { static int x = 100; return x; }
 const int& getConstRef() { static int x = 200; return x; }
-int&& getRvalueRef() { return 300; }
+int&& getRvalueRef() {
+    static int x = 300;
+    return std::move(x);  // 返回静态对象的右值引用，避免悬垂引用
+}
 
 void demo_basic_auto() {
     std::cout << "===== 1. auto 基础推导规则 =====\n";
@@ -79,15 +83,21 @@ void demo_braced_init() {
     auto il1 = {1, 2, 3};       // il1: std::initializer_list<int>
     // auto il2 = {1, 2.0};     // 错误！类型不一致
 
-    // C++17 修正：直接用 = 单个值的情况
+    // N3922 修正：直接用 = 单个值的情况
     auto il3 = {42};            // il3: std::initializer_list<int> (C++11/14/17 都成立)
-    auto il4{42};               // il4: int  (C++17 起！C++11/14 是 initializer_list<int>)
+    auto il4{42};               // il4: int (N3922 之后；C++17 纳入标准)
+                                // C++11/14 的原始规则曾是 initializer_list<int>；
+                                // 但很多编译器通过缺陷报告 N3922 提前采用了新规则，
+                                // 所以不要依赖旧标准下的具体行为。
 
     std::cout << "il1 size = " << il1.size()
+              << ", il3 size = " << il3.size()
               << ", il4 = " << il4 << " (il4 是 int，不是 initializer_list)\n";
 
-    // 注意：模板参数推导不推导 initializer_list
+    // 注意：模板参数推导不会把裸花括号列表推成 initializer_list<T>。
     // template<typename T> void f(T t); f({1,2,3}); // 错误！
+    // 但形参本身是 std::initializer_list<T> 时可以推导：
+    // template<typename T> void g(std::initializer_list<T>); g({1,2,3}); // OK
 }
 
 // 1.3 auto 在函数返回值中的限制（C++14 起允许 auto 返回类型）
@@ -155,6 +165,8 @@ auto forward_call_bad(Func&& f, Args&&... args) {
 }
 
 int&  get_int_ref(int& x) { return x; }
+// 返回形参的右值引用：仅用于演示返回类型推导。
+// 若实参是临时对象，函数返回后该引用立即悬空，不要在实际代码中使用返回值。
 int&& get_int_rref(int&& x) { return std::move(x); }
 
 void demo_perfect_forward_return() {
@@ -316,8 +328,8 @@ void demo_auto_nttp() {
 
     // 自动推导非类型参数的类型
     constexpr auto c1 = Constant<42>::value;      // int
-    constexpr auto c2 = Constant<3.14>::value;    // double (C++20 起允许浮点数作为 NTTP)
     constexpr auto c3 = Constant<'a'>::value;     // char
+    // 注意：浮点数作为非类型模板参数（如 Constant<3.14>）是 C++20 才支持的
 
     static_assert(std::is_same_v<typename Constant<42>::type, int>);
     static_assert(std::is_same_v<typename Constant<'a'>::type, char>);
@@ -337,10 +349,8 @@ struct ValueList {
 void demo_auto_variadic() {
     std::cout << "\n===== 4.2 auto 变参模板 =====\n";
 
-    // 混合类型的非类型参数包
-    using MixedList = ValueList<1, 2.5, 'x', 100>;
-    // 注意：C++17 中 double 不能作为 NTTP，上面的 2.5 在 C++17 中会编译错误
-    // 我们用整数混合 char 来演示
+    // 混合整数和字符的非类型参数包
+    // 注意：C++17 中 double 不能作为 NTTP，ValueList<1, 2.5, 'x'> 会编译错误
     using IntCharList = ValueList<1, 2, 'a', 'b'>;
 
     std::cout << "ValueList<1, 2, 'a', 'b'>::size = " << IntCharList::size << "\n";
@@ -350,9 +360,9 @@ void demo_auto_variadic() {
 // 但可以用 auto 推导后再用 decltype 获取类型
 
 template <auto V>
-constexpr auto get_value_type() {
-    return std::type_identity<decltype(V)>{};  // C++20 的 type_identity，这里仅作示意
-}
+using value_type_of = decltype(V);
+
+static_assert(std::is_same_v<value_type_of<42>, int>);
 
 } // namespace template_auto
 

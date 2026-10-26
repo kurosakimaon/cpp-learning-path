@@ -17,8 +17,10 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# 公共头文件目录
-include_directories(${CMAKE_SOURCE_DIR}/common)
+# 注：不要全局 include_directories(${CMAKE_SOURCE_DIR}/common)。
+# 那个目录里也有一个 Utils.h，会抢在 projects/todo_cli/include/Utils.h
+# 前面被找到，导致 todo_cli 编译失败。需要公共头的目标应各自用
+# target_include_directories 精确添加。
 
 # ============================================================================
 # 查找 Boost 库（可选，找不到则跳过Boost相关demo）
@@ -45,6 +47,9 @@ endif()
 
 # 查找线程库（并行算法需要）
 find_package(Threads REQUIRED)
+
+# C++17 并行算法在部分标准库实现里需要 TBB 后端；有就自动链接
+find_package(TBB QUIET)
 
 # ============================================================================
 # 查找 Google Test（可选，找不到则跳过单元测试相关demo）
@@ -250,6 +255,12 @@ foreach(src ${CPP17_SOURCES})
     message(STATUS "  Added target: cpp17_${target}")
 endforeach()
 
+# 并行算法目标：若环境提供 TBB，则链接它的 CMake 目标
+if(TBB_FOUND AND TARGET TBB::tbb)
+    target_link_libraries(cpp17_parallel_algorithms PRIVATE TBB::tbb)
+    message(STATUS "  Linked cpp17_parallel_algorithms with TBB::tbb")
+endif()
+
 # ============================================================================
 # C++11→C++14→C++17 演进对比 Demo
 # ============================================================================
@@ -298,6 +309,10 @@ if(Boost_FOUND)
         ${Boost_THREAD_LIBRARY}
         Threads::Threads
     )
+    if(WIN32)
+        # Asio 在 Windows 上需要 Winsock 库
+        target_link_libraries(boost_asio_basics PRIVATE ws2_32 mswsock)
+    endif()
     message(STATUS "  Added target: boost_asio_basics")
 
     # filesystem
@@ -401,6 +416,8 @@ endforeach()
 # 综合实战项目：Todo CLI（有独立的 CMakeLists.txt）
 # ============================================================================
 message(STATUS "\n=== Practical Project (综合实战项目) ===")
+# enable_testing() 放在根目录，顶层构建目录里才能直接跑 ctest
+enable_testing()
 add_subdirectory(projects/todo_cli)
 message(STATUS "  Added targets: todo_cli, test_task")
 
@@ -491,6 +508,10 @@ foreach(src ${EVOLUTION_SOURCES})
     get_filename_component(target ${src} NAME_WE)
     add_dependencies(all_evolution evo_${target})
 endforeach()
+# cpp20_overview 是有条件创建的，存在时才加入 all_evolution
+if(TARGET evo_cpp20_overview)
+    add_dependencies(all_evolution evo_cpp20_overview)
+endif()
 
 add_custom_target(all_patterns
     COMMENT "Building all design pattern demos..."
@@ -521,7 +542,8 @@ if(Boost_FOUND)
 endif()
 
 # 全部编译（不含Boost）
-add_custom_target(all
+# 注意：不能把目标命名为 all，all 是 CMake/Make 的保留目标名。
+add_custom_target(all_demos
     COMMENT "Building all demos..."
     DEPENDS
         all_beginner
@@ -538,9 +560,9 @@ add_custom_target(all
         test_task
 )
 
-# 有 Google Test 时把单元测试也纳入 all
+# 有 Google Test 时把单元测试也纳入 all_demos
 if(GTest_FOUND)
-    add_dependencies(all all_testing)
+    add_dependencies(all_demos all_testing)
 endif()
 
 message(STATUS "\n=== Build Summary ===")
@@ -550,9 +572,17 @@ message(STATUS "  Algorithm demos:     2 targets (蜕变期·算法)")
 message(STATUS "  Debugging demos:     3 targets (调试专题)")
 message(STATUS "  Exception demos:     1 target  (异常与错误处理)")
 message(STATUS "  Performance demos:   2 targets (性能优化)")
-message(STATUS "  Concurrency demos:   7 targets (并发专题)")
+if(Boost_FOUND)
+    message(STATUS "  Concurrency demos:   7 targets (并发专题，含 IPC)")
+else()
+    message(STATUS "  Concurrency demos:   6 targets (并发专题，IPC 已跳过)")
+endif()
 message(STATUS "  C++17 demos:         8 targets (内功期)")
-message(STATUS "  Evolution demos:     3 targets (演进对比)")
+if(TARGET evo_cpp20_overview)
+    message(STATUS "  Evolution demos:     4 targets (演进对比，含 C++20)")
+else()
+    message(STATUS "  Evolution demos:     3 targets (演进对比，C++20 已跳过)")
+endif()
 message(STATUS "  Pattern demos:      11 targets (化境期)")
 message(STATUS "  Project targets:     2 targets (todo_cli + test_task)")
 if(GTest_FOUND)

@@ -14,6 +14,7 @@
 #include <memory>   // 智能指针
 #include <mutex>    // lock_guard
 #include <fstream>
+#include <cstdio>   // std::fopen / std::fclose
 
 // ============================================================
 // 一、throw / try / catch 基本用法
@@ -271,6 +272,12 @@ class RAIIFile {
 public:
     RAIIFile(const std::string& path) {
         fp = std::fopen(path.c_str(), "r");
+        if (!fp) {
+            // 构造失败时对象不会诞生，析构函数也不会被调用
+            // 因此构造函数里抛出异常前，必须自己清理已获取的资源
+            // 这里 fopen 失败没有拿到资源，直接抛即可
+            throw std::runtime_error("无法打开文件: " + path);
+        }
         std::cout << "文件打开了" << std::endl;
     }
 
@@ -291,11 +298,25 @@ private:
 
 void demo_raii_file() {
     std::cout << "--- 自定义 RAII 类示例 ---" << std::endl;
+
+    // 先准备一个演示用的文件
+    {
+        std::ofstream out("raii_demo.txt");
+        out << "RAII demo" << std::endl;
+    }
+
     try {
-        RAIIFile file("test.txt");  // 可能打开失败，但析构照样调用
+        RAIIFile file("raii_demo.txt");
         // ... 做一些操作
         throw std::runtime_error("中间出了点问题");
         // 就算抛异常，file 的析构函数也会跑
+    } catch (const std::exception& e) {
+        std::cout << "捕获异常：" << e.what() << std::endl;
+    }
+
+    // 打开不存在的文件：构造函数抛异常，对象没有构造完成，析构不会执行
+    try {
+        RAIIFile missing("no_such_file_xyz.txt");
     } catch (const std::exception& e) {
         std::cout << "捕获异常：" << e.what() << std::endl;
     }
@@ -312,13 +333,16 @@ void demo_raii_file() {
 //  1. 基本保证（Basic Guarantee）
 //     抛异常后，对象处于合法但不确定的状态。
 //     至少不会泄漏资源，不会崩溃。
-//     比如：vector push_back 失败了，vector 还是能用的，
-//     只是不确定元素加没加上。
+//     比如：某些容器的插入操作在极端情况下可能只提供基本保证，
+//     对象仍可用，但不确定元素加没加上。
 //
 //  2. 强保证（Strong Guarantee）
 //     抛异常后，对象状态保持不变（就像没调用过这个函数一样）。
 //     典型做法：copy-and-swap（先复制修改，成功了再交换）。
 //     要么全成功，要么全失败，不留中间状态。
+//     注意：std::vector::push_back 对可拷贝或移动构造不抛异常的元素
+//     通常提供强保证；如果元素只能移动且移动构造可能抛异常，
+//     标准只保证基本/未指定状态，不能一概而论。
 //
 //  3. 不抛出保证（No-throw Guarantee / No-fail Guarantee）
 //     保证绝对不抛异常，一定成功。
@@ -376,8 +400,8 @@ void demo_exception_safety_levels() {
 // 作用：
 //   1. 优化：编译器知道不会抛异常，可以生成更高效的代码
 //   2. 语义：让调用者放心，不用写 try/catch
-//   3. 移动语义：容器在扩容时，只有元素的移动构造是 noexcept 的，
-//      才会用移动（否则用拷贝，保证强异常安全）
+//   3. 移动语义：容器在扩容时，若元素的移动构造是 noexcept（或类型不可拷贝），
+//      会优先用移动；否则用拷贝，以保证强异常安全
 //
 // 注意：noexcept 不是强制的！
 //       如果你标记了 noexcept 但函数里还是抛了异常，
@@ -446,7 +470,8 @@ void demo_noexcept() {
 //   1. 无法忽略：错误码可以不检查，异常不行（不 catch 就崩）
 //   2. 代码干净：正常逻辑和错误处理分开，不用每层都判断返回值
 //   3. 自带信息：异常对象可以带丰富的错误信息
-//   4. 构造函数只能用异常：构造函数没有返回值，出错只能抛异常
+//   4. 构造函数没有返回值，抛异常是常用的报错方式
+//      （也可以用工厂函数返回 optional/错误对象，或两段式初始化）
 //
 // 【异常的缺点】
 //   1. 性能开销：有一定的运行时开销（虽然现代编译器优化得不错了）
@@ -457,7 +482,7 @@ void demo_noexcept() {
 // 【怎么选？】
 //   - 预期内的、频繁发生的错误 → 错误码（比如用户输入验证）
 //   - 意料之外的、罕见的错误 → 异常（比如内存不足、文件损坏）
-//   - 构造函数出错 → 异常（没别的选择）
+//   - 构造函数出错 → 常用异常（工厂返回 optional/错误对象也可选）
 //   - 析构函数 → 绝对不能抛异常！
 //   - 回调函数 / 信号处理 → 通常用错误码（异常不好跨边界）
 //
@@ -664,8 +689,8 @@ int main() {
 // 正确的做法是：确定不会抛的才标，不确定的就别瞎承诺。
 // 尤其注意移动构造和移动赋值——标 noexcept 对性能影响很大。
 // 容器（vector 等）在扩容的时候，
-// 只有元素的移动构造是 noexcept 的，才会用移动，
-// 否则只能用拷贝（为了保证强异常安全）。
+// 若元素的移动构造是 noexcept（或类型不可拷贝），会优先用移动；
+// 否则用拷贝，以保证强异常安全。
 // 这性能差距可就大了。
 //
 // 【最后一句话】

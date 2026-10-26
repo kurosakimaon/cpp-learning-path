@@ -24,12 +24,14 @@
  *   PropertyTree 用法简单，功能够用，中小项目首选。
  *   大项目可以考虑专门的配置中心，但原理是相通的。
  *
- * 编译命令: g++ -std=c++17 property_tree_demo.cpp -lboost_system
+ * 编译命令: g++ -std=c++17 property_tree_demo.cpp
+ *   （PropertyTree 的这几个解析器都是头文件实现，不需要额外链接库）
  *
  * 头文件：<boost/property_tree/ptree.hpp>
  *        <boost/property_tree/ini_parser.hpp>
  *        <boost/property_tree/json_parser.hpp>
  *        <boost/property_tree/xml_parser.hpp>
+ *        <boost/property_tree/info_parser.hpp>
  */
 
 #include <iostream>
@@ -37,12 +39,14 @@
 #include <vector>
 #include <fstream>
 #include <sstream>
+#include <functional>
 
 // PropertyTree 头文件
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+#include <boost/property_tree/info_parser.hpp>
 
 namespace pt = boost::property_tree;
 
@@ -329,6 +333,35 @@ void demo_xml_file() {
 }
 
 // ============================================================================
+// 4.5 INFO 格式（Boost.PropertyTree 自带的简洁格式）
+// ============================================================================
+void demo_info_file() {
+    std::cout << "\n===== 4.5 INFO 配置文件 =====\n";
+
+    pt::ptree tree;
+    tree.put("server.host", "0.0.0.0");
+    tree.put("server.port", 8080);
+    tree.put("server.workers", 4);
+    tree.put("logging.level", "info");
+
+    pt::write_info("config.info", tree);
+
+    std::cout << "  已写入 config.info，内容如下：\n\n";
+    std::ifstream ifs("config.info");
+    std::cout << ifs.rdbuf() << "\n";
+
+    pt::ptree loaded;
+    pt::read_info("config.info", loaded);
+    std::cout << "  读回 server.port = " << loaded.get<int>("server.port") << "\n";
+    std::cout << "  读回 logging.level = "
+              << loaded.get<std::string>("logging.level") << "\n";
+
+    std::cout << "\n  INFO 格式特点：\n";
+    std::cout << "    - Boost 自有格式，用 {} 表示层级，没有引号和逗号\n";
+    std::cout << "    - 适合纯 C++ 项目内部使用，其他语言生态支持较少\n";
+}
+
+// ============================================================================
 // 5. 遍历操作
 // ============================================================================
 void demo_traversal() {
@@ -396,7 +429,9 @@ void demo_error_handling() {
     pt::ptree tree;
     tree.put("server.port", 8080);
 
-    // 方式1：get 带默认值（推荐，最安全）
+    // 方式1：get 带默认值
+    // 注意：默认值只在“路径不存在”时生效；如果键存在但值转换失败，
+    // 仍然会抛 ptree_bad_data，默认值救不了你。
     int timeout = tree.get<int>("server.timeout", 30);
     std::cout << "  带默认值: timeout = " << timeout << "\n";
 
@@ -418,20 +453,21 @@ void demo_error_handling() {
         std::cout << "  捕获异常：类型转换失败 - " << e.what() << "\n";
     }
 
-    // 类型转换失败
+    // 类型转换失败：即使提供了默认值，也不能吞掉“值存在但非法”的错误
     tree.put("server.port", "not_a_number");
     try {
-        int port = tree.get<int>("server.port");
+        int port = tree.get<int>("server.port", 8080);
         std::cout << "  port = " << port << "\n";
     } catch (const pt::ptree_bad_data& e) {
-        std::cout << "  类型转换失败（预期）: " << e.what() << "\n";
+        std::cout << "  类型转换失败（预期，默认值不会生效）: "
+                  << e.what() << "\n";
     }
 
     std::cout << "\n  最佳实践：\n";
     std::cout << "    - 必须存在的配置用 get()，缺失就是错误\n";
-    std::cout << "    - 有默认值的配置用 get(默认值)\n";
-    std::cout << "    - 可选配置用 get_optional()\n";
-    std::cout << "    - 尽量少用 try-catch，用默认值更优雅\n";
+    std::cout << "    - get(默认值) 只能处理“键缺失”，不能处理“值类型错误”\n";
+    std::cout << "    - 可选配置、或外部输入不可信时用 get_optional()/显式校验\n";
+    std::cout << "    - 边界处（读文件、收网络请求）要 try-catch 或校验类型\n";
 }
 
 // ============================================================================
@@ -483,10 +519,24 @@ public:
         }
 
         // 范围检查
-        int port = tree_.get<int>("database.port", 0);
-        if (port <= 0 || port > 65535) {
-            std::cerr << "端口号不合法: " << port << "\n";
+        // get_optional<int> 在“键缺失”和“值无法转换”两种情况下都返回空，
+        // 比 get<int>(默认值) 更适合校验外部配置文件。
+        auto port = tree_.get_optional<int>("database.port");
+        if (!port) {
+            std::cerr << "端口号缺失或不是整数\n";
             ok = false;
+        } else if (*port <= 0 || *port > 65535) {
+            std::cerr << "端口号不合法: " << *port << "\n";
+            ok = false;
+        }
+
+        // 可选字段存在时才校验；存在但不是整数同样算配置错误
+        if (tree_.get_child_optional("database.max_connections")) {
+            auto max_conn = tree_.get_optional<int>("database.max_connections");
+            if (!max_conn || *max_conn <= 0) {
+                std::cerr << "max_connections 必须是正整数\n";
+                ok = false;
+            }
         }
 
         return ok;
@@ -602,8 +652,8 @@ void exercises() {
     std::cout << "     - 日志级别\n";
     std::cout << "     - 用 INI 格式，写一个 Config 类封装\n";
     std::cout << "\n";
-    std::cout << "  2. 比较三种配置格式的优缺点：\n";
-    std::cout << "     INI / JSON / XML，各适合什么场景？\n";
+    std::cout << "  2. 比较四种配置格式的优缺点：\n";
+    std::cout << "     INI / JSON / XML / INFO，各适合什么场景？\n";
     std::cout << "     写一段你自己的理解。\n";
     std::cout << "\n";
     std::cout << "  3. 思考：配置热更新怎么做？\n";
@@ -624,6 +674,7 @@ int main() {
     demo_ini_file();
     demo_json_file();
     demo_xml_file();
+    demo_info_file();
     demo_traversal();
     demo_error_handling();
     demo_app_config();

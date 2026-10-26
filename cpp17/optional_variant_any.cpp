@@ -24,6 +24,7 @@
 #include <type_traits>
 #include <algorithm>
 #include <cmath>
+#include <map>
 
 // ============================================================
 // 第一部分：std::optional 高级用法
@@ -106,7 +107,7 @@ void demo_value_semantics() {
     std::cout << "\n===== 1.2 optional 值语义与生命周期 =====\n";
 
     std::cout << "--- 创建有值的 optional ---\n";
-    std::optional<HeavyObject> opt1 = std::in_place, "obj1", std::vector<int>{1, 2, 3};
+    std::optional<HeavyObject> opt1{std::in_place, "obj1", std::vector<int>{1, 2, 3}};
     // std::in_place 表示原地构造，避免额外的拷贝/移动
 
     std::cout << "--- 重置为空 ---\n";
@@ -171,9 +172,8 @@ std::optional<Config> load_config(const std::string& filename) {
 
 int get_port_with_default(const std::string& filename) {
     auto cfg = load_config(filename);
-    // 链式调用（C++23 风格）：cfg.port.value_or(80)
-    // C++17 我们手动实现
-
+    // value_or 是 C++17 就有的成员函数；
+    // 这里先判断 cfg 是否有效，再安全地访问 cfg->port
     if (cfg && cfg->port) {
         return *cfg->port;
     }
@@ -222,6 +222,7 @@ void demo_good_practices() {
 
     // 不好的做法1：用 optional<bool> 代替三态（用 enum 更清晰）
     std::optional<bool> tribool = false;
+    (void)tribool;
     // 三种状态: true, false, nullopt
     // 建议：定义 enum class TriState { Yes, No, Unknown };
 
@@ -590,7 +591,8 @@ void demo_comparison() {
     std::cout << "\n===== 3.4 三者对比与选择策略 =====\n";
     std::cout << "std::optional:\n";
     std::cout << "  - 一个类型，可能有值或无值\n";
-    std::cout << "  - 零开销抽象（与直接存值几乎一样）\n";
+    std::cout << "  - 不动态分配，通常只比 T 多一个标志（可能有对齐填充），\n";
+    std::cout << "    因此接近零开销，但不是严格的\"零开销抽象\"\n";
     std::cout << "  - 适用：可能不存在的返回值、可选参数\n\n";
 
     std::cout << "std::variant:\n";

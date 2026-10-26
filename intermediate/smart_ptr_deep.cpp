@@ -25,7 +25,7 @@ using namespace std;
 //
 // 1. 忘了释放 → 内存泄漏
 // 2. 提前释放后还在用 → 野指针/悬空指针
-// 3. 重复释放 → double free，程序崩溃
+// 3. 重复释放 → double free，未定义行为（常见是崩溃）
 // 4. 异常安全：函数中间抛异常，后面的delete执行不到
 // 5. 所有权不清晰：谁创建、谁释放、什么时候释放
 //
@@ -48,7 +48,7 @@ void whySmartPtr()
     cout << endl;
     cout << "  手动管理内存的痛点：" << endl;
     cout << "    1. 忘记delete → 内存泄漏" << endl;
-    cout << "    2. 重复delete → double free 崩溃" << endl;
+    cout << "    2. 重复delete → double free（未定义行为）" << endl;
     cout << "    3. 异常安全问题 → 抛异常后delete执行不到" << endl;
     cout << "    4. 所有权不清晰 → 谁来释放？什么时候释放？" << endl;
     cout << endl;
@@ -121,7 +121,7 @@ void uniquePtr_basic()
 
     // reset() 释放旧对象，接管新对象
     cout << "\n  reset 演示：" << endl;
-    p1.reset(new DemoClass(10));  // 先析构旧的1，再构造新的10
+    p1.reset(new DemoClass(10));  // 先构造新的10，再由 reset 析构旧的1
     p1->sayHello();
 
     p1.reset(nullptr);  // 显式释放
@@ -539,8 +539,8 @@ void weakPtr_observer()
 //
 // 注意：使用 shared_from_this() 的前提是，
 //       对象已经被一个shared_ptr管理了！
-//       如果对象在栈上，或者用new出来还没给shared_ptr，
-//       调用 shared_from_this() 是未定义行为（C++17前抛异常）。
+//       如果对象在栈上，或者用new出来还没给shared_ptr：
+//       C++17 起会抛出 std::bad_weak_ptr；C++11/14 中则是未定义行为。
 // ============================================================
 
 class GoodSelf : public enable_shared_from_this<GoodSelf>
@@ -586,10 +586,10 @@ void enableSharedFromThis_demo()
     cout << "  getSelf() 后，引用计数: " << good.use_count() << endl;
     good2->printUseCount();
 
-    // 错误用法（会崩溃，所以注释掉了）
+    // 错误用法（未定义行为，所以注释掉了）
     cout << "\n  5.2 错误做法：直接 return shared_ptr(this)" << endl;
-    cout << "  后果：创建两个独立的控制块，最后 double free 崩溃" << endl;
-    cout << "  （这个示例没运行，运行了程序就崩了）" << endl;
+    cout << "  后果：创建两个独立的控制块，最后 double free（未定义行为）" << endl;
+    cout << "  （这个示例没运行，运行结果不可预测，常见是崩溃）" << endl;
     /*
     auto bad = make_shared<BadSelf>();
     auto bad2 = bad->getSelf();  // 两个独立的引用计数！
@@ -617,7 +617,7 @@ void commonMistakes()
     cout << "        int* raw = new int(10);" << endl;
     cout << "        shared_ptr<int> sp1(raw);" << endl;
     cout << "        shared_ptr<int> sp2(raw);  // 两个独立控制块！" << endl;
-    cout << "      后果：double free，程序崩溃" << endl;
+    cout << "      后果：double free，未定义行为（常见是崩溃）" << endl;
     cout << "      正确做法：尽量用 make_shared / make_unique" << endl;
     cout << "      不要从同一个裸指针创建多个智能指针" << endl;
 
@@ -650,7 +650,7 @@ void commonMistakes()
     cout << "\n  6.6 用智能指针管理栈对象？作死！" << endl;
     cout << "      int x = 10;" << endl;
     cout << "      shared_ptr<int> sp(&x);  // 大错特错！" << endl;
-    cout << "      栈对象本来就会自动释放，智能指针再释放一次就崩了" << endl;
+    cout << "      栈对象本来就会自动释放，智能指针再 delete 一次是未定义行为" << endl;
 }
 
 // ============================================================

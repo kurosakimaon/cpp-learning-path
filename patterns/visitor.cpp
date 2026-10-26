@@ -50,6 +50,10 @@
 #include <cmath>
 #include <sstream>
 #include <cassert>
+#include <stdexcept>
+
+// 圆周率：kPi 不是标准 C++ 宏（MSVC 需要 _USE_MATH_DEFINES），这里显式定义
+constexpr double kPi = 3.14159265358979323846;
 
 // ============================================================
 // 经典访问者模式：表达式求值
@@ -294,6 +298,31 @@ public:
     virtual std::string getType() const = 0;
 };
 
+// 前向声明具体元素，供访问者接口引用
+class CircleElement;
+class RectangleElement;
+class TriangleElement;
+
+// 各元素的访问者接口（独立接口，避免循环依赖）
+// 必须在元素类之前定义，否则 dynamic_cast 的目标类型不完整
+class ICircleVisitor {
+public:
+    virtual ~ICircleVisitor() = default;
+    virtual void visitCircle(CircleElement& circle) = 0;
+};
+
+class IRectangleVisitor {
+public:
+    virtual ~IRectangleVisitor() = default;
+    virtual void visitRectangle(RectangleElement& rect) = 0;
+};
+
+class ITriangleVisitor {
+public:
+    virtual ~ITriangleVisitor() = default;
+    virtual void visitTriangle(TriangleElement& tri) = 0;
+};
+
 // 具体元素1：圆形
 class CircleElement : public IAcyclicElement {
 public:
@@ -301,7 +330,7 @@ public:
 
     void accept(IAcyclicVisitor& visitor) override {
         // 尝试将visitor转换为CircleVisitor
-        if (auto* circleVisitor = dynamic_cast<class ICircleVisitor*>(&visitor)) {
+        if (auto* circleVisitor = dynamic_cast<ICircleVisitor*>(&visitor)) {
             circleVisitor->visitCircle(*this);
         }
         // 如果不支持，则不做任何事（静默跳过）
@@ -321,7 +350,7 @@ public:
         : width_(width), height_(height) {}
 
     void accept(IAcyclicVisitor& visitor) override {
-        if (auto* rectVisitor = dynamic_cast<class IRectangleVisitor*>(&visitor)) {
+        if (auto* rectVisitor = dynamic_cast<IRectangleVisitor*>(&visitor)) {
             rectVisitor->visitRectangle(*this);
         }
     }
@@ -342,7 +371,7 @@ public:
         : base_(base), height_(height) {}
 
     void accept(IAcyclicVisitor& visitor) override {
-        if (auto* triVisitor = dynamic_cast<class ITriangleVisitor*>(&visitor)) {
+        if (auto* triVisitor = dynamic_cast<ITriangleVisitor*>(&visitor)) {
             triVisitor->visitTriangle(*this);
         }
     }
@@ -356,32 +385,13 @@ private:
     double height_;
 };
 
-// 各元素的访问者接口（独立的接口，避免循环依赖）
-class ICircleVisitor {
-public:
-    virtual ~ICircleVisitor() = default;
-    virtual void visitCircle(CircleElement& circle) = 0;
-};
-
-class IRectangleVisitor {
-public:
-    virtual ~IRectangleVisitor() = default;
-    virtual void visitRectangle(RectangleElement& rect) = 0;
-};
-
-class ITriangleVisitor {
-public:
-    virtual ~ITriangleVisitor() = default;
-    virtual void visitTriangle(TriangleElement& tri) = 0;
-};
-
 // 具体访问者：面积计算（只关心圆形和矩形，不关心三角形）
 class AreaVisitor : public IAcyclicVisitor,
                    public ICircleVisitor,
                    public IRectangleVisitor {
 public:
     void visitCircle(CircleElement& circle) override {
-        double area = M_PI * circle.getRadius() * circle.getRadius();
+        double area = kPi * circle.getRadius() * circle.getRadius();
         totalArea_ += area;
         std::cout << "  [AreaVisitor] 圆形面积: " << area << std::endl;
     }
@@ -440,7 +450,7 @@ using ShapeV = std::variant<CircleV, RectangleV, TriangleV>;
 // 访问者1：面积计算（使用函数对象的重载）
 struct AreaVisitorV {
     double operator()(const CircleV& c) const {
-        return M_PI * c.radius * c.radius;
+        return kPi * c.radius * c.radius;
     }
 
     double operator()(const RectangleV& r) const {
@@ -455,7 +465,7 @@ struct AreaVisitorV {
 // 访问者2：周长计算
 struct PerimeterVisitorV {
     double operator()(const CircleV& c) const {
-        return 2 * M_PI * c.radius;
+        return 2 * kPi * c.radius;
     }
 
     double operator()(const RectangleV& r) const {
@@ -612,7 +622,7 @@ void testVariantVisit() {
     std::cout << "\n--- 使用lambda组合访问者 ---" << std::endl;
     auto lambdaVisitor = Overloaded{
         [](const CircleV& c) {
-            return "Lambda访问: 圆形，面积=" + std::to_string(M_PI * c.radius * c.radius);
+            return "Lambda访问: 圆形，面积=" + std::to_string(kPi * c.radius * c.radius);
         },
         [](const RectangleV& r) {
             return "Lambda访问: 矩形，面积=" + std::to_string(r.width * r.height);

@@ -80,8 +80,12 @@ option(ENABLE_EXPERIMENTAL_FEATURES "是否启用实验性功能" OFF)
 #
 
 # 如果没指定构建类型，默认用 Debug
-if(NOT CMAKE_BUILD_TYPE)
+# 多配置生成器（Visual Studio、Xcode）不用 CMAKE_BUILD_TYPE，
+# 所以这里也要排除掉，避免往缓存里塞一个不起作用的假值。
+if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "构建类型" FORCE)
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS
+        Debug Release RelWithDebInfo MinSizeRel)
 endif()
 
 # CACHE STRING 是什么意思？
@@ -154,22 +158,19 @@ add_executable(options_demo main.cpp)
 # 跟之前的 target_include_directories 一样，
 # 也是针对单个目标的，也有 PUBLIC/PRIVATE/INTERFACE。
 #
-# 这里我们根据 option 的值，决定要不要定义对应的宏。
+# 注意：ENABLE_DEBUG_OUTPUT / ENABLE_EXPERIMENTAL_FEATURES 已经由
+# config.h 的 #cmakedefine 生成。如果这里再用 -D 定义同名宏，
+# 命令行会先把它定义成 1，而 config.h 里又 #define 一次空值，
+# 编译器会报“宏重定义”。所以这里换一个独立的宏来演示，
+# 避免同一个名字被两套机制重复定义。
 #
-
-if(ENABLE_DEBUG_OUTPUT)
-    target_compile_definitions(options_demo PRIVATE ENABLE_DEBUG_OUTPUT)
-endif()
-
-if(ENABLE_EXPERIMENTAL_FEATURES)
-    target_compile_definitions(options_demo PRIVATE ENABLE_EXPERIMENTAL_FEATURES)
-endif()
+target_compile_definitions(options_demo PRIVATE CMAKE_DEFINITION_DEMO=1)
 
 # 【补充】
-# 其实上面这俩我们可以不用 target_compile_definitions，
-# 因为 configure_file 已经通过 #cmakedefine 处理了。
-# 这里放出来是为了演示 target_compile_definitions 的用法。
-# 实际项目中两种方式都有人用，看个人喜好。
+# configure_file 和 target_compile_definitions 都能把配置传给代码：
+#   - 配置项很多、需要集中管理时，用 configure_file + config.h
+#   - 只是给某个目标加一两个宏时，用 target_compile_definitions
+# 两种方式都有人用，关键是别对同一个宏重复定义。
 
 
 # ============================================================

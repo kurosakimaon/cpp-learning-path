@@ -45,6 +45,8 @@
 #include <chrono>
 #include <thread>
 #include <cassert>
+#include <cstdint>
+#include <stdexcept>
 
 // ============================================================
 // 基础接口：数据流
@@ -66,11 +68,13 @@ public:
 
     std::string read() override {
         std::cout << "  [FileStream] 从文件 " << filename_ << " 读取数据" << std::endl;
-        return "file_content_data";
+        return content_;
     }
 
     void write(const std::string& data) override {
-        std::cout << "  [FileStream] 向文件 " << filename_ << " 写入数据: " << data << std::endl;
+        content_ += data;
+        std::cout << "  [FileStream] 向文件 " << filename_ << " 写入 "
+                  << data.size() << " 字节" << std::endl;
     }
 
     std::string getDescription() const override {
@@ -79,18 +83,21 @@ public:
 
 private:
     std::string filename_;
+    std::string content_;  // 模拟文件内容，不真正落盘
 };
 
 // 具体构件：内存流
 class MemoryStream : public IStream {
 public:
     std::string read() override {
-        std::cout << "  [MemoryStream] 从内存读取数据" << std::endl;
-        return buffer_;
+        std::cout << "  [MemoryStream] 从内存读取 " << buffer_.size() << " 字节" << std::endl;
+        std::string data = std::move(buffer_);
+        buffer_.clear();
+        return data;
     }
 
     void write(const std::string& data) override {
-        std::cout << "  [MemoryStream] 向内存写入数据: " << data << std::endl;
+        std::cout << "  [MemoryStream] 向内存写入 " << data.size() << " 字节" << std::endl;
         buffer_ += data;
     }
 
@@ -140,6 +147,9 @@ class EncryptedStream : public StreamDecorator {
 public:
     EncryptedStream(std::unique_ptr<IStream> stream, std::string key)
         : StreamDecorator(std::move(stream)), key_(std::move(key)) {
+        if (key_.empty()) {
+            throw std::invalid_argument("EncryptedStream 的密钥不能为空");
+        }
     }
 
     std::string read() override {
@@ -151,7 +161,11 @@ public:
     void write(const std::string& data) override {
         std::cout << "  [EncryptedStream] 加密数据 (key=" << key_ << ")" << std::endl;
         std::string encrypted = encrypt(data);
-        StreamDecorator::write(encrypted);
+        // 每段数据带长度头，底层连续写入多段时也能正确分帧
+        std::string framed = "ENC";
+        appendLength(framed, encrypted.size());
+        framed += encrypted;
+        StreamDecorator::write(framed);
     }
 
     std::string getDescription() const override {
@@ -159,18 +173,50 @@ public:
     }
 
 private:
+    static void appendLength(std::string& out, size_t len) {
+        uint32_t n = static_cast<uint32_t>(len);
+        out.push_back(static_cast<char>((n >> 24) & 0xFF));
+        out.push_back(static_cast<char>((n >> 16) & 0xFF));
+        out.push_back(static_cast<char>((n >> 8) & 0xFF));
+        out.push_back(static_cast<char>(n & 0xFF));
+    }
+
+    static bool extractLength(const std::string& data, size_t pos, uint32_t& len) {
+        if (pos + 4 > data.size()) return false;
+        len = (static_cast<uint32_t>(static_cast<unsigned char>(data[pos])) << 24)
+            | (static_cast<uint32_t>(static_cast<unsigned char>(data[pos + 1])) << 16)
+            | (static_cast<uint32_t>(static_cast<unsigned char>(data[pos + 2])) << 8)
+            | static_cast<uint32_t>(static_cast<unsigned char>(data[pos + 3]));
+        return true;
+    }
+
     std::string encrypt(const std::string& data) {
-        // 简单的异或加密示例
+        // 教学用的简单异或加密，可逆；真实场景请用 AES 等成熟算法
         std::string result = data;
         for (size_t i = 0; i < result.size(); ++i) {
             result[i] ^= key_[i % key_.size()];
         }
-        return "[ENCRYPTED]" + result;
+        return result;
     }
 
     std::string decrypt(const std::string& data) {
-        // 简化：直接返回原文
-        return data + " (已解密)";
+        if (data.rfind("ENC", 0) != 0) return data;  // 不是本装饰器写入的数据
+        std::string result;
+        size_t pos = 0;
+        while (pos < data.size()) {
+            if (data.compare(pos, 3, "ENC") != 0) return data;
+            uint32_t len = 0;
+            if (!extractLength(data, pos + 3, len)) return data;
+            pos += 7;
+            if (len > data.size() - pos) return data;  // 数据不完整
+            std::string chunk = data.substr(pos, len);
+            for (size_t i = 0; i < chunk.size(); ++i) {
+                chunk[i] ^= key_[i % key_.size()];
+            }
+            result += chunk;
+            pos += len;
+        }
+        return result;
     }
 
     std::string key_;
@@ -202,12 +248,28 @@ public:
     }
 
 private:
+    // 教学用的简易 RLE（游程编码）：格式为 [重复次数][字节]，可逆
     std::string compress(const std::string& data) {
-        return "[COMPRESSED:" + std::to_string(data.size()) + "bytes]";
+        std::string result;
+        for (size_t i = 0; i < data.size();) {
+            size_t run = 1;
+            while (i + run < data.size() && data[i + run] == data[i] && run < 255) {
+                ++run;
+            }
+            result.push_back(static_cast<char>(run));
+            result.push_back(data[i]);
+            i += run;
+        }
+        return result;
     }
 
     std::string decompress(const std::string& data) {
-        return data + " (已解压)";
+        std::string result;
+        for (size_t i = 0; i + 1 < data.size(); i += 2) {
+            unsigned char count = static_cast<unsigned char>(data[i]);
+            result.append(count, data[i + 1]);
+        }
+        return result;
     }
 };
 
@@ -220,14 +282,21 @@ public:
         : StreamDecorator(std::move(stream)), bufferSize_(bufferSize) {
     }
 
+    ~BufferedStream() override {
+        flush();  // 销毁前把未刷出的数据交给下层，避免丢数据
+    }
+
     std::string read() override {
+        flush();  // 先提交待写数据，保证能读到自己刚写入的内容
+
         if (readBuffer_.empty()) {
-            std::cout << "  [BufferedStream] 读取缓冲区 (大小=" << bufferSize_ << ")" << std::endl;
             readBuffer_ = StreamDecorator::read();
-        } else {
-            std::cout << "  [BufferedStream] 从缓冲区读取" << std::endl;
+            std::cout << "  [BufferedStream] 读入缓冲区 ("
+                      << readBuffer_.size() << " 字节)" << std::endl;
         }
-        return readBuffer_;
+        std::string data = std::move(readBuffer_);
+        readBuffer_.clear();
+        return data;
     }
 
     void write(const std::string& data) override {
@@ -488,9 +557,9 @@ auto logDecorator(Func func, const std::string& name) {
 template <typename Func>
 auto timingDecorator(Func func, const std::string& name) {
     return [func, name](auto&&... args) {
-        auto start = std::chrono::high_resolution_clock::now();
+        auto start = std::chrono::steady_clock::now();
         auto result = func(std::forward<decltype(args)>(args)...);
-        auto end = std::chrono::high_resolution_clock::now();
+        auto end = std::chrono::steady_clock::now();
         auto duration = std::chrono::duration_cast<std::chrono::microseconds>(end - start);
         std::cout << "  [TimingDecorator] " << name << " 耗时: "
                   << duration.count() << " 微秒" << std::endl;
@@ -499,19 +568,24 @@ auto timingDecorator(Func func, const std::string& name) {
 }
 
 // 重试装饰器：给函数添加重试逻辑
+// 注意：重试会多次调用同一个函数，所以这里按值接收参数、每次尝试传入同一份副本。
+// 这与完美转发（只消费一次参数）不同：参数必须可复制，且函数应按值/const 引用接收。
 template <typename Func>
 auto retryDecorator(Func func, int maxRetries) {
-    return [func, maxRetries](auto&&... args) {
+    if (maxRetries < 1) {
+        throw std::invalid_argument("maxRetries 必须大于等于 1");
+    }
+    return [func, maxRetries](auto... args) {
         for (int i = 0; i < maxRetries; ++i) {
             try {
-                return func(std::forward<decltype(args)>(args)...);
+                return func(args...);
             } catch (const std::exception& e) {
                 std::cout << "  [RetryDecorator] 第 " << (i + 1)
                           << " 次尝试失败: " << e.what() << std::endl;
-                if (i == maxRetries - 1) throw;
+                if (i + 1 == maxRetries) throw;
             }
         }
-        return func(std::forward<decltype(args)>(args)...);
+        throw std::logic_error("重试循环意外结束");
     };
 }
 
@@ -527,7 +601,7 @@ void testClassicDecorator() {
     auto basicFile = std::make_unique<FileStream>("data.txt");
     std::cout << "  描述: " << basicFile->getDescription() << std::endl;
     basicFile->write("Hello World");
-    basicFile->read();
+    std::cout << "  读取结果: " << basicFile->read() << std::endl;
 
     // 加密装饰
     std::cout << "\n--- 加密的文件流 ---" << std::endl;
@@ -537,7 +611,7 @@ void testClassicDecorator() {
     );
     std::cout << "  描述: " << encryptedFile->getDescription() << std::endl;
     encryptedFile->write("敏感数据");
-    encryptedFile->read();
+    std::cout << "  解密结果: " << encryptedFile->read() << std::endl;
 
     // 多重装饰：加密 + 压缩 + 缓冲
     std::cout << "\n--- 加密+压缩+缓冲的内存流 ---" << std::endl;
@@ -552,7 +626,8 @@ void testClassicDecorator() {
     );
     std::cout << "  描述: " << superStream->getDescription() << std::endl;
     superStream->write("重要数据");
-    superStream->read();
+    superStream->write("，第二段");
+    std::cout << "  读取并解密结果: " << superStream->read() << std::endl;
 }
 
 void testStreamStyleDecorator() {

@@ -8,19 +8,19 @@
  *   4. 连接管理：connection / scoped_connection / 连接分组
  *   5. Slot 生命周期管理：track 追踪 shared_ptr 对象生命周期
  *   6. 观察者模式实现：事件驱动架构的典型应用
- *   7. 信号优先级：slot 按优先级顺序调用
+ *   7. 连接分组与调用顺序：组号、connect_position（不是“优先级”）
  *   8. 自动断开机制：track + 弱引用实现安全的对象生命周期管理
  *
  * Boost 优势：
  *   - 线程安全：signals2 是信号库的线程安全版本（signals v1 不是）
  *   - 自动连接管理：slot 对象析构时自动断开连接（通过 track）
  *   - 灵活的组合器：自定义多 slot 返回值的聚合方式
- *   - 连接分组和优先级：精细控制 slot 调用顺序
+ *   - 连接分组：用组号和插入位置精细控制 slot 调用顺序
  *   - scoped_connection：RAII 风格的连接管理
  *   - C++ 标准库中无对应功能
  *
  * 编译命令（示例）：
- *   g++ -std=c++17 signals2.cpp -o signals2 -lboost_thread -lpthread
+ *   g++ -std=c++17 signals2.cpp -o signals2 -pthread   （Signals2 是头文件实现）
  *   （Signals2 是纯头文件库，但线程部分可能需要 pthread）
  */
 
@@ -91,9 +91,10 @@ void basic_signals_demo() {
         return product;
     });
 
-    // 调用信号，返回最后一个 slot 的返回值
-    int result = math_signal(3, 4);
-    std::cout << "  信号返回值（最后一个 slot）: " << result << std::endl;
+    // 默认 combiner 是 optional_last_value，返回 boost::optional<int>
+    auto result = math_signal(3, 4);
+    std::cout << "  信号返回值（最后一个 slot）: "
+              << (result ? std::to_string(*result) : "无返回值") << std::endl;
 
     // 1.3 连接数量查询
     std::cout << "\n1.3 连接管理:" << std::endl;
@@ -239,9 +240,15 @@ void combiner_demo() {
         return ok;
     });
 
-    std::cout << "  验证 5:" << std::endl;
+    std::cout << "  验证 5（三个检查都会执行）:" << std::endl;
     bool r1 = validate_signal(5);
-    std::cout << "  结果: " << std::boolalpha << r1 << " (检查2失败，检查3未执行)" << std::endl;
+    std::cout << "  结果: " << std::boolalpha << r1
+              << " (检查3失败：5 不是偶数)" << std::endl;
+
+    std::cout << "  验证 150（检查2失败后短路，检查3不执行）:" << std::endl;
+    bool r3 = validate_signal(150);
+    std::cout << "  结果: " << std::boolalpha << r3
+              << " (检查2失败，检查3未执行)" << std::endl;
 
     std::cout << "  验证 50:" << std::endl;
     bool r2 = validate_signal(50);
@@ -317,41 +324,48 @@ void connection_management_demo() {
 }
 
 // ============================================================
-// 四、优先级与调用顺序
+// 四、调用顺序（分组，不是“优先级”）
 // ============================================================
-// 同一组内的 slot 按优先级排序调用（优先级值越小越先调用）。
-// 不同组之间按组号排序。
+// Signals2 没有 priority 参数，控制调用顺序靠“组号”和 connect_position：
+//   - 组号小的组先调用；同一组内默认按 connect 的先后顺序调用。
+//   - connect(group, slot, sig::at_front) 可以把 slot 插到该组最前面。
+//   - connect(slot, sig::at_front) 插入“最前面的未分组区”，比所有组都早。
+//   - connect(slot) 默认 at_back，插入“最后面的未分组区”，比所有组都晚。
+//
+// 注意 at_front / at_back 是 connect_position 枚举（at_back=0, at_front=1），
+// 必须作为第二个/第三个参数传给 connect。若写成 connect(sig::at_front, slot)，
+// 它会匹配到 connect(group, slot)，被当成“组号 1”，不是“放到最前”！
 
 void priority_demo() {
-    std::cout << "\n--- 4. Slot 优先级与调用顺序 ---" << std::endl;
+    std::cout << "\n--- 4. 分组与调用顺序（Signals2 无优先级参数） ---" << std::endl;
 
-    sig::signal<void()> priority_signal;
+    sig::signal<void()> ordered_signal;
 
-    // at_front：放到最前面
-    priority_signal.connect(sig::at_front, []() {
-        std::cout << "  [最前] 第一个调用" << std::endl;
+    // 未分组：默认 at_back 在所有组之后；at_front 在所有组之前
+    ordered_signal.connect([]() {
+        std::cout << "  [未分组-默认] 所有组之后" << std::endl;
     });
+    ordered_signal.connect([]() {
+        std::cout << "  [未分组-at_front] 所有组之前" << std::endl;
+    }, sig::at_front);
 
-    // 默认优先级
-    priority_signal.connect([]() {
-        std::cout << "  [默认] 中间调用" << std::endl;
+    // 分组：组号小的先调用
+    ordered_signal.connect(5, []() {
+        std::cout << "  [组5] 在组0之后" << std::endl;
     });
+    ordered_signal.connect(0, []() {
+        std::cout << "  [组0-A] 最先调用" << std::endl;
+    });
+    ordered_signal.connect(0, []() {
+        std::cout << "  [组0-B] 同组按连接顺序" << std::endl;
+    });
+    ordered_signal.connect(0, []() {
+        std::cout << "  [组0-C-at_front] 插到组0最前" << std::endl;
+    }, sig::at_front);
 
-    // at_back：放到最后面
-    priority_signal.connect(sig::at_back, []() {
-        std::cout << "  [最后] 最后一个调用" << std::endl;
-    });
-
-    // 也可以用组号控制顺序（组号越小越先调用）
-    priority_signal.connect(0, []() {
-        std::cout << "  [组0] 组号为 0，最先调用" << std::endl;
-    });
-    priority_signal.connect(5, []() {
-        std::cout << "  [组5] 组号为 5" << std::endl;
-    });
-
-    std::cout << "  调用顺序:" << std::endl;
-    priority_signal();
+    std::cout << "  调用顺序（未分组-at_front → 组0 → 组5 → 未分组-默认）:"
+              << std::endl;
+    ordered_signal();
 }
 
 // ============================================================
@@ -393,21 +407,26 @@ void track_lifetime_demo() {
     auto processor1 = std::make_shared<DataProcessor>("处理器A");
     auto processor2 = std::make_shared<DataProcessor>("处理器B");
 
-    // slot 追踪 processor1，processor1 失效时自动断开
+    // slot 追踪 processor1，processor1 失效时自动断开。
+    // 注意 lambda 里必须捕获 weak_ptr，否则 shared_ptr 被 slot 持有，
+    // 对象永远不会析构，track 也就永远不会生效。
+    auto weak1 = std::weak_ptr<DataProcessor>(processor1);
     data_signal.connect(
-        sig::slot<void(int)>([processor1](int data) {
-            processor1->process(data);
-        }).track(processor1)
+        sig::slot<void(int)>([weak1](int data) {
+            if (auto p = weak1.lock()) {
+                p->process(data);
+            }
+        }).track_foreign(processor1)
     );
 
-    // 另一种写法：使用 track + weak_ptr
+    // 另一种写法：track_foreign 直接追踪 weak_ptr
+    auto weak2 = std::weak_ptr<DataProcessor>(processor2);
     data_signal.connect(
-        sig::slot<void(int)>([processor2](int data) {
-            processor2->process(data);
-        }).track_foreign(
-            std::weak_ptr<DataProcessor>(processor2),
-            [](std::weak_ptr<DataProcessor> wp) { return !wp.expired(); }
-        )
+        sig::slot<void(int)>([weak2](int data) {
+            if (auto p = weak2.lock()) {
+                p->process(data);
+            }
+        }).track_foreign(weak2)
     );
 
     std::cout << "  两个处理器都存活时发射信号:" << std::endl;
@@ -506,7 +525,7 @@ void thread_safety_demo() {
     const int increments_per_thread = 1000;
     std::vector<std::thread> threads;
 
-    auto start = std::chrono::high_resolution_clock::now();
+    auto start = std::chrono::steady_clock::now();
 
     for (int i = 0; i < num_threads; ++i) {
         threads.emplace_back([&increment_signal, increments_per_thread, i]() {
@@ -518,7 +537,7 @@ void thread_safety_demo() {
 
     for (auto& t : threads) t.join();
 
-    auto end = std::chrono::high_resolution_clock::now();
+    auto end = std::chrono::steady_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(end - start);
 
     // 预期：5 线程 * 1000 次 * 3 个 slot = 15000
@@ -565,14 +584,14 @@ public:
 
     // 发布事件
     void publish(const Event& event) {
+        // 先通知订阅了该类型的处理器，再通知全局监听器
         signals_[static_cast<int>(event.type)](event);
+        all_events_signal_(event);
     }
 
     // 订阅所有事件
     Connection subscribe_all(EventHandler handler) {
-        all_events_signal_.connect(std::move(handler));
-        // 返回一个空的 connection（简化处理，实际应聚合所有连接）
-        return sig::connection();
+        return all_events_signal_.connect(std::move(handler));
     }
 
 private:
@@ -602,6 +621,11 @@ void event_bus_demo() {
         std::cout << "  [数据模块] 数据已更新: " << e.message << std::endl;
     });
 
+    // 订阅所有事件（全局监听）
+    auto all_conn = bus.subscribe_all([](const Event& e) {
+        std::cout << "  [全局监听] " << e.source << ": " << e.message << std::endl;
+    });
+
     // 发布一些事件
     std::cout << "  发布事件流:" << std::endl;
     bus.publish({EventType::UserLoggedIn, "alice", "web_app"});
@@ -613,7 +637,12 @@ void event_bus_demo() {
     login_conn.disconnect();
     std::cout << "\n  断开登录订阅后发布登录事件:" << std::endl;
     bus.publish({EventType::UserLoggedIn, "bob", "mobile_app"});
-    std::cout << "  （登录模块无响应，因为已断开）" << std::endl;
+    std::cout << "  （登录模块无响应，因为已断开；全局监听仍然收到）" << std::endl;
+
+    all_conn.disconnect();
+    std::cout << "\n  断开全局监听后再发布事件:" << std::endl;
+    bus.publish({EventType::DataUpdated, "静默更新", "background"});
+    std::cout << "  （全局监听无响应）" << std::endl;
 }
 
 // ============================================================
@@ -631,7 +660,7 @@ int main() {
     // 3. 连接管理
     connection_management_demo();
 
-    // 4. 优先级
+    // 4. 分组与调用顺序
     priority_demo();
 
     // 5. 生命周期管理
@@ -652,7 +681,7 @@ int main() {
     std::cout << "  3. 组合器：自定义多 slot 返回值的聚合方式" << std::endl;
     std::cout << "  4. 连接管理：connection / scoped_connection / 分组" << std::endl;
     std::cout << "  5. track 机制：自动追踪对象生命周期，安全断开" << std::endl;
-    std::cout << "  6. 优先级：控制 slot 调用顺序" << std::endl;
+    std::cout << "  6. 调用顺序：用连接分组和 connect_position 控制（signals2 没有 priority 参数）" << std::endl;
     std::cout << "  7. 典型应用：事件总线、观察者模式、插件架构" << std::endl;
     std::cout << "  8. C++ 标准库无对应功能，Boost 是首选方案" << std::endl;
 

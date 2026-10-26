@@ -12,6 +12,22 @@
 # 如果你想"有就包含，没有就算了"，可以用 -include（前面加个减号）
 include config.mk
 
+# Windows 上 g++ 生成的是 demo.exe，目标名要带上后缀。
+# 用 uname 判断平台：某些 make/终端环境里 OS 变量不一定存在。
+UNAME_S := $(shell uname -s 2>/dev/null)
+ifeq ($(OS),Windows_NT)
+    EXE := .exe
+else ifneq (,$(findstring MINGW,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring MSYS,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring CYGWIN,$(UNAME_S)))
+    EXE := .exe
+else
+    EXE :=
+endif
+TARGET_FILE := $(TARGET)$(EXE)
+
 
 # ============================================================
 # 一、wildcard 函数：自动发现源文件
@@ -68,7 +84,7 @@ HDRS = $(wildcard *.h)
 # ============================================================
 # 四、默认目标
 # ============================================================
-all: $(TARGET)
+all: $(TARGET_FILE)
 	@echo "========== 编译成功！=========="
 	@echo "源文件: $(SRCS)"
 	@echo "目标文件: $(OBJS)"
@@ -78,9 +94,9 @@ all: $(TARGET)
 # ============================================================
 # 五、链接目标
 # ============================================================
-# $@  目标名（$(TARGET) 的值，也就是 demo）
+# $@  目标名（$(TARGET_FILE) 的值，也就是 demo 或 demo.exe）
 # $^  所有依赖（所有 .o 文件）
-$(TARGET): $(OBJS)
+$(TARGET_FILE): $(OBJS)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 
@@ -194,12 +210,13 @@ BUILD = debug
 
 ifeq ($(BUILD), release)
     # release 模式：开优化，去掉调试信息
-    CXXFLAGS += -O2 -DNDEBUG
-    MODE_MSG = "发布模式 (Release)"
+    # （config.mk 里的 -g 要显式过滤掉，否则只加 -DNDEBUG 并不会删掉调试信息）
+    CXXFLAGS := $(filter-out -g,$(CXXFLAGS)) -O2 -DNDEBUG
+    MODE_MSG = 发布模式 (Release)
 else
     # debug 模式：调试信息，不优化
     CXXFLAGS += -O0 -DDEBUG
-    MODE_MSG = "调试模式 (Debug)"
+    MODE_MSG = 调试模式 (Debug)
 endif
 #
 # 【解释】
@@ -237,12 +254,12 @@ endif
 .PHONY: all clean run test test2 info
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+	rm -f $(OBJS) $(TARGET) $(TARGET_FILE)
 	@echo "清理完毕！"
 
-run: $(TARGET)
+run: $(TARGET_FILE)
 	@echo "运行模式: $(MODE_MSG)"
-	./$(TARGET)
+	./$(TARGET_FILE)
 
 # 打印一些信息，方便调试 Makefile
 info:

@@ -46,6 +46,11 @@ public:
     // 参数是输出参数：把加载到的任务填进去
     // 返回值：是否加载成功
     virtual bool load(std::vector<Task>& out_tasks) = 0;
+
+    // 数据源当前是否存在。
+    // 用来区分"首次运行，还没有文件"和"显式 load 时文件已被删除"：
+    // 前者可以当作空列表，后者不应该悄悄清空内存中的任务。
+    virtual bool exists() const = 0;
 };
 
 } // namespace todo

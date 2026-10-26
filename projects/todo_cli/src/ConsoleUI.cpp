@@ -44,6 +44,13 @@ void ConsoleUI::run(TaskList& tasks, Storage& storage) {
         // 读取输入
         input = readInput();
 
+        // getline 失败时（EOF，比如 Ctrl+D / Ctrl+Z）必须退出，
+        // 否则输入流一直是失败状态，循环会疯狂空转。
+        if (!std::cin) {
+            std::cout << std::endl;  // 让"再见"另起一行
+            break;
+        }
+
         if (input.empty()) {
             continue;  // 空行忽略
         }
@@ -52,7 +59,7 @@ void ConsoleUI::run(TaskList& tasks, Storage& storage) {
         std::unique_ptr<Command> cmd = CommandFactory::parse(input);
 
         if (!cmd) {
-            showError("未知命令，输入 help 查看帮助");
+            showError("命令格式错误或未知命令，输入 help 查看帮助");
             continue;
         }
 

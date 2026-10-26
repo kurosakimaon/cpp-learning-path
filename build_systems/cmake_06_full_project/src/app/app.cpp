@@ -29,31 +29,44 @@ void App::printHelp() {
     std::cout << "选项：" << std::endl;
     std::cout << "  -h, --help      显示帮助信息" << std::endl;
     std::cout << "  -v, --version   显示版本信息" << std::endl;
-    std::cout << "  -d, --demo      运行演示" << std::endl;
+    std::cout << "  -d, --demo      运行演示（不加选项时只显示本帮助）" << std::endl;
 }
 
 void App::printVersion() {
     std::cout << "MyProject 版本 " << versionString() << std::endl;
-    std::cout << fullVersionString() << std::endl;
+    std::cout << "构建类型：" << BUILD_TYPE << std::endl;
 }
 
-bool App::parseArgs(int argc, char* argv[]) {
+int App::parseArgs(int argc, char* argv[]) {
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
         if (arg == "-h" || arg == "--help") {
             printHelp();
-            return false;  // 打印完帮助就退出
+            return 0;  // 打印完帮助就退出
         } else if (arg == "-v" || arg == "--version") {
             printVersion();
-            return false;
+            return 0;
+        } else if (arg == "-d" || arg == "--demo") {
+            demo_requested_ = true;
+        } else {
+            std::cerr << "未知选项：" << arg << std::endl;
+            printHelp();
+            return 1;
         }
     }
-    return true;
+    return -1;  // 参数都没问题，继续运行
 }
 
 int App::run(int argc, char* argv[]) {
     // 先解析参数
-    if (!parseArgs(argc, argv)) {
+    int parse_result = parseArgs(argc, argv);
+    if (parse_result >= 0) {
+        return parse_result;
+    }
+
+    // 没要求运行演示，就只打印帮助
+    if (!demo_requested_) {
+        printHelp();
         return 0;
     }
 
@@ -99,21 +112,6 @@ int App::run(int argc, char* argv[]) {
     std::cout << "========================================" << std::endl;
 
     return 0;
-}
-
-// ============================================================
-//  fullVersionString 的实现
-//  这里用了 config.h 里的宏，所以放在 .cpp 里
-// ============================================================
-
-// 这个宏由 CMake 的 configure_file 生成
-// （通过根 CMakeLists.txt 里的 target_compile_definitions）
-#ifndef BUILD_TYPE
-#define BUILD_TYPE "Unknown"
-#endif
-
-std::string fullVersionString() {
-    return "构建类型：" + std::string(BUILD_TYPE);
 }
 
 } // namespace myproject

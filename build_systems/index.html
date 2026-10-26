@@ -294,7 +294,7 @@
   <div class="section-title">
     <span>📋</span> Makefile 路线
   </div>
-  <div class="section-subtitle">4 个层级，从单文件到完整项目</div>
+  <div class="section-subtitle">5 个层级，从单文件到完整项目；第 5 讲专讲静态库/动态库</div>
 
   <div class="card-grid">
     <a href="makefile_01_basic/" class="card makefile">
@@ -317,7 +317,7 @@
       <div class="card-icon">🔄</div>
       <div class="card-folder">makefile_03_patterns/</div>
       <div class="card-title">03 · 模式规则与函数</div>
-      <div class="card-desc">模式规则（%）、隐含规则、常用函数（patsubst/wildcard/foreach）。</div>
+      <div class="card-desc">模式规则（%）、常用函数（patsubst/wildcard/foreach）、条件判断与 include。</div>
       <div class="card-meta"><span class="tag intermediate">中级</span></div>
     </a>
 
@@ -325,7 +325,7 @@
       <div class="card-icon">🏢</div>
       <div class="card-folder">makefile_04_project/</div>
       <div class="card-title">04 · 完整项目结构</div>
-      <div class="card-desc">多目录项目、头文件依赖自动生成、递归 make、编译优化、项目工程化。</div>
+      <div class="card-desc">多目录项目、用 find 递归发现源文件、头文件依赖自动生成（-MMD -MP）、Debug/Release 切换、项目工程化。</div>
       <div class="card-meta"><span class="tag advanced">高级</span></div>
     </a>
 
@@ -356,7 +356,7 @@
       <div class="card-icon">📂</div>
       <div class="card-folder">cmake_02_multi_file/</div>
       <div class="card-title">02 · 多文件项目</div>
-      <div class="card-desc">多源文件编译、头文件路径、变量与列表、编译选项。</div>
+      <div class="card-desc">多源文件编译、头文件路径、变量与列表、file(GLOB) 的坑。</div>
       <div class="card-meta"><span class="tag elementary">初级</span></div>
     </a>
 
@@ -364,7 +364,7 @@
       <div class="card-icon">📦</div>
       <div class="card-folder">cmake_03_library/</div>
       <div class="card-title">03 · 库的构建与链接</div>
-      <div class="card-desc">静态库/动态库创建、target_link_libraries、子目录组织、库依赖管理。</div>
+      <div class="card-desc">静态库构建、target_link_libraries、子目录组织、库依赖管理与动态库概念。</div>
       <div class="card-meta"><span class="tag intermediate">中级</span></div>
     </a>
 
@@ -380,7 +380,7 @@
       <div class="card-icon">🎯</div>
       <div class="card-folder">cmake_05_modern/</div>
       <div class="card-title">05 · 现代 CMake（基于目标）</div>
-      <div class="card-desc">target_* 用法、PUBLIC/PRIVATE/INTERFACE、目标属性、导出目标、使用方式要求。</div>
+      <div class="card-desc">target_* 用法、PUBLIC/PRIVATE/INTERFACE、生成器表达式、ALIAS 别名目标。</div>
       <div class="card-meta"><span class="tag advanced">高级</span></div>
     </a>
 
@@ -388,7 +388,7 @@
       <div class="card-icon">🏢</div>
       <div class="card-folder">cmake_06_full_project/</div>
       <div class="card-title">06 · 完整项目结构</div>
-      <div class="card-desc">工业级项目布局：库/应用/测试分离、版本头文件、编译警告、CTest 单元测试。</div>
+      <div class="card-desc">工业级项目布局：库/应用/测试分离、版本头文件、安装与导出（install/EXPORT）、CTest、CPack 打包。</div>
       <div class="card-meta"><span class="tag expert">资深</span></div>
     </a>
   </div>
@@ -408,13 +408,13 @@
   <!-- 编译选项速查表 -->
   <div class="cheatsheet-section">
     <h2>📋 编译选项速查表</h2>
-    <p>常用 GCC/Clang 编译选项，建议收藏。MSVC 选项括号内标注。</p>
+    <p>常用 GCC/Clang 编译选项，建议收藏。部分选项标注了对应的 MSVC 写法。</p>
 
     <div class="cheat-grid">
       <div class="cheat-card">
         <h3>🎯 标准与语言</h3>
         <table class="cheat-table">
-          <tr><td><code>-std=c++17</code></td><td>使用 C++17 标准（11/14/20/23 同理）</td></tr>
+          <tr><td><code>-std=c++17</code></td><td>使用 C++17 标准（11/14/20/23 同理；MSVC 为 /std:c++17）</td></tr>
           <tr><td><code>-std=c17</code></td><td>使用 C17 标准</td></tr>
           <tr><td><code>-pedantic</code></td><td>严格遵守标准，拒绝扩展语法</td></tr>
           <tr><td><code>-fno-exceptions</code></td><td>禁用异常（嵌入式常用）</td></tr>
@@ -439,7 +439,7 @@
         <table class="cheat-table">
           <tr><td><code>-O0</code></td><td>不优化（Debug 默认，编译最快）</td></tr>
           <tr><td><code>-O1</code></td><td>基础优化（性能和编译时间折中）</td></tr>
-          <tr><td><code>-O2</code></td><td>标准优化（Release 常用）</td></tr>
+          <tr><td><code>-O2</code></td><td>标准优化（Release 常用；MSVC 为 /O2）</td></tr>
           <tr><td><code>-O3</code></td><td>最高优化等级（可能更慢，谨慎用）</td></tr>
           <tr><td><code>-Os</code></td><td>优化体积（减小代码大小）</td></tr>
           <tr><td><code>-Og</code></td><td>调试友好的优化（gdb 调试用）</td></tr>

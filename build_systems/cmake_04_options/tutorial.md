@@ -1,0 +1,274 @@
+# CMake 入门教程 - 第四讲
+
+> 选项与配置
+
+## 一、这一讲学啥？
+
+徒弟啊，前面咱学了怎么编译、怎么搞多文件、怎么搞库。但真实项目里，需求是多变的：
+
+- 有时候要 Debug 版，有时候要 Release 版
+- 有些功能想做成可选的，用户想关就关
+- 不同平台编译器不一样，编译选项也不一样
+
+这一讲咱就学学怎么让 CMake 项目更灵活、更可配置。
+
+## 二、option - 编译开关
+
+`option` 是最简单也最常用的配置方式：
+
+```cmake
+option(ENABLE_DEBUG_OUTPUT "是否启用调试输出" OFF)
+```
+
+格式：`option(变量名 "说明文字" 默认值)`
+
+值只有两种：`ON` 或 `OFF`。
+
+用户怎么改？`cmake` 的时候加 `-D` 参数：
+
+```bash
+cmake .. -DENABLE_DEBUG_OUTPUT=ON
+cmake .. -DENABLE_DEBUG_OUTPUT=OFF
+```
+
+多个选项一起设也行：
+
+```bash
+cmake .. -DENABLE_DEBUG_OUTPUT=ON -DENABLE_EXPERIMENTAL_FEATURES=ON
+```
+
+> **老师傅提醒**
+>
+> `-D` 后面的值不写 ON/OFF，写 1/0、TRUE/FALSE 也行，但推荐用 ON/OFF，可读性好。
+
+`option` 只能传布尔值。如果要传字符串或者数字呢？直接用 `-D` 就行，不用提前声明：
+
+```bash
+cmake .. -DMY_CUSTOM_VALUE=42
+cmake .. -DMY_NAME="张三"
+```
+
+在 `CMakeLists.txt` 里直接用 `${MY_CUSTOM_VALUE}` 就能引用。
+
+## 三、configure_file - 生成配置头文件
+
+这个命令太有用了，徒弟你得好好掌握。
+
+它能干啥？把 CMake 里的变量值，"传递"到 C++ 代码里。
+
+怎么用？两步：
+
+**第一步：写一个 `.in` 模板文件（比如 `config.h.in`）**
+
+```c
+#define PROJECT_NAME "@PROJECT_NAME@"
+#cmakedefine ENABLE_DEBUG_OUTPUT
+```
+
+**第二步：在 `CMakeLists.txt` 里调用 `configure_file`**
+
+```cmake
+configure_file(config.h.in config.h)
+```
+
+CMake 会做这些替换：
+
+- `@VAR@` → 替换成变量 `VAR` 的值
+- `${VAR}` → 也会替换（不推荐用这个，容易搞混）
+- `#cmakedefine VAR`
+  → 如果 `VAR` 为真，变成 `#define VAR`
+  → 如果 `VAR` 为假，变成 `/* #undef VAR */`
+
+生成的 `config.h` 在哪？一般放在构建目录里（`CMAKE_CURRENT_BINARY_DIR`），所以别忘了把构建目录加到 include 路径里。
+
+### 为什么要用这个？
+
+你想啊，如果不用 `configure_file`，你要在 C++ 里判断 `ENABLE_DEBUG_OUTPUT` 开没开，你得用 `target_compile_definitions` 一个个加宏定义。少的话还行，多了就麻烦了。用 `configure_file` 的话，所有配置都在 `config.h` 里，代码里只要 `#include "config.h"` 就行，整齐划一。
+
+## 四、CMAKE_BUILD_TYPE - Debug vs Release
+
+CMake 内置了几种构建类型：
+
+- Debug —— 调试模式
+  - 有调试信息（`-g`）
+  - 不优化（`-O0`）
+  - 没有 `NDEBUG`（MSVC 的 Debug 配置还会定义 `_DEBUG`；GCC/Clang 不定义 `_DEBUG`）
+  - 适合开发调试用
+- Release —— 发布模式
+  - 没有调试信息
+  - 优化级别高（`-O3` 或 `-O2`）
+  - 定义了 `NDEBUG`（断言 `assert` 会被关掉）
+  - 适合发布给用户用
+- RelWithDebInfo —— 带调试信息的发布版
+  - 有优化，也有调试信息
+  - 适合做性能分析的时候用
+- MinSizeRel —— 最小体积发布版
+  - 优化偏向于减小体积而不是速度
+  - 适合嵌入式或者空间有限的场景
+
+### 说明
+
+上面列的是 GCC/Clang 的典型选项；MSVC 对应的是 `/Zi`（调试信息）、`/Od`（不优化）、`/O2`（优化）。`RelWithDebInfo` 和 `MinSizeRel` 也会定义 `NDEBUG`。
+
+怎么设置？
+
+```bash
+cmake .. -DCMAKE_BUILD_TYPE=Debug
+cmake .. -DCMAKE_BUILD_TYPE=Release
+```
+
+### 老师傅踩过的坑
+
+1. 对于 Visual Studio 这种多配置生成器，`CMAKE_BUILD_TYPE` 没用！因为 VS 一个解决方案里同时有 Debug 和 Release 配置。编译的时候用 `--config` 指定：
+
+   ```bash
+   cmake --build . --config Debug
+   cmake --build . --config Release
+   ```
+
+2. Makefile 和 Ninja 是单配置生成器，`CMAKE_BUILD_TYPE` 才管用。
+
+3. 不设置的话，`CMAKE_BUILD_TYPE` 是空的，既不是 Debug 也不是 Release，没有优化也没有调试信息。所以一般项目里都会给个默认值：
+
+   ```cmake
+   if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+       set(CMAKE_BUILD_TYPE Debug CACHE STRING "构建类型" FORCE)
+   endif()
+   ```
+
+## 五、if/else/endif - 条件判断
+
+CMake 的条件判断语法有点怪，没有花括号，用 `endif` 结尾。
+
+基本格式：
+
+```cmake
+if(条件)
+    ... 命令 ...
+elseif(条件)
+    ... 命令 ...
+else()
+    ... 命令 ...
+endif()
+```
+
+常用判断：
+
+```cmake
+if(VAR)              # VAR 为真
+if(NOT VAR)          # VAR 为假
+if(VAR1 AND VAR2)    # 逻辑与
+if(VAR1 OR VAR2)     # 逻辑或
+if(DEFINED VAR)      # 变量是否被定义
+if(EXISTS "path")    # 文件/目录是否存在
+if(str1 STREQUAL str2)   # 字符串相等（操作符写在两个参数中间）
+if(v1 VERSION_LESS v2)   # 版本号比较
+```
+
+### 注意
+
+CMake 里真假的判断规则有点复杂：
+
+- `ON`, `TRUE`, `1`, `YES`, `Y` → 真
+- `OFF`, `FALSE`, `0`, `NO`, `N`, `NOTFOUND`, 空字符串 → 假
+- 其他的……看情况，总之别搞太花哨，老老实实 ON/OFF。
+
+## 六、target_compile_options - 编译选项
+
+给目标加编译选项，现代写法：
+
+```cmake
+target_compile_options(my_target PRIVATE -Wall -Wextra)
+```
+
+对应老派写法是修改全局变量 `CMAKE_CXX_FLAGS`：
+
+```cmake
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra")
+```
+
+为什么 target 写法更好？
+
+1. 只影响指定目标，不污染全局
+2. 可以有 `PUBLIC`/`PRIVATE`/`INTERFACE` 的传递关系
+3. 代码更清晰，看目标定义就知道它有啥选项
+
+不同编译器选项不一样怎么办？用 `if` 判断编译器：
+
+```cmake
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    # GCC 特有的选项
+elseif(MSVC)
+    # MSVC 特有的选项
+endif()
+```
+
+`CMAKE_CXX_COMPILER_ID` 常见值：
+
+- `GNU` —— GCC
+- `Clang` —— Clang
+- `AppleClang` —— macOS 自带的 Clang
+- `MSVC` —— Visual Studio
+
+## 七、target_compile_definitions - 宏定义
+
+给目标加宏定义，相当于 `-D` 选项：
+
+```cmake
+target_compile_definitions(my_target PRIVATE MY_MACRO=1)
+```
+
+跟 `target_compile_options` 类似，也是现代 CMake 推荐的写法。老派写法是 `add_definitions(-DMY_MACRO=1)`，但那个是全局的。
+
+## 八、怎么玩这个例子？
+
+你可以试试下面这些组合，看看输出有什么不一样：
+
+1. 默认构建（Debug，功能都关）
+
+   ```bash
+   mkdir build && cd build
+   cmake ..
+   cmake --build .
+   ./options_demo
+   # Windows + MinGW/Ninja：options_demo.exe
+   # Windows + Visual Studio：Debug\options_demo.exe
+   ```
+
+2. 打开调试输出
+
+   ```bash
+   cmake .. -DENABLE_DEBUG_OUTPUT=ON
+   cmake --build .
+   ./options_demo
+   ```
+
+3. 打开实验功能，Release 模式
+
+   ```bash
+   cmake .. -DENABLE_EXPERIMENTAL_FEATURES=ON -DCMAKE_BUILD_TYPE=Release
+   cmake --build .
+   ./options_demo
+   ```
+
+4. 两个功能都开
+
+   ```bash
+   cmake .. -DENABLE_DEBUG_OUTPUT=ON -DENABLE_EXPERIMENTAL_FEATURES=ON
+   cmake --build .
+   ./options_demo
+   ```
+
+注意：每次改了选项，重新 `cmake ..` 就行，不用删 `build` 目录。CMake 会自动检测变化，重新生成构建文件。
+
+## 九、老师傅的经验之谈
+
+1. `configure_file` + `config.h.in` 是个非常好用的模式，大型项目里几乎都用。建议你也养成这个习惯。
+2. `option` 的默认值要设得合理。比如调试功能默认关，这样用户拿到手编译出来的是干净的发布版。
+3. 编译警告一定要开（`-Wall -Wextra` 或 `/W4`）。警告是编译器在给你提个醒，别不当回事。甚至可以加上 `-Werror`，把警告当错误处理，强制你写出没有警告的代码。
+4. `CMAKE_BUILD_TYPE` 记得给个默认值，不然空的构建类型不优化也没调试信息，很尴尬。
+5. 能用 `target_*` 命令就别用全局变量。这是现代 CMake 的核心思想之一。
+
+---
+
+第四讲就到这儿。选项和配置的玩法很多，先掌握这些常用的就够应付大部分场景了。下一讲咱深入讲讲现代 CMake 的基于目标的写法。

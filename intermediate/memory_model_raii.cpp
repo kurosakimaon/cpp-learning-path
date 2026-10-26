@@ -11,6 +11,7 @@
 #include <vector>
 #include <memory>   // 智能指针头文件
 #include <cstring>
+#include <cstdio>
 #include <mutex>
 
 using namespace std;
@@ -60,9 +61,12 @@ void stackDemo_basic()
     cout << "  局部变量 b 的地址: " << &b << " 值: " << b << endl;
     cout << "  栈上数组 str 地址: " << (void*)str << " 内容: " << str << endl;
 
-    // 观察地址变化——栈是从高地址向低地址增长的
+    // 观察地址变化。很多平台（如 x86-64）的栈从高地址向低地址增长，
+    // 但标准并不规定不同局部变量的相对地址顺序，不要依赖具体结果。
     int c = 20;
-    cout << "  后定义的 c 的地址: " << &c << " (比a低，说明栈向下生长)" << endl;
+    cout << "  后定义的 c 的地址: " << &c
+         << ((&c < &a) ? "（本机观察到比 a 低）" : "（本机观察到比 a 高）") << endl;
+    cout << "  注意：局部变量的相对地址顺序由实现决定，不能当作可移植规律。" << endl;
 }
 
 // 递归演示栈溢出（注意：注释掉了避免真的崩掉，徒弟你懂原理就行）
@@ -173,9 +177,10 @@ void stackVsHeap()
     cout << "  速度        | 快（移动栈指针）       | 慢（找空闲块）" << endl;
     cout << "  空间大小    | 小（MB级别）           | 大（GB级别）" << endl;
     cout << "  碎片问题    | 无                     | 有" << endl;
-    cout << "  生长方向    | 向下（高→低地址）      | 向上（低→高地址）" << endl;
+    cout << "  生长方向    | 典型x86-64向低地址     | 由分配器管理，无固定方向" << endl;
     cout << "  灵活性      | 大小固定编译时确定     | 动态分配运行时确定" << endl;
     cout << endl;
+    cout << "  注意：栈的生长方向依平台/架构而定，堆也没有标准规定的固定方向。" << endl;
     cout << "  经验法则：小数据、生命周期短 → 栈" << endl;
     cout << "           大数据、生命周期长 → 堆" << endl;
 }
@@ -199,7 +204,7 @@ void memoryErrors_demo()
     cout << "      错误示例：" << endl;
     cout << "        int* p = new int(10);" << endl;
     cout << "        delete p;" << endl;
-    cout << "        delete p;  // 同一块内存释放两次！崩溃！" << endl;
+    cout << "        delete p;  // 同一块内存释放两次！未定义行为（常见是崩溃）" << endl;
     cout << "      正确做法：释放后置 nullptr，delete nullptr 是安全的" << endl;
 
     // --- 5.3 内存越界 ---
@@ -225,7 +230,7 @@ void memoryErrors_demo()
     cout << "            int x = 10;" << endl;
     cout << "            return &x;  // x在栈上，函数结束就没了！" << endl;
     cout << "        }" << endl;
-    cout << "      后果：返回的是悬空指针，访问就炸" << endl;
+    cout << "      后果：返回的是悬空指针，访问它是未定义行为" << endl;
 }
 
 // ============================================================
@@ -328,7 +333,8 @@ public:
         }
     }
 
-    // 禁用拷贝，允许移动
+    // 禁用拷贝：否则两个对象会关闭同一个 FILE*。
+    // 本示例没有实现移动构造/移动赋值，所以它目前既不可拷贝也不可移动。
     FileHandler(const FileHandler&) = delete;
     FileHandler& operator=(const FileHandler&) = delete;
 

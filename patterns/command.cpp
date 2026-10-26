@@ -33,7 +33,7 @@
  * 【现代C++实现方式】
  * 1. 经典命令模式：Command接口+具体命令类
  * 2. 撤销/重做：命令保存状态，支持undo/redo
- * 3. 命令队列：异步执行、任务调度
+ * 3. 命令队列：把提交与执行解耦，可配合工作线程实现异步调度
  * 4. 宏命令：组合多个命令
  * 5. std::function命令：函数式风格的轻量命令
  */
@@ -42,10 +42,12 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <map>
 #include <deque>
 #include <functional>
 #include <stack>
 #include <thread>
+#include <mutex>
 #include <chrono>
 #include <sstream>
 #include <cassert>
@@ -255,12 +257,14 @@ private:
 };
 
 // ============================================================
-// 3. 命令队列（异步执行）
+// 3. 命令队列（延后 / 批处理执行）
 // ============================================================
 
 /**
- * 命令队列：将命令放入队列中，由另一个线程或稍后执行。
- * 这是任务调度、线程池、消息队列等的基础。
+ * 命令队列：把“提交命令”和“执行命令”解耦。
+ * 调用者只负责入队，再由 processOne/processAll 在调用线程中执行。
+ * 这是任务调度、线程池、消息队列的基础：
+ * 如果另起一个工作线程不断调用 processOne，就得到了异步执行。
  */
 
 class CommandQueue {
@@ -273,21 +277,35 @@ public:
 
     // 执行队列中的所有命令
     void processAll() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        std::cout << "  [命令队列] 处理 " << queue_.size() << " 个命令" << std::endl;
-        while (!queue_.empty()) {
-            auto command = std::move(queue_.front());
-            queue_.pop_front();
+        size_t count = 0;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            count = queue_.size();
+        }
+        std::cout << "  [命令队列] 处理 " << count << " 个命令" << std::endl;
+
+        while (true) {
+            std::function<void()> command;
+            {
+                std::lock_guard<std::mutex> lock(mutex_);
+                if (queue_.empty()) break;
+                command = std::move(queue_.front());
+                queue_.pop_front();
+            }
+            // 在锁外执行：命令内部可以继续 enqueue，也不会长时间占着锁
             command();
         }
     }
 
     // 处理一个命令
     bool processOne() {
-        std::lock_guard<std::mutex> lock(mutex_);
-        if (queue_.empty()) return false;
-        auto command = std::move(queue_.front());
-        queue_.pop_front();
+        std::function<void()> command;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            if (queue_.empty()) return false;
+            command = std::move(queue_.front());
+            queue_.pop_front();
+        }
         command();
         return true;
     }
@@ -562,11 +580,18 @@ void testMacroCommand() {
     TextEditor editor;
 
     // 创建一个宏命令：初始化文档模板
+    // 注意：所有子命令在执行前就已创建，所以插入位置必须按最终顺序预先算好，
+    // 不能在这里用 editor.getBuffer().size()——那时缓冲区还是空的。
     auto macro = std::make_unique<MacroCommand>();
-    macro->addCommand(std::make_unique<InsertCommand>(editor, 0, "标题：项目报告\n"));
-    macro->addCommand(std::make_unique<InsertCommand>(editor, editor.getBuffer().size(), "作者：张三\n"));
-    macro->addCommand(std::make_unique<InsertCommand>(editor, editor.getBuffer().size(), "日期：2024-01-15\n"));
-    macro->addCommand(std::make_unique<InsertCommand>(editor, editor.getBuffer().size(), "====================\n"));
+    int position = 0;
+    auto addInsert = [&](const std::string& text) {
+        macro->addCommand(std::make_unique<InsertCommand>(editor, position, text));
+        position += static_cast<int>(text.size());
+    };
+    addInsert("标题：项目报告\n");
+    addInsert("作者：张三\n");
+    addInsert("日期：2024-01-15\n");
+    addInsert("====================\n");
 
     std::cout << "\n--- 执行宏命令 ---" << std::endl;
     macro->execute();
@@ -659,7 +684,7 @@ int main() {
     std::cout << "核心思想：将请求封装为对象，实现调用者和执行者解耦" << std::endl;
     std::cout << "经典命令：Command接口 + 具体命令类，支持撤销/重做" << std::endl;
     std::cout << "撤销/重做：双栈结构，命令对象保存状态" << std::endl;
-    std::cout << "命令队列：异步执行、任务调度、批处理" << std::endl;
+    std::cout << "命令队列：延后执行、任务调度、批处理" << std::endl;
     std::cout << "宏命令：组合模式 + 命令模式，多个命令组合执行" << std::endl;
     std::cout << "std::function：函数式风格，轻量级命令" << std::endl;
     std::cout << "设计原则：单一职责、开闭原则" << std::endl;

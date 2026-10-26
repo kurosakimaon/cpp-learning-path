@@ -21,6 +21,7 @@
 #include <utility>
 #include <sstream>
 #include <numeric>
+#include <algorithm>
 
 // ============================================================
 // 第一部分：折叠表达式基础语法
@@ -44,7 +45,7 @@ auto sum_right(Args... args) {
 // 1.2 一元左折叠：求和
 template <typename... Args>
 auto sum_left(Args... args) {
-    return (... + args);  // 一元左折叠：((... + e2) + e1) + eN
+    return (... + args);  // 一元左折叠：(((e1 + e2) + e3) + ...) + eN
     // 等价于 (((args[0] + args[1]) + args[2]) + ... )
 }
 
@@ -360,57 +361,33 @@ struct type_size_wrapper {
 };
 
 // 4.4 编译期计算：所有参数的最大值
+
+// 递归写法：一次取一个参数，思路最直观
 template <typename T>
-constexpr T max_val(T a, T b) {
-    return a > b ? a : b;
+constexpr T max_val(T value) {
+    return value;
 }
 
 template <typename T, typename... Rest>
 constexpr T max_val(T first, Rest... rest) {
-    // 递归 + 折叠混合使用
-    return max_val(first, max_val(rest...));
+    const T tail = max_val(rest...);
+    return first > tail ? first : tail;
 }
 
-// 用折叠表达式实现
-template <typename... Args>
-constexpr auto fold_max(Args... args) {
-    // 二元左折叠：初始值取第一个元素，然后依次比较
-    // 但空包的情况需要单独处理
-    if constexpr (sizeof...(args) == 0) {
-        return 0;
-    } else {
-        auto result = (args, ...);  // 取最后一个参数作为初始值？不对
-        // 正确做法：用递归或其他方式
-        // 实际上可以用初始值 + 自定义的 max 操作
-        // 这里演示用 lambda 包装
-        return ([](auto a, auto b) { return a > b ? a : b; }(args, ...));
-        // 不对，上面不是折叠表达式的正确用法
-        // 正确的折叠方式：(init op ... op pack)
-    }
-    return 0;  // 占位
-}
-
-// 更简洁的最大值折叠
+// 折叠写法：逗号折叠 + 赋值，逐个比较并更新 result
+// 注意：折叠表达式只能用运算符，不能直接折叠任意函数调用
 template <typename T, typename... Rest>
-constexpr T max_of(T first, Rest... rest) {
-    return (first | ... |  // 这是位或，不是 max
-        // 正确方式：用逗号和辅助
-        0);
-    // 实际上直接写递归更清晰
+constexpr T max_fold(T first, Rest... rest) {
+    T result = first;
+    ((result = rest > result ? rest : result), ...);
+    return result;
 }
 
-// 用 if constexpr + 折叠的正确实现
-template <typename First, typename... Rest>
-constexpr auto max_fold(First first, Rest... rest) {
-    if constexpr (sizeof...(rest) == 0) {
-        return first;
-    } else {
-        // 用 lambda 作为二元操作（但折叠表达式需要运算符，不是函数）
-        // 所以对于任意函数，折叠表达式不直接适用
-        // 这是折叠表达式的限制：只能用运算符
-        // 替代方案：用 std::max + 初始化列表
-        return std::max({first, rest...});  // 这不是折叠表达式，但更实用
-    }
+// 另一种实用写法：std::max + initializer_list
+// 要求所有参数类型相同（或能推导出共同的 T）
+template <typename T, typename... Rest>
+constexpr T max_initializer_list(T first, Rest... rest) {
+    return std::max({first, rest...});
 }
 
 void demo_type_computation() {
@@ -509,18 +486,46 @@ void demo_multi_inherit() {
 }
 
 // 5.3 编译期字符串拼接（进阶）
-// 使用折叠表达式在编译期拼接字符串字面量
+// 使用 constexpr + 折叠表达式在编译期拼接字符串字面量
 
 // 简单的编译期字符串
 template <size_t N>
 struct FixedString {
-    char data[N];
+    char data[N]{};
     static constexpr size_t size = N - 1;  // 不含 null 终止符
+
+    constexpr FixedString() = default;
 
     constexpr FixedString(const char (&str)[N]) {
         for (size_t i = 0; i < N; ++i) data[i] = str[i];
     }
 };
+
+// 两个 FixedString 相加，结果仍然是编译期字符串
+template <size_t N, size_t M>
+constexpr auto operator+(const FixedString<N>& a, const FixedString<M>& b) {
+    FixedString<N + M - 1> result{};  // 两段长度相加，只保留一个 null
+    for (size_t i = 0; i < N - 1; ++i) result.data[i] = a.data[i];
+    for (size_t i = 0; i < M; ++i) result.data[N - 1 + i] = b.data[i];
+    return result;
+}
+
+// 用折叠表达式拼接任意多个编译期字符串
+template <typename... Strings>
+constexpr auto concat(Strings... strs) {
+    static_assert(sizeof...(Strings) > 0, "至少需要一个字符串");
+    return (strs + ...);
+}
+
+void demo_constexpr_concat() {
+    std::cout << "\n===== 5.3 编译期字符串拼接 =====\n";
+
+    constexpr auto greeting = concat(
+        FixedString("Hello"), FixedString(", "), FixedString("World!"));
+    static_assert(greeting.size == 13);
+    std::cout << "拼接结果: " << greeting.data << "\n";
+    std::cout << "长度: " << greeting.size << "（编译期确定）\n";
+}
 
 // 5.4 实际工程模式：统一的参数校验
 template <typename... Args>
@@ -592,7 +597,7 @@ auto safe_sum(Args... args) {
 
 // 6.4 陷阱：折叠表达式中函数调用的求值顺序
 // 逗号运算符的折叠有确定的求值顺序（从左到右）
-// 但其他运算符不一定（函数参数求值顺序是未定义的）
+// 但其他运算符不一定（函数参数的求值顺序是未指定的，不是未定义行为）
 
 template <typename... Args>
 void print_with_index(Args... args) {
@@ -714,6 +719,7 @@ int main() {
 
     advanced_patterns::demo_filter();
     advanced_patterns::demo_multi_inherit();
+    advanced_patterns::demo_constexpr_concat();
     advanced_patterns::demo_validation();
 
     pitfalls::demo_custom_operator_fold();

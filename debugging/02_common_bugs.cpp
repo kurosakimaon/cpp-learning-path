@@ -17,8 +17,10 @@
 #include <iostream>
 #include <string>
 #include <vector>
+#include <algorithm>
 #include <cstring>
 #include <memory>
+#include <limits>
 
 using std::cout;
 using std::endl;
@@ -38,8 +40,9 @@ void bug_array_out_of_bounds() {
     int arr[5] = {1, 2, 3, 4, 5};
 
     // ❌ 错误：数组大小是 5，下标只能到 4
-    // 读 arr[5] 读的是数组后面的内存，内容不确定
-    cout << "arr[5] = " << arr[5] << "  ← 这是越界读出来的垃圾值！" << endl;
+    // 读 arr[5] 属于未定义行为：可能读到垃圾值、崩溃，或"看起来正常"。
+    // 这里不真正执行越界访问，避免演示程序自己踩 UB。
+    cout << "arr[5] 是越界访问（未定义行为），这里只讲解，不真正读取。" << endl;
 
     // ❌ 更危险：越界写，会破坏别的变量或栈帧
     // arr[100] = 999;  // 取消注释可能导致程序崩溃
@@ -67,10 +70,9 @@ void bug_dangling_pointer() {
     cout << "delete 之前: *p = " << *p << endl;
 
     delete p;
-    // ❌ 错误：delete 之后 p 变成野指针，不能再用了
-    // 但 p 的值还在（指向的地址没变），只是那块内存不归你管了
-    cout << "delete 之后: *p = " << *p
-         << "  ← 野指针！这块内存可能已经被别人用了" << endl;
+    // ❌ 错误：delete 之后 p 变成悬空指针（野指针），不能再解引用。
+    // 解引用已释放的内存是未定义行为，所以这里不演示 *p，只说明后果。
+    cout << "delete 之后，p 已成为悬空指针，不能解引用。" << endl;
 
     // ✅ 好习惯：delete 之后立刻把指针设为 nullptr
     p = nullptr;
@@ -161,9 +163,13 @@ public:
     // ✅ 自定义赋值运算符：深拷贝（注意自赋值检查）
     DeepString& operator=(const DeepString& other) {
         if (this != &other) {        // 防止自赋值
-            delete[] data_;          // 先释放旧的
-            data_ = new char[strlen(other.data_) + 1];
-            strcpy(data_, other.data_);
+            // 先分配并复制新内容，成功后再释放旧内存。
+            // 若先 delete[] 再 new，new 抛异常时对象会留下悬空指针，
+            // 析构时还会再次 delete[]（双重释放）。
+            char* fresh = new char[strlen(other.data_) + 1];
+            strcpy(fresh, other.data_);
+            delete[] data_;
+            data_ = fresh;
         }
         return *this;
     }
@@ -199,7 +205,9 @@ void bug_shallow_copy() {
 // ============================================================
 //
 //  症状：算出来的数莫名其妙变成负数，或者很小
-//  原因：整型的范围是有限的，超过了就溢出（环绕）
+//  原因：整型的范围是有限的
+//        有符号整数溢出是未定义行为（UB），不要依赖它“环绕”
+//        无符号整数溢出是有定义的：按 2^N 取模环绕
 
 void bug_integer_overflow() {
     cout << "\n=== Bug 5: 整数溢出 ===" << endl;
@@ -207,24 +215,26 @@ void bug_integer_overflow() {
     // int 的范围大约是 -21亿 ~ +21亿
     int a = 2000000000;
     int b = 2000000000;
-    int sum = a + b;  // ❌ 溢出了！
 
-    cout << "a = " << a << endl;
-    cout << "b = " << b << endl;
-    cout << "a + b = " << sum << "  ← 溢出了！正确答案应该是 40 亿" << endl;
+    // ❌ int sum = a + b;  // 有符号溢出是未定义行为，结果不可预测！
+    // 正确做法：先判断再计算，或者提前换成更宽的类型
+    if (a > std::numeric_limits<int>::max() - b) {
+        cout << "a + b 会超出 int 范围，已阻止这次计算" << endl;
+    }
 
     // ✅ 正确：用更大的类型
     long long bigSum = (long long)a + b;
     cout << "用 long long: a + b = " << bigSum << "  ← 正确" << endl;
 
     // 另一个经典坑：无符号数相减
+    // 无符号运算不会得到负数，而是按 2^32 取模，变成很大的正数
     unsigned int x = 5;
     unsigned int y = 10;
-    unsigned int diff = x - y;  // ❌ 无符号数不会是负的，变成很大的正数
-    cout << "\n5u - 10u = " << diff << "  ← 无符号溢出，变成超大数！" << endl;
+    unsigned int diff = x - y;  // 有定义，但通常不是想要的结果
+    cout << "\n5u - 10u = " << diff << "  ← 无符号环绕，变成超大数！" << endl;
 
     cout << "💡 关键检查点：两数相加/相乘时，想想会不会超范围" << endl;
-    cout << "💡 有符号和无符号混用时要特别小心" << endl;
+    cout << "💡 有符号溢出是 UB；无符号溢出按模 2^N 环绕，二者都不是“正常结果”" << endl;
 }
 
 // ============================================================
@@ -249,11 +259,13 @@ void bug_signed_unsigned() {
     }
 
     // 另一个常见场景：vector 的 size() 是无符号的
-    std::vector<int> v;
+    std::vector<int> v{1, 2, 3};
     int n = -1;
-    if (v.size() > n) {
-        cout << "v.size()(" << v.size() << ") > -1 吗？" << endl;
-        cout << "❌ 答案是 false！因为 -1 转无符号数变超大了" << endl;
+    bool greater = v.size() > n;   // n 被转换成 unsigned，-1 变成超大正数
+    cout << "v.size()(" << v.size() << ") > -1 的结果是: "
+         << (greater ? "true" : "false") << endl;
+    if (!greater) {
+        cout << "❌ 答案是 false！因为 -1 被转成无符号数，变成超大的正数" << endl;
     }
 
     cout << "💡 尽量不要混用有符号和无符号" << endl;

@@ -203,7 +203,7 @@ void demo_insert_erase() {
 
     auto it_mod2 = bm.right.find("two");
     if (it_mod2 != bm.right.end()) {
-        bm.right.replace_data(it_mod2, "第二");
+        bm.right.replace_key(it_mod2, "第二");
         std::cout << "    把右边 two 改成 第二\n";
     }
 
@@ -489,20 +489,22 @@ void demo_translation_dict() {
 void demo_performance() {
     std::cout << "\n===== 8. bimap vs 两个map =====\n";
 
-    std::cout << "  功能对比:\n";
-    std::cout << "    特性          两个 std::map    boost::bimap\n";
-    std::cout << "    ─────────────────────────────────────────\n";
-    std::cout << "    正向查找          O(log n)        O(log n)\n";
-    std::cout << "    反向查找          O(n) 或 O(log n) O(log n)\n";
-    std::cout << "    插入              O(log n)        O(log n)\n";
-    std::cout << "    删除              O(log n)        O(log n)\n";
-    std::cout << "    同步维护          手动（容易错）   自动\n";
-    std::cout << "    内存占用          两份key         一份数据\n";
-    std::cout << "    代码复杂度        高              低\n";
+    std::cout << "  功能对比（与“两个 std::map 手工同步”相比）:\n";
+    std::cout << "    特性        两个 std::map（手工反向索引）  boost::bimap\n";
+    std::cout << "    ─────────────────────────────────────────────────────\n";
+    std::cout << "    正向查找      O(log n)                        O(log n)\n";
+    std::cout << "    反向查找      O(log n)（若维护反向 map）     O(log n)\n";
+    std::cout << "                  O(n)（若只维护一个 map）\n";
+    std::cout << "    插入          O(log n)，两棵树各插一次      O(log n)\n";
+    std::cout << "    删除          O(log n)，两棵树各删一次      O(log n)\n";
+    std::cout << "    同步维护      手动（容易漏、容易不一致）    自动\n";
+    std::cout << "    内存          每个元素两个树节点 + key 两份  每个元素两个索引节点，值只存一份\n";
+    std::cout << "    代码复杂度    高                            低\n";
 
     std::cout << "\n  bimap 的优势：\n";
-    std::cout << "    1. 数据只存一份，节省内存\n";
-    std::cout << "    2. 自动双向同步，不会出现不一致\n";
+    std::cout << "    1. 值只存一份，无需在两个 map 里各存一份 value\n";
+    std::cout << "       （但两个索引结构仍然存在，内存并不会减半）\n";
+    std::cout << "    2. 自动双向同步，不会出现一边改了另一边没改\n";
     std::cout << "    3. 代码更简洁，语义更清晰\n";
     std::cout << "    4. 支持多种集合类型（有序/无序/向量/...）\n";
 
@@ -528,8 +530,9 @@ void laoshifu_says() {
     std::cout << "  后来发现了 bimap，简直是救星。\n";
     std::cout << "\n";
     std::cout << "  bimap 不只是两个 map 拼起来那么简单。\n";
-    std::cout << "  它的数据只存一份，两边的索引都指向同一份数据。\n";
-    std::cout << "  内存和性能都比手写两个 map 要好。\n";
+    std::cout << "  它的值只存一份，两边的索引都指向同一份数据。\n";
+    std::cout << "  注意：两个索引的开销还在，别指望内存减半；\n";
+    std::cout << "  它真正省掉的是“手工同步”带来的 bug。\n";
     std::cout << "\n";
     std::cout << "  几个实用建议：\n";
     std::cout << "  1️⃣ 能用标签就用标签，left/right 太容易搞混了\n";

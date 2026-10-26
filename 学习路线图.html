@@ -424,8 +424,8 @@
   <div class="meta">
     <div class="meta-item"><strong>6</strong> 个阶段</div>
     <div class="meta-item"><strong>55</strong> 个代码 Demo<br><span style="font-size:12px;opacity:0.7">含Boost共68个</span></div>
-    <div class="meta-item"><strong>10</strong> 个构建示例</div>
-    <div class="meta-item"><strong>6</strong> 个可视化页面</div>
+    <div class="meta-item"><strong>11</strong> 个构建示例</div>
+    <div class="meta-item"><strong>2</strong> 个可视化页面</div>
   </div>
 </div>
 
@@ -467,7 +467,7 @@
       <span class="topic-tag">编译与调试</span>
     </div>
     <div class="stage-files">
-      📁 对应代码：<code>beginner/</code> 目录下 6 个 demo
+      📁 对应代码：<code>beginner/</code> 目录下共 10 个 demo（本阶段先学 01–06，07–10 放到下一阶段）
     </div>
   </div>
 
@@ -495,7 +495,7 @@
       <span class="topic-tag">异常处理</span>
     </div>
     <div class="stage-files">
-      📁 对应代码：<code>beginner/</code> + <code>intermediate/</code> 目录
+      📁 对应代码：<code>beginner/</code>（07–10）+ <code>exceptions/</code> 目录
     </div>
   </div>
 
@@ -583,10 +583,11 @@
       <span class="topic-tag">编程规范</span>
       <span class="topic-tag">代码审查</span>
       <span class="topic-tag">单元测试</span>
+      <span class="topic-tag">调试排错</span>
       <span class="topic-tag">项目结构设计</span>
     </div>
     <div class="stage-files">
-      📁 对应代码：<code>patterns/</code> + <code>build_systems/</code> 目录
+      📁 对应代码：<code>patterns/</code> + <code>debugging/</code> + <code>testing/</code> + <code>build_systems/</code> 目录
     </div>
   </div>
 
@@ -599,8 +600,8 @@
     </div>
     <div class="stage-duration">⏱️ 建议用时：持续学习</div>
     <div class="stage-desc">
-      学无止境。Boost 库是 C++ 的"准标准库"，涵盖日志、配置、网络、
-      序列化、进程间通信等 13 个实用库。同时关注模板元编程、
+      学无止境。Boost 库是 C++ 的"准标准库"，`boost/` 目录用 13 个示例覆盖日志、配置、网络、序列化、多索引、Spirit 解析器等常用组件；
+      进程间通信（Boost.Interprocess）在 `concurrency/` 中演示。同时关注模板元编程、
       性能调优、架构设计，在实战中不断精进。
     </div>
     <div class="stage-topics">
@@ -616,9 +617,10 @@
       <span class="topic-tag">进程间通信</span>
       <span class="topic-tag">模板元编程</span>
       <span class="topic-tag">性能调优</span>
+      <span class="topic-tag">综合实战</span>
     </div>
     <div class="stage-files">
-      📁 对应代码：<code>boost/</code> 目录
+      📁 对应代码：<code>boost/</code> + <code>performance/</code> + <code>projects/todo_cli/</code> 目录
     </div>
   </div>
 
@@ -851,8 +853,8 @@
     </tr>
     <tr>
       <td><a href="cpp_evolution/" style="color: var(--accent);"><code>cpp_evolution/</code></a></td>
-      <td colspan="2"><a href="cpp_evolution/cpp11_core_features.cpp" style="color: var(--ink);">cpp11核心</a> · <a href="cpp_evolution/cpp14_features.cpp" style="color: var(--ink);">cpp14特性</a> · <a href="cpp_evolution/evolution_comparison.cpp" style="color: var(--ink);">演进对比</a></td>
-      <td>C++11→14→17 版本演进与写法对比</td>
+      <td colspan="2"><a href="cpp_evolution/cpp11_core_features.cpp" style="color: var(--ink);">cpp11核心</a> · <a href="cpp_evolution/cpp14_features.cpp" style="color: var(--ink);">cpp14特性</a> · <a href="cpp_evolution/evolution_comparison.cpp" style="color: var(--ink);">演进对比</a> · <a href="cpp_evolution/cpp20_overview.cpp" style="color: var(--ink);">C++20 概览</a></td>
+      <td>C++11→14→17→20 版本演进与写法对比（C++20 示例需 C++20 编译器）</td>
     </tr>
     <tr>
       <td rowspan="7">并发编程</td>
@@ -1096,7 +1098,7 @@
     <tr>
       <td rowspan="1">实战项目</td>
       <td rowspan="1"><a href="projects/todo_cli/" style="color: var(--accent);"><code>projects/todo_cli/</code></a></td>
-      <td><a href="projects/todo_cli/index.html" style="color: var(--ink);">🏗️ Todo CLI 待办管理系统</a> · <a href="projects/todo_cli/tutorial.txt" style="color: var(--accent);">📖 指南</a></td>
+      <td><a href="projects/todo_cli/index.html" style="color: var(--ink);">🏗️ Todo CLI 待办管理系统</a> · <a href="projects/todo_cli/tutorial.md" style="color: var(--accent);">📖 指南</a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>综合项目：命令模式+工厂+策略+RAII+文件持久化，把知识串起来</td>
     </tr>
@@ -1166,7 +1168,7 @@
     <div class="book-level">并发编程</div>
     <div class="book-title">《C++并发编程实战》</div>
     <div class="book-author">Anthony Williams</div>
-    <div class="book-desc">C++ 并发编程的权威指南。线程、同步、原子操作、内存模型、并发数据结构…非常全面。第2版涵盖 C++17/20。</div>
+    <div class="book-desc">C++ 并发编程的权威指南。线程、同步、原子操作、内存模型、并发数据结构…非常全面。第2版按 C++17 标准更新，并补充了并行算法与多线程测试章节。</div>
   </div>
 
   <div class="book-card">
@@ -1205,7 +1207,7 @@
   <ol>
     <li><strong>Windows 用户：</strong>安装 Visual Studio Community（免费），勾选"C++ 桌面开发"工作负载</li>
     <li><strong>也可以用 VS Code + MinGW：</strong>轻量灵活，适合初学者</li>
-    <li><strong>编译器要求：</strong>支持 C++17 即可（GCC 7+ / Clang 5+ / MSVC 2017+）</li>
+    <li><strong>编译器要求：</strong>支持 C++17（GCC 9+ / Clang 10+ / MSVC 2019+）；C++20 示例需 GCC 11+ / Clang 12+ / MSVC 2019 16.11+</li>
   </ol>
   <br>
   <h3>第二步：从第一个文件开始</h3>

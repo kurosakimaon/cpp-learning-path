@@ -20,6 +20,7 @@
 #include <map>
 #include <utility>
 #include <type_traits>
+#include <cmath>
 #include <cassert>
 
 // ============================================================
@@ -63,6 +64,8 @@ void demo_pair_binding() {
     // C++17 之前的写法
     int old_first = p.first;
     std::string old_second = p.second;
+    std::cout << "C++14 方式: first=" << old_first
+              << ", second=" << old_second << "\n";
 
     // C++17 结构化绑定
     auto [first, second] = p;
@@ -105,7 +108,7 @@ void demo_struct_binding() {
     std::cout << "Point: x=" << px << ", y=" << py << ", name=" << pname << "\n";
 
     // 绑定嵌套结构体？不行！必须一层一层来
-    Rectangle rect{{5, 5}, 100, 200};
+    Rectangle rect{{5, 5, "corner"}, 100, 200};
     auto [tl, w, h] = rect;
     // tl 的类型是 Point，可以再绑定
     auto [rx, ry, rname] = tl;
@@ -414,10 +417,13 @@ void demo_ignore_bindings() {
 
     std::tuple<int, double, std::string, char> t(1, 3.14, "hello", 'x');
 
-    // 只关心部分值，其他用 _ 或随意命名（C++ 没有专门的 ignore 语法）
-    auto [i, _, s, __] = t;
+    // 只关心部分值，其他只能起个名字占位（C++ 没有专门的 ignore 语法）
+    // 注意：不要用 __ 开头或含双下划线的名字，这些标识符保留给实现。
+    auto [i, unused1, s, unused2] = t;
+    (void)unused1;
+    (void)unused2;
     std::cout << "i = " << i << ", s = " << s << "\n";
-    // 注意：_ 就是普通变量名，可以用但不建议在实际代码中滥用
+    // 注意：占位名也是普通变量，只是不参与后续计算
 
     // 更好的做法：使用 std::tie + std::ignore（C++11 方式）
     int ii;

@@ -66,6 +66,16 @@ public:
     // 添加任务，返回新任务的 ID
     int addTask(const Task& task);
 
+    // 从存储导入任务：保留任务原有的 ID，
+    // 并把 next_id_ 更新为“最大 ID + 1”。
+    // 与 addTask 的区别：addTask 总是分配新 ID，适合用户新建任务；
+    // 导入持久化数据时必须保留原 ID，否则重启后命令里的 ID 会错位。
+    void importTasks(const std::vector<Task>& tasks);
+
+    // 清空所有任务，并把 next_id_ 重置为 1。
+    // 加载文件前先用它清空旧数据，再调用 importTasks。
+    void clear();
+
     // 根据 ID 删除任务，返回是否成功（ID 不存在则失败）
     bool deleteTask(int id);
 

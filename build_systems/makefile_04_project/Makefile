@@ -57,6 +57,21 @@ LIB_DIR := lib
 # 安装目录前缀
 PREFIX := /usr/local
 
+# Windows 下 g++ 生成的可执行文件带 .exe 后缀。
+# 用 uname 兜底，因为某些 make 环境里 OS 变量不一定存在。
+UNAME_S := $(shell uname -s 2>/dev/null)
+ifeq ($(OS),Windows_NT)
+    EXE := .exe
+else ifneq (,$(findstring MINGW,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring MSYS,$(UNAME_S)))
+    EXE := .exe
+else ifneq (,$(findstring CYGWIN,$(UNAME_S)))
+    EXE := .exe
+else
+    EXE :=
+endif
+
 
 # ============================================================
 # 二、编译器与编译选项
@@ -106,9 +121,9 @@ endif
 # ============================================================
 
 # 找出 src/ 目录下所有 .cpp 文件（包括子目录）
-# 注意：wildcard 只能找一层目录，要递归得用 shell find 命令
-# 或者用 Make 4.x 的 $(wildcard src/**/*.cpp)
-# 为了兼容性，咱用 shell find，靠谱
+# 注意：wildcard 只能匹配一层目录，别指望 src/**/*.cpp 递归——
+# GNU make 的 wildcard 不支持 shell 的 globstar 语义。
+# 要递归就老老实实用 shell find。
 
 # 用 find 命令递归查找所有 .cpp 文件
 SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -type f)
@@ -125,8 +140,9 @@ SRCS := $(shell find $(SRC_DIR) -name '*.cpp' -type f)
 #
 # 【老师傅提醒】
 # 用 shell 函数要注意跨平台。
-# Windows 上没有 find 命令，但 MinGW 和 WSL 都有。
-# 纯 Windows 环境可能得换种写法，咱这里以 GNU/Linux 环境为主。
+# Windows CMD 里的 find 是文本搜索工具，不是 Unix 的 find。
+# 在 MinGW/MSYS2 或 WSL 里才能用 Unix find；
+# 纯 Windows 环境可能得换种写法，咱这里以 Unix 工具链为主。
 
 
 # ============================================================
@@ -162,7 +178,7 @@ DEPS := $(patsubst %.o,%.d,$(OBJS))
 # ============================================================
 
 # 可执行文件名
-TARGET := $(BIN_DIR)/myapp
+TARGET := $(BIN_DIR)/myapp$(EXE)
 
 # 默认目标：all
 .PHONY: all

@@ -1,0 +1,127 @@
+# CMake 入门教程 - 第一讲
+
+> 老师傅带你走进 CMake 的世界
+
+## 一、什么是 CMake？
+
+徒弟啊，你先别急着敲命令，咱先唠唠什么是 CMake。
+
+简单说，CMake 就是个"生成构建系统的工具"。
+
+你可能会问：啥叫构建系统？
+
+- 你手写 `g++ main.cpp -o hello`，这叫手动编译
+- 项目大了，文件多了，你写 Makefile 来管理编译，这 Makefile 就是一种构建系统
+- 但 Makefile 主要面向 Unix 工具链：Windows 上更常见的是 Visual Studio 的 `.sln`/`.vcxproj`，不同平台、不同编译器各有各的构建文件，换台机器就得重写一套
+
+那 CMake 干啥的？
+
+CMake 就像是个翻译官。你写一份 `CMakeLists.txt`（相当于通用说明书），CMake 根据你电脑的环境和所选的生成器，自动生成对应的构建文件：
+
+- Linux / macOS 默认 → 生成 Unix Makefile（也可选 Ninja）
+- Windows + Visual Studio → 生成 `.sln`/`.vcxproj`
+- Windows + MinGW → 生成 MinGW Makefiles
+- macOS 指定 Xcode 生成器 → 生成 Xcode 工程（默认并不是 Xcode）
+
+一份配置，到处运行。这就是 CMake 最牛的地方。
+
+## 二、为什么要用 CMake？
+
+老师傅我给你数几个好处：
+
+1. 跨平台
+   刚才说了，一套 `CMakeLists.txt`，Windows/Linux/macOS 通吃。你不用写三套构建脚本了，省老鼻子事了。
+2. 自动检测依赖
+   CMake 能帮你找编译器、找系统库、找第三方库。不用你自己去写一堆检测脚本。
+3. 外部构建（Out-of-source build）
+   这是个好东西，下面专门讲。
+4. 生态好
+   现在 C++ 世界里，CMake 几乎就是事实标准了。你去找个开源 C++ 项目，十个有八个用 CMake。
+
+## 三、什么是外部构建（Out-of-source build）？
+
+这个概念很重要，徒弟你竖起耳朵听好。
+
+啥叫"外部构建"？就是把编译产生的中间文件（`.o`、`.obj`、可执行文件啥的）都放到源码目录之外的一个单独的文件夹里（通常叫 `build`）。
+
+为什么要这么干？好处多了去了：
+
+1. 源码目录干干净净
+   你想啊，一个项目几百个源文件，编译完产生一堆 `.o` 文件，混在一起你都分不清哪个是源码哪个是中间产物。外部构建的话，源码目录永远清清爽爽。
+2. 删编译结果方便
+   想重新编译？直接把 `build` 文件夹删了就行。不用在源码目录里到处找哪些是生成的文件。
+3. 可以同时有多个构建版本
+   你可以搞一个 `build_debug` 文件夹放 Debug 版本，再搞一个 `build_release` 文件夹放 Release 版本。互不干扰，想切哪个切哪个。
+
+> **老师傅警告**
+>
+> 千万千万别在源码目录里直接跑 `cmake .`！
+> 那叫 in-source build（内部构建），生成的一堆文件
+> 乱七八糟混在源码里，清理起来老费劲了。
+> 新手最容易犯这个错，你可别学他们！
+
+## 四、基本命令流程
+
+来，咱实际操作一把，就用这个 `cmake_01_basic` 例子。
+
+**步骤 1：进到项目目录，创建一个 `build` 文件夹**
+
+```bash
+cd cmake_01_basic
+mkdir build
+cd build
+```
+
+**步骤 2：运行 cmake，让它生成构建文件**
+
+```bash
+cmake ..
+```
+
+（注意那两个点 `..` 是上一级目录，也就是源码目录）
+
+这一步 CMake 会检测你的编译器，生成对应的构建文件。Windows + Visual Studio 的话会生成 `.sln` 文件，Linux/macOS + Make 的话会生成 Makefile。
+
+**步骤 3：编译项目**
+
+Linux/macOS 下：
+
+```bash
+make
+```
+
+Windows（Visual Studio）下：
+
+```bash
+cmake --build .
+```
+
+（或者你直接打开生成的 `.sln` 文件用 VS 编译也行）
+
+**步骤 4：运行程序**
+
+Linux/macOS：`./hello`
+
+Windows：`Debug\hello.exe` 或者 `Release\hello.exe`
+
+## 五、几个常用的 CMake 命令速查
+
+```bash
+cmake ..              # 用默认生成器生成构建文件
+cmake -G "MinGW Makefiles" ..   # 指定用 MinGW Makefiles
+cmake -G "Visual Studio 17 2022" ..  # 指定 VS 2022
+cmake --build .       # 编译（不管是什么生成器都能用这条）
+cmake --build . --config Release   # Release 模式编译
+make clean            # 清理编译结果（Makefile 生成器）
+```
+
+## 六、老师傅的经验之谈
+
+1. `CMakeLists.txt` 的名字注意大小写，必须是 `CMakeLists.txt`，一个字母都不能错，CMake 不认别的名字。
+2. 养成外部构建的好习惯，永远在 `build` 目录里操作。
+3. `cmake ..` 这一步是"配置阶段"，`make` 是"构建阶段"。改了 `CMakeLists.txt` 后，Makefile/Ninja 生成器通常会自动重新配置；手动再跑一次 `cmake ..` 也无妨。只改源码的话，直接 `make` 就行。
+4. 刚开始学不用记太多命令，先把最基础的三个命令搞明白：`cmake_minimum_required`、`project`、`add_executable`。这仨是 CMake 的"三板斧"，所有项目都离不开。
+
+---
+
+第一讲就到这儿。把这个例子跑通了，咱就进下一讲，看看多文件项目怎么搞。

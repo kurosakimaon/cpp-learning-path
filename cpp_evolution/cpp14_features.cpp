@@ -15,7 +15,7 @@
  * 7. std::make_unique
  * 8. [[deprecated]] 属性
  * 9. lambda 初始化捕获 (Lambda Capture Initializers)
- * 10. 变量模板与类型特征 (type traits 变量模板)
+ * 10. 变量模板的实际应用（注意：标准库的 _v 类型特征到 C++17 才加入）
  *
  * 编译命令: g++ -std=c++14 -Wall -Wextra -pedantic cpp14_features.cpp -o cpp14_features
  */
@@ -29,6 +29,7 @@
 #include <utility>
 #include <complex>
 #include <numeric>
+#include <cstddef>
 
 // ============================================================================
 // 1. 泛型 Lambda (Generic Lambda)
@@ -126,10 +127,10 @@ auto get_value_auto() {
 }
 
 decltype(auto) get_value_decltype_auto() {
-    return global_value;  // 返回 int（因为 global_value 是左值表达式? 不，它是id表达式）
+    return global_value;  // 无括号的 id 表达式：按声明类型推导，返回 int
     // 注意：return expr 中，
     // - 如果 expr 是无括号的 id 表达式 -> decltype(entity) 规则 -> int
-    // - 如果是 (expr) -> decltype(expr) 规则 -> int&（如果是左值）
+    // - 如果是 (expr) -> decltype(expr) 规则 -> int&（左值表达式）
 }
 
 decltype(auto) get_value_ref() {
@@ -150,8 +151,10 @@ decltype(auto) make_unique_cpp14_style(Args&&... args) {
 }
 
 // 进阶：返回类型推导与递归
-// C++14 允许递归函数使用返回类型推导
-// 但必须先有一个 return 语句让编译器推导出类型
+// C++14 允许带返回类型推导的函数参与递归，但递归调用发生前，
+// 编译器必须能确定被调函数的返回类型：
+// - 非模板函数：通常要求递归调用之前已经出现过 return 语句；
+// - 函数模板：像下面这样拆成“单参数基线版 + 递归版”两个重载，最稳妥。
 template <typename T>
 auto sum_all(T value) {
     return value;
@@ -180,18 +183,27 @@ void demo() {
     std::cout << "\n--- 2.3 auto vs decltype(auto) ---\n";
     auto v1 = get_value_auto();
     v1 = 100;
-    std::cout << "get_value_auto() 返回值类型，修改后 global_value = "
-              << global_value << "（不受影响）\n";
+    std::cout << "get_value_auto() 返回 int：v1 = " << v1
+              << "，global_value = " << global_value << "（不受影响）\n";
 
-    auto v2 = get_value_ref();  // v2 是 int（值捕获）
+    auto v2 = get_value_ref();  // v2 是 int（值拷贝）
     v2 = 200;
-    std::cout << "用 auto 接收 get_value_ref() 返回值，global_value = "
-              << global_value << "（不受影响，因为被拷贝了）\n";
+    std::cout << "用 auto 接收 get_value_ref() 返回值：v2 = " << v2
+              << "，global_value = " << global_value
+              << "（不受影响，因为被拷贝了）\n";
 
     decltype(auto) v3 = get_value_ref();  // v3 是 int&
     v3 = 200;
     std::cout << "用 decltype(auto) 接收，global_value = "
               << global_value << "（v3 是引用，修改生效）\n";
+
+    static_assert(std::is_same<decltype(get_value_auto()), int>::value,
+                  "auto 返回 int");
+    static_assert(std::is_same<decltype(get_value_decltype_auto()), int>::value,
+                  "无括号 id 表达式按声明类型推导为 int");
+    static_assert(std::is_same<decltype(get_value_ref()), int&>::value,
+                  "带括号的左值表达式推导为 int&");
+    std::cout << "static_assert 验证：auto 去掉引用，decltype(auto) 按表达式规则推导\n";
 
     // 恢复
     global_value = 42;
@@ -229,9 +241,10 @@ T circle_area(T radius) {
     return pi<T> * radius * radius;
 }
 
-// 类型特征的变量模板（C++14 标准库大量使用）
-// 标准库中：std::is_same_v<T, U> 就是变量模板
-// 它等价于 std::is_same<T, U>::value
+// 类型特征的变量模板
+// 注意：变量模板是 C++14 的语言特性，可以自己定义；
+// 但标准库的 _v 版本（std::is_same_v 等）是 C++17 才加入的。
+// C++14 里标准库仍然只有 std::is_same<T, U>::value。
 
 // 自定义类型特征变量模板
 template <typename T>
@@ -243,13 +256,13 @@ constexpr bool is_floating_point_v = std::is_floating_point<T>::value;
 // 更复杂的例子：配置参数
 template <typename T>
 struct TypeConfig {
-    static constexpr size_t buffer_size = sizeof(T) * 16;
+    static constexpr std::size_t buffer_size = sizeof(T) * 16;
     static constexpr bool is_trivial = std::is_trivial<T>::value;
 };
 
 // 变量模板版本
 template <typename T>
-constexpr size_t buffer_size_v = TypeConfig<T>::buffer_size;
+constexpr std::size_t buffer_size_v = TypeConfig<T>::buffer_size;
 
 // 进阶：变量模板特化
 template <typename T>
@@ -284,9 +297,10 @@ void demo() {
               << is_integral_v<int> << "\n";
     std::cout << "is_integral_v<double>  = "
               << is_integral_v<double> << "\n";
-    std::cout << "标准库的 std::is_same_v<int, int> = "
-              << std::is_same_v<int, int> << "\n";
-    std::cout << "C++14 起 _v 后缀的变量模板大量出现在 <type_traits> 中\n";
+    std::cout << "标准库 C++14 写法 std::is_same<int, int>::value = "
+              << std::is_same<int, int>::value << "\n";
+    std::cout << "标准库的 _v 后缀（如 std::is_same_v）是 C++17 才加入的\n";
+    std::cout << "本文件自定义的 is_integral_v 展示了 C++14 变量模板的能力\n";
 
     std::cout << "\n--- 3.3 特化变量模板 ---\n";
     std::cout << "type_name_v<int>          = " << type_name_v<int> << "\n";
@@ -294,10 +308,10 @@ void demo() {
     std::cout << "type_name_v<std::string>  = " << type_name_v<std::string> << "\n";
     std::cout << "type_name_v<char>         = " << type_name_v<char> << "\n";
 
-    std::cout << "\n--- 3.4 与 C++11 的对比 ---\n";
-    std::cout << "C++11 写法：std::is_same<T, U>::value\n";
-    std::cout << "C++14 写法：std::is_same_v<T, U>\n";
-    std::cout << "省去了 ::value，代码更简洁，编译也可能更快\n";
+    std::cout << "\n--- 3.4 与旧写法的对比 ---\n";
+    std::cout << "C++14 标准库写法：std::is_same<T, U>::value\n";
+    std::cout << "C++17 标准库写法：std::is_same_v<T, U>\n";
+    std::cout << "变量模板是 C++14 加入的语言特性，标准库的 _v 版本到 C++17 才补上\n";
 
     std::cout << "\n--- 3.5 实际应用：配置系统 ---\n";
     std::cout << "buffer_size_v<int>    = " << buffer_size_v<int> << " 字节\n";
@@ -321,7 +335,9 @@ namespace section4_relaxed_constexpr {
 // - 可以有局部变量（必须初始化）
 // - 可以有循环、if、switch
 // - 可以有 void 函数（不返回值，但可以修改引用参数）
-// - 可以有 constexpr lambda
+//
+// 注意：lambda 的 operator() 隐式成为 constexpr 是 C++17 的特性，
+// C++14 的 lambda 不能靠这个在编译期求值。
 
 // C++14 constexpr：可以有循环和局部变量
 constexpr int factorial(int n) {
@@ -343,8 +359,7 @@ constexpr bool is_prime(int n) {
     return true;
 }
 
-// constexpr lambda（C++17 才正式成为标准，但部分编译器在 C++14 就支持）
-// C++14 的 constexpr 函数可以更复杂
+// C++14 的 constexpr 函数可以包含循环等复杂逻辑
 constexpr int sum_range(int start, int end) {
     int sum = 0;
     for (int i = start; i <= end; i++) {
@@ -366,10 +381,11 @@ constexpr void swap(int& a, int& b) {
 }
 
 // 编译期排序（简化版冒泡排序）
-template <size_t N>
+template <std::size_t N>
 constexpr void sort_array(int (&arr)[N]) {
-    for (size_t i = 0; i < N - 1; i++) {
-        for (size_t j = 0; j < N - i - 1; j++) {
+    if (N < 2) return;
+    for (std::size_t i = 0; i < N - 1; i++) {
+        for (std::size_t j = 0; j < N - i - 1; j++) {
             if (arr[j] > arr[j + 1]) {
                 swap(arr[j], arr[j + 1]);
             }
@@ -393,22 +409,13 @@ void demo() {
     std::cout << "is_prime(15) = " << prime_15 << "\n";
 
     std::cout << "\n--- 4.2 编译期数组排序 ---\n";
-    constexpr int arr[] = {5, 2, 8, 1, 9, 3, 7, 4, 6};
-    // 注意：C++14 中 constexpr 函数不能直接修改全局数组
-    // 但可以在 constexpr 上下文中创建和修改局部数组
+    // 常量求值中不能修改生命周期开始于表达式之外的全局数组；
+    // 下面的数组是 constexpr 对象 Sorter 的成员，生命周期在求值期间开始，
+    // 因此可以在 constexpr 构造函数里创建并排序。
     struct Sorter {
         int data[9];
         constexpr Sorter() : data{5, 2, 8, 1, 9, 3, 7, 4, 6} {
-            // 冒泡排序
-            for (int i = 0; i < 8; i++) {
-                for (int j = 0; j < 8 - i; j++) {
-                    if (data[j] > data[j + 1]) {
-                        int temp = data[j];
-                        data[j] = data[j + 1];
-                        data[j + 1] = temp;
-                    }
-                }
-            }
+            sort_array(data);  // 复用上面的 constexpr 冒泡排序
         }
     };
     constexpr Sorter sorted;
@@ -630,7 +637,9 @@ void demo() {
 
     std::cout << "\n--- 7.2 为什么推荐 make_unique ---\n";
     std::cout << "  1. 避免显式 new，符合 RAII 原则\n";
-    std::cout << "  2. 异常安全：防止构造函数抛异常时的资源泄漏\n";
+    std::cout << "  2. 异常安全：new 和所有权接管合并为一次函数调用，\n";
+    std::cout << "     避免多参数求值顺序造成的泄漏窗口\n";
+    std::cout << "     （new 本身在构造函数抛异常时会自动释放内存）\n";
     std::cout << "  3. 代码更简洁，无需重复类型名\n";
 
     std::cout << "\n--- 7.3 make_unique 的变体 ---\n";

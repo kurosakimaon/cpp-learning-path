@@ -1,9 +1,11 @@
 // ============================================================
 // 07_ipc_shared_memory.cpp - 进程间通信（Boost.Interprocess）
-// 编译命令: g++ -std=c++17 07_ipc_shared_memory.cpp -lboost_system -lrt -pthread -o 07_ipc_shared_memory
+// Linux 编译: g++ -std=c++17 07_ipc_shared_memory.cpp -lrt -pthread -o 07_ipc_shared_memory
+// MinGW 编译: g++ -std=c++17 07_ipc_shared_memory.cpp -pthread -o 07_ipc_shared_memory
 //
-// 注意：本文件使用 Boost.Interprocess 库
-// Windows 下需要安装 Boost 并正确配置头文件和库路径
+// 注意：本文件使用 Boost.Interprocess 库（多数功能是 header-only，
+// 不需要额外链接 boost_system；Linux 上需要 -lrt 才能使用共享内存/消息队列）
+// Windows 下需要安装 Boost 并正确配置头文件路径
 // ============================================================
 
 #include <iostream>
@@ -83,8 +85,11 @@ namespace bip = boost::interprocess;
 //   - 内存映射文件（memory-mapped file）
 //   - 进程间同步原语（mutex, condition, semaphore...）
 //   - 消息队列（message queue）
-//   - 命名管道（named pipe）
 //   - 还支持在共享内存里构造STL容器（vector, string, map...）
+//
+// 注意：Boost.Interprocess 没有 named_pipe 类。
+// 命名管道要用操作系统 API（POSIX mkfifo / Windows CreateNamedPipe），
+// 或者用 Boost.Asio 的本地 socket（local::stream_protocol）等更高层封装。
 //
 // 很强大对吧？咱们一个个来学。
 // ============================================================
@@ -170,8 +175,9 @@ void demo_basic_shared_memory() {
         }
 
         // ---- 第五步：清理 ----
-        // 注意：共享内存在内核中，进程退出了它还在！
-        // 必须手动删除，不然一直占着内存
+        // 注意：共享内存的生命周期因平台而异。POSIX 上它通常会保留到
+        // 显式 remove；Windows 上最后一个句柄关闭后可能被回收。
+        // 跨平台代码最稳妥的做法是显式 remove，避免残留。
         bip::shared_memory_object::remove(shm_name);
         cout << "共享内存已删除" << endl;
 
@@ -216,11 +222,15 @@ struct SharedData {
 
 void demo_synchronized_shm() {
     cout << "\n=== 演示2：带同步的共享内存 ===" << endl;
+    // 本示例在单进程内用两个线程模拟两个进程。
+    // 真实多进程时，只能由“创建者”执行 remove/truncate/placement new；
+    // 其他进程必须以 open_only 打开并直接映射，不能再初始化，
+    // 否则会把正在使用的共享内存清空，甚至重复构造互斥量。
 
     const char* shm_name = "sync_shm_demo";
 
     try {
-        // 清理旧的
+        // 单进程演示：先清理上一次运行可能残留的共享内存
         bip::shared_memory_object::remove(shm_name);
 
         // 创建共享内存
@@ -246,6 +256,10 @@ void demo_synchronized_shm() {
                 bip::scoped_lock<bip::interprocess_mutex> lock(data->mutex);
                 data->counter++;
                 cout << "  进程A：counter = " << data->counter << endl;
+                if (i == 0) {
+                    data->ready = true;          // 通知 B：初始化完成
+                    data->cond.notify_all();
+                }
                 lock.unlock();
                 data->cond.notify_one();
 
@@ -254,6 +268,11 @@ void demo_synchronized_shm() {
         };
 
         auto worker2 = [data]() {
+            // 等 A 把 ready 置为 true（演示 interprocess_condition 的真正用法）
+            {
+                bip::scoped_lock<bip::interprocess_mutex> lock(data->mutex);
+                data->cond.wait(lock, [data] { return data->ready; });
+            }
             for (int i = 0; i < 5; ++i) {
                 bip::scoped_lock<bip::interprocess_mutex> lock(data->mutex);
                 data->counter++;
@@ -537,9 +556,14 @@ void demo_message_queue() {
 //   - 单向的（一个写一个读）
 //   - 只能在同一台机器上用
 //
-// Boost.Interprocess 的 named_pipe 封装了跨平台的命名管道。
+// 注意：Boost.Interprocess 并没有 named_pipe 类！
+// 命名管道是操作系统提供的能力：
+//   - POSIX：用 mkfifo() 创建，然后像文件一样 open/read/write
+//   - Windows：用 CreateNamedPipe() / ConnectNamedPipe() 等 API
+// 想跨平台封装，可以考虑 Boost.Asio 的本地 socket
+// （Unix domain socket），或自己包一层平台 API。
 //
-// 实际项目中命名管用得不是特别多，因为：
+// 实际项目中命名管道用得不是特别多，因为：
 //   - 和 Unix domain socket 比，功能差不多
 //   - 和消息队列比，没有结构化、没有优先级
 //   - 和共享内存比，速度慢（数据要拷贝）
@@ -548,10 +572,7 @@ void demo_message_queue() {
 // ============================================================
 
 void demo_named_pipe() {
-    cout << "\n=== 演示6：命名管道（Named Pipe） ===" << endl;
-
-    // 注意：命名管道的完整演示需要两个进程
-    // 这里只展示基本概念和API，实际使用需要两个程序
+    cout << "\n=== 演示6：命名管道（概念说明，无 Boost 封装） ===" << endl;
 
     cout << "命名管道（Named Pipe）是一种字节流式的IPC方式。" << endl;
     cout << endl;
@@ -561,16 +582,19 @@ void demo_named_pipe() {
     cout << "  - 单向：一端写，一端读" << endl;
     cout << "  - 只能本机使用，不能跨网络" << endl;
     cout << endl;
-    cout << "Boost.Interprocess 中的相关类：" << endl;
-    cout << "  - bip::named_pipe  - 命名管道" << endl;
-    cout << "  - 支持 read/write 操作" << endl;
-    cout << "  - 支持阻塞和非阻塞模式" << endl;
+    cout << "平台 API：" << endl;
+    cout << "  - POSIX/Linux: mkfifo() 创建 FIFO，再 open/read/write" << endl;
+    cout << "  - Windows: CreateNamedPipe() / ConnectNamedPipe()" << endl;
+    cout << "  - 跨平台替代：Boost.Asio 的 local::stream_protocol（Unix domain socket）" << endl;
+    cout << endl;
+    cout << "注意：Boost.Interprocess 不提供 named_pipe 类，" << endl;
+    cout << "不要去找 bip::named_pipe，它不存在。" << endl;
     cout << endl;
     cout << "适用场景：" << endl;
     cout << "  - 简单的命令式通信（发指令、收结果）" << endl;
     cout << "  - 流式数据传输（比如传日志）" << endl;
     cout << endl;
-    cout << "（命名管道需要两个独立进程才能完整演示，这里就不跑了）" << endl;
+    cout << "（命名管道需要两个独立进程才能完整演示，这里只讲概念）" << endl;
 }
 
 // ============================================================
@@ -610,6 +634,7 @@ void demo_producer_consumer_shm() {
     const char* shm_name = "prod_cons_shm";
 
     try {
+        // 单进程演示：先清理残留。真实多进程同样只能由创建者初始化一次。
         bip::shared_memory_object::remove(shm_name);
 
         bip::shared_memory_object shm(
@@ -739,7 +764,8 @@ int main() {
     cout << "4. Boost.Interprocess 是个好库，但也不是银弹。" << endl;
     cout << "   它封装得很好，但有些细节还是要注意：" << endl;
     cout << "   - 共享内存里不能放普通的 std 容器，要用 Boost 的版本" << endl;
-    cout << "   - 共享内存在内核中，进程退出了不会自动删，记得手动清理" << endl;
+    cout << "   - 共享内存生命周期因平台而异（POSIX 常驻、Windows 随句柄回收），" << endl;
+    cout << "     跨平台代码应显式 remove，别依赖析构自动清理" << endl;
     cout << "   - 指针不能直接放共享内存里（地址空间不一样），要用偏移量" << endl;
     cout << "" << endl;
     cout << "5. 实际项目中怎么选？我的经验：" << endl;
@@ -766,7 +792,7 @@ int main() {
     cout << "   writer 写的时候加锁，reader 读的时候也加锁，" << endl;
     cout << "   验证一下多进程下的互斥效果。" << endl;
     cout << "" << endl;
-    cout << "3. 用消息队列实现一个简单的"任务分发系统"：" << endl;
+    cout << "3. 用消息队列实现一个简单的“任务分发系统”：" << endl;
     cout << "   - 一个发送者进程，发送带优先级的任务" << endl;
     cout << "   - 多个接收者进程，从队列里取任务执行" << endl;
     cout << "   观察高优先级任务是不是先被处理。" << endl;
@@ -775,7 +801,7 @@ int main() {
     cout << "   如果我想在共享内存里实现一个链表，该怎么办？" << endl;
     cout << "   （提示：查一下 offset_ptr 和 相对地址）" << endl;
     cout << "" << endl;
-    cout << "5. 查一下什么是"内存映射文件"（Memory-Mapped File）：" << endl;
+    cout << "5. 查一下什么是“内存映射文件”（Memory-Mapped File）：" << endl;
     cout << "   它和共享内存有什么区别？" << endl;
     cout << "   什么情况下你会选择用内存映射文件而不是共享内存？" << endl;
     cout << "" << endl;

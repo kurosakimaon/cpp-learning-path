@@ -17,6 +17,11 @@
 #include <string>
 #include <vector>
 #include <type_traits>
+#include <utility>
+#include <list>
+#include <forward_list>
+#include <iterator>
+#include <stdexcept>
 #include <tuple>
 #include <array>
 #include <numeric>
@@ -83,20 +88,22 @@ void demo_basic_comparison() {
     std::cout << "  get_value(p)  = " << get_value_cpp17(p) << "\n";
 }
 
-// 1.2 if constexpr 的关键特性：丢弃的分支不实例化
-// 这意味着丢弃分支中的语法错误也不会导致编译失败（在模板内）
+// 1.2 if constexpr 的关键特性：被丢弃的分支不会针对当前模板参数实例化
+// 注意：丢弃不等于"随便写"。被丢弃的语句仍然必须语法正确；
+// 不依赖模板参数的明显类型错误，编译器照样会报错。
+// 能省掉的只是"针对当前 T 的实例化/语义检查"，例如对 int 解引用。
 
 template <typename T>
 void maybe_print(const T& value) {
     if constexpr (std::is_same_v<T, int>) {
-        // 对于非 int 类型，这个分支被丢弃，不会编译
+        // 对于非 int 类型，这个分支被丢弃，不会针对该 T 实例化
         std::cout << "整型值: " << value << "\n";
     } else if constexpr (std::is_same_v<T, std::string>) {
         std::cout << "字符串值: " << value << "\n";
     } else {
         // 其他类型，不打印
-        // 注意：即使这里写了不能编译的代码，只要不被实例化就没事
-        // （但在模板外的 if constexpr，两个分支仍然都会被检查语法）
+        // 这里的代码对当前 T 不会实例化，但仍需通过语法检查；
+        // 模板外的 if constexpr 则两个分支都会被完整检查。
         std::cout << "不支持的类型\n";
     }
 }
@@ -207,6 +214,14 @@ struct SerializableClass {
     std::string serialize() const { return "SerializedObject"; }
 };
 
+// C++17 检测惯用法：判断类型是否有 serialize() 成员函数
+template <typename T, typename = void>
+struct has_serialize : std::false_type {};
+
+template <typename T>
+struct has_serialize<T,
+    std::void_t<decltype(std::declval<const T&>().serialize())>> : std::true_type {};
+
 // 版本1：支持 serialize() 成员函数的类型
 // 版本2：算术类型（int, double 等）
 // 版本3：字符串类型
@@ -214,19 +229,19 @@ struct SerializableClass {
 
 template <typename T>
 std::string serialize(const T& obj) {
-    if constexpr (std::is_arithmetic_v<T>) {
+    using U = std::decay_t<T>;
+    if constexpr (std::is_arithmetic_v<U>) {
         // 算术类型：转字符串
         return std::to_string(obj);
-    } else if constexpr (std::is_same_v<T, std::string>) {
+    } else if constexpr (std::is_same_v<U, std::string>) {
         // 字符串：直接返回
         return obj;
-    } else if constexpr (std::is_same_v<T, const char*>) {
-        // C 风格字符串
+    } else if constexpr (std::is_convertible_v<const T&, const char*>) {
+        // C 风格字符串。注意字符串字面量的 T 是 char[N] 而不是 const char*，
+        // 所以要用 decay_t / is_convertible 判断，不能直接比较 T。
         return std::string(obj);
-    } else if constexpr (requires { obj.serialize(); }) {
-        // 有 serialize() 方法的类型（C++20 concepts，这里用 requires 表达式示意）
-        // 注意：C++17 中 requires 表达式不是所有编译器都支持，
-        // 实际工程中常用检测惯用法（见下文 SFINAE 检测）
+    } else if constexpr (has_serialize<U>::value) {
+        // 有 serialize() 方法的类型：用 C++17 的检测惯用法判断
         return obj.serialize();
     } else {
         static_assert(sizeof(T) == 0, "Unsupported type for serialization");
@@ -236,25 +251,21 @@ std::string serialize(const T& obj) {
 
 // 3.2 C++17 方式：用 void_t 检测成员函数（SFINAE 检测 + if constexpr）
 
-// 检测是否有 serialize() 成员函数
-template <typename T, typename = void>
-struct has_serialize : std::false_type {};
-
-template <typename T>
-struct has_serialize<T, std::void_t<decltype(std::declval<T>().serialize())>>
-    : std::true_type {};
-
+// 基于上面 has_serialize 的变量模板别名
 template <typename T>
 inline constexpr bool has_serialize_v = has_serialize<T>::value;
 
 // 使用检测结果的 serialize 函数（C++17 完全兼容版）
 template <typename T>
 std::string serialize_v2(const T& obj) {
-    if constexpr (std::is_arithmetic_v<T>) {
+    using U = std::decay_t<T>;
+    if constexpr (std::is_arithmetic_v<U>) {
         return std::to_string(obj);
-    } else if constexpr (std::is_same_v<T, std::string>) {
+    } else if constexpr (std::is_same_v<U, std::string>) {
         return obj;
-    } else if constexpr (has_serialize_v<T>) {
+    } else if constexpr (std::is_convertible_v<const T&, const char*>) {
+        return std::string(obj);
+    } else if constexpr (has_serialize_v<U>) {
         return obj.serialize();
     } else {
         static_assert(sizeof(T) == 0, "Unsupported type for serialize_v2");
@@ -268,6 +279,8 @@ void demo_type_dispatch() {
     std::cout << "serialize(42) = " << serialize_v2(42) << "\n";
     std::cout << "serialize(3.14) = " << serialize_v2(3.14) << "\n";
     std::cout << "serialize(string) = " << serialize_v2(std::string("hello")) << "\n";
+    // 字符串字面量的 T 是 char[N]，验证 C 风格字符串分支
+    std::cout << "serialize(\"literal\") = " << serialize_v2("literal") << "\n";
 
     SerializableClass sc;
     std::cout << "serialize(SerializableClass) = " << serialize_v2(sc) << "\n";
@@ -276,21 +289,27 @@ void demo_type_dispatch() {
 // 3.3 迭代器类型分发：输入迭代器 vs 随机访问迭代器
 template <typename Iter>
 auto advance_iter(Iter it, int n) {
-    if constexpr (std::is_base_of_v<
-        std::random_access_iterator_tag,
-        typename std::iterator_traits<Iter>::iterator_category
-    >) {
+    using Category = typename std::iterator_traits<Iter>::iterator_category;
+    if constexpr (std::is_base_of_v<std::random_access_iterator_tag, Category>) {
         // 随机访问迭代器：直接 O(1) 跳转
         it += n;
         std::cout << "使用随机访问迭代器 (O(1))\n";
-    } else {
-        // 其他迭代器：逐步前进
+    } else if constexpr (std::is_base_of_v<std::bidirectional_iterator_tag, Category>) {
+        // 双向迭代器：可以前进也可以后退，但只能一步一步走
+        // 用 n 自身计数，避免 -n 在 n == INT_MIN 时溢出
         if (n >= 0) {
-            for (int i = 0; i < n; ++i) ++it;
+            while (n-- > 0) ++it;
         } else {
-            for (int i = 0; i < -n; ++i) --it;
+            while (n++ < 0) --it;
         }
-        std::cout << "使用逐步迭代 (O(n))\n";
+        std::cout << "使用双向迭代器 (O(n))\n";
+    } else {
+        // 前向/输入迭代器没有 --，只能前进
+        if (n < 0) {
+            throw std::invalid_argument("该迭代器不支持后退");
+        }
+        while (n-- > 0) ++it;
+        std::cout << "使用前向迭代器 (O(n))\n";
     }
     return it;
 }
@@ -566,17 +585,19 @@ constexpr const T* find_if(const std::array<T, N>& arr, Pred pred) {
 void demo_find_if() {
     std::cout << "\n===== 6.3 编译期查找算法 =====\n";
 
-    constexpr std::array<int, 6> numbers = {2, 4, 6, 7, 8, 10};
+    // 必须是 static：普通局部 constexpr 变量在运行期位于栈上，
+    // 其元素地址不能作为常量表达式
+    static constexpr std::array<int, 6> numbers = {2, 4, 6, 7, 8, 10};
 
     // 查找第一个奇数
     constexpr auto is_odd = [](int x) { return x % 2 != 0; };
     constexpr const int* first_odd = find_if(numbers, is_odd);
-    static_assert(first_odd != nullptr && *first_odd == 7);
+    static_assert(*first_odd == 7);
 
     // 查找第一个大于 9 的数
     constexpr auto greater_than_9 = [](int x) { return x > 9; };
     constexpr const int* gt9 = find_if(numbers, greater_than_9);
-    static_assert(gt9 != nullptr && *gt9 == 10);
+    static_assert(*gt9 == 10);
 
     std::cout << "第一个奇数: " << *first_odd << "\n";
     std::cout << "第一个 >9 的数: " << *gt9 << "\n";
@@ -610,8 +631,8 @@ void demo_non_template_pitfall() {
     std::cout << "非模板中 if constexpr 的两个分支都会被语法检查\n";
 }
 
-// 7.2 陷阱：return 类型不一致
-// if constexpr 的不同分支返回不同类型时，函数的返回类型会根据所有分支推导
+// 7.2 不同分支返回不同类型
+// if constexpr 的丢弃分支不会被实例化，返回类型由实际保留的分支决定
 
 template <typename T>
 auto inconsistent_return(T x) {

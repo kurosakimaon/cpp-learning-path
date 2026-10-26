@@ -39,7 +39,7 @@ int main()
     cout << "是否是学生（bool）：" << (isStudent ? "是" : "否") << endl;
     // 小知识：bool值直接输出会显示 1 或 0，用三目运算符可以显示"是/否"
 
-    // C++17 新特性：auto 自动类型推导
+    // C++11 引入的 auto 自动类型推导（不是 C++17）
     auto score = 99.5;      // 编译器会自动推导出 score 是 double 类型
     cout << "auto推导的分数：" << score << "，类型是double" << endl;
     cout << endl;
@@ -227,6 +227,15 @@ int main()
 
     cout << "老师傅建议：小项目/练习用 using namespace std 没问题" << endl;
     cout << "          大型项目最好用 std:: 前缀或只using需要的名字" << endl;
+    cout << endl;
+
+    // 输入用 std::cin（会等待键盘输入，所以这里只写注释，不实际执行）
+    // int inputAge = 0;
+    // cout << "请输入年龄：";
+    // cin >> inputAge;              // 从键盘读一个整数
+    // cout << "你输入的是：" << inputAge << endl;
+    // 注意：cin 读取失败时要检查流状态，入门阶段先了解用法即可。
+    cout << "输入用 cin，例如：int x; cin >> x;（本示例不阻塞等待输入）" << endl;
     cout << endl;
 
     // ============================================================

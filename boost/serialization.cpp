@@ -3,7 +3,7 @@
  *
  * 知识点覆盖：
  *   1. 基本序列化：POD 类型、自定义类的序列化
- *   2. 版本控制：serialization::version + load_construct_data
+ *   2. 版本控制：BOOST_CLASS_VERSION + serialize 的 version 参数
  *   3. 指针序列化：裸指针、智能指针（shared_ptr）的序列化
  *   4. 多态序列化：基类指针指向派生类对象的序列化
  *   5. STL 容器序列化：vector/map/set/string 等
@@ -20,7 +20,9 @@
  *   - C++ 标准库中无对应功能
  *
  * 编译命令（示例）：
- *   g++ -std=c++17 serialization.cpp -o serialization -lboost_serialization
+ *   Linux:        g++ -std=c++17 serialization.cpp -o serialization -lboost_serialization
+ *   MinGW/MSYS2:  g++ -std=c++17 serialization.cpp -o serialization -lboost_serialization-mt
+ *   （Windows 预编译库常带 -mt 后缀，以实际库文件名为准）
  */
 
 #include <iostream>
@@ -252,7 +254,7 @@ private:
     template <class Archive>
     void serialize(Archive& ar, const unsigned int /*version*/) {
         // 必须先序列化基类
-        ar & boost::serialization::base_object<Shape>(*this);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Shape);
         ar & BOOST_SERIALIZATION_NVP(radius_);
     }
 };
@@ -276,18 +278,21 @@ private:
     friend class boost::serialization::access;
     template <class Archive>
     void serialize(Archive& ar, const unsigned int /*version*/) {
-        ar & boost::serialization::base_object<Shape>(*this);
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(Shape);
         ar & BOOST_SERIALIZATION_NVP(width_);
         ar & BOOST_SERIALIZATION_NVP(height_);
     }
 };
 
 // 导出派生类，使得通过基类指针可以正确反序列化
+// BOOST_CLASS_EXPORT 为每个类注册一个导出键（export key），
+// 多态序列化靠它把归档中的类型标识映射回具体类型。
 BOOST_CLASS_EXPORT(Circle)
 BOOST_CLASS_EXPORT(RectangleShape)
 
-// 给基类一个 GUID（可选，但推荐用于多态序列化）
-BOOST_CLASS_VERSION(Shape, 0)
+// 注意：BOOST_CLASS_VERSION 设置的是“类版本号”，不是 GUID，
+// 也和导出键无关。Shape 当前不需要版本迁移，因此这里不再额外声明
+// （不写就等价于版本 0，写了反而是误导）。
 
 // ============================================================
 // 六、STL 容器序列化

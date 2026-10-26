@@ -168,23 +168,23 @@
 
   <div class="header">
     <h1>👑 大师期 · Boost 库</h1>
-    <p>C++ 标准库的试验场 · 工业级组件大全 · 13 个核心库实战</p>
+    <p>C++ 标准库的试验场 · 工业级组件大全 · 13 个实战示例</p>
   </div>
 
   <div class="intro-section">
     <h2>📖 模块简介</h2>
     <p>
       Boost 库是 C++ 社区最著名的开源库集合，被称为"C++ 标准库的试验场"。
-      很多我们今天熟知的标准库组件（智能指针、lambda、filesystem、optional……）
+      很多我们今天熟知的标准库组件（shared_ptr/weak_ptr、tuple、filesystem、optional……）
       最早都来自 Boost。Boost 库质量极高、经过工业界广泛验证，是 C++ 工程师的得力助手。
     </p>
     <p style="margin-top: 10px;">
-      本模块精选了 13 个最常用、最有价值的 Boost 库，从智能指针、Asio 网络编程、
+      本模块用 13 个示例覆盖了 14 个最常用、最有价值的 Boost 库，从智能指针、Asio 网络编程、
       文件系统、命令行解析，到序列化、Spirit 解析器、信号槽、多索引容器、日志系统等等。
       每一个都是 Boost 中的精品，学会它们，你的 C++ 工具箱会大大扩充。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.txt" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #8E0E00, #c62828); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(142, 14, 0, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(142, 14, 0, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(142, 14, 0, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #8E0E00, #c62828); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(142, 14, 0, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(142, 14, 0, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(142, 14, 0, 0.3)';">
         📖 学习指南
       </a>
       <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
@@ -199,7 +199,7 @@
     <a href="smart_ptr.cpp" class="card">
       <div class="card-icon">🛡️</div>
       <div class="card-title">智能指针深入</div>
-      <div class="card-desc">scoped_ptr、intrusive_ptr、循环引用分析、weak_ptr 的正确用法、指针容器。</div>
+      <div class="card-desc">scoped_ptr、intrusive_ptr、循环引用分析、weak_ptr 的正确用法、enable_shared_from_this、线程安全。</div>
       <div class="card-meta"><span class="tag expert">资深</span></div>
     </a>
 
@@ -269,7 +269,7 @@
     <a href="datetime_demo.cpp" class="card">
       <div class="card-icon">⏰</div>
       <div class="card-title">日期时间处理</div>
-      <div class="card-desc">Boost.DateTime：日期计算、时间区间、格式化输出、时区处理、计时器。</div>
+      <div class="card-desc">Boost.DateTime：日期计算、时间区间、格式化输出、UTC/本地时间、local_time 时区用法。</div>
       <div class="card-meta"><span class="tag expert">资深</span></div>
     </a>
 
@@ -292,7 +292,7 @@
     <h2>📚 学习建议</h2>
     <ul>
       <li><strong>先装 Boost 环境</strong>：学习 Boost 之前先把库装好。Windows 下推荐 vcpkg，Linux 下用包管理器或者源码编译。注意很多 Boost 库是 header-only 的，不需要编译。</li>
-      <li><strong>挑你需要的学</strong>：Boost 有上百个库，不可能也没必要全学。根据你的项目需求和兴趣，挑几个最有用的深入学习。本模块选的 13 个都是应用最广的。</li>
+      <li><strong>挑你需要的学</strong>：Boost 有上百个库，不可能也没必要全学。根据你的项目需求和兴趣，挑几个最有用的深入学习。本模块选的这些示例都是应用最广的。</li>
       <li><strong>对比标准库</strong>：很多 Boost 库后来进入了标准库（比如 smart_ptr → std::shared_ptr、filesystem → std::filesystem）。对比着学，你能理解标准库的设计思路来自哪里。</li>
       <li><strong>Asio 是重点也是难点</strong>：Asio 是 Boost 中最强大也最难的库之一，是现代 C++ 网络编程的事实标准。值得花时间深入学习。</li>
       <li><strong>读文档，读示例</strong>：Boost 的文档非常详尽，每个库都有完整的教程和示例。遇到问题先查文档，文档里基本都有答案。</li>
@@ -306,7 +306,7 @@
     <p>但师傅要提醒你：<strong>Boost 不是银弹，也不是所有项目都适合用</strong>。Boost 库质量虽高，但也有学习成本、编译成本、依赖成本。用不用、用哪些，要根据项目情况权衡。</p>
     <p>师傅跟你聊聊 Boost 的"门道"：</p>
     <ul>
-      <li><strong>Boost 是标准库的"试验田"。</strong> 这话不假。过去 20 年，大量 Boost 组件进入了 C++ 标准：智能指针、tuple、bind、function、regex、filesystem、optional、variant、any、string_view……你学 Boost，其实是在提前学未来的 C++ 标准。</li>
+      <li><strong>Boost 是标准库的"试验田"。</strong> 这话不假。过去 20 年，大量 Boost 组件进入了 C++ 标准：shared_ptr/weak_ptr、tuple、bind、function、regex、filesystem、optional、variant、any……你学 Boost，其实是在提前学很多标准设施的设计思路。</li>
       <li><strong>header-only 库优先用。</strong> Boost 里很多库是"纯头文件"的，不需要编译链接，包含头文件就能用。这些库引入成本最低，放心用。需要编译的库（如 filesystem、log、thread）就要考虑一下依赖问题。</li>
       <li><strong>Asio 是网络编程的必修课。</strong> 如果你要做服务端开发、网络编程，Asio 几乎是绕不开的。它的异步编程模型（proactor 模式）非常经典，学会了它，你对异步编程的理解会上一个大台阶。</li>
       <li><strong>别沉迷于"奇技淫巧"。</strong> Boost 里有一些非常"炫技"的库（比如 MPL、Fusion、Spirit），用模板元编程实现了很多不可思议的功能。这些东西很酷，但实际项目中用得不多。了解一下可以，别陷太深。</li>

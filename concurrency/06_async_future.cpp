@@ -13,6 +13,7 @@
 #include <string>
 #include <mutex>
 #include <numeric>
+#include <algorithm>
 
 using namespace std;
 
@@ -51,7 +52,8 @@ using namespace std;
 //      （"面先别急着做，等我来了再下锅"）
 //
 // 如果你不指定，默认是 launch::async | launch::deferred，
-// 由实现决定用哪种（通常看系统负载）。
+// 由实现选择其中一种；标准没有规定选择依据，
+// 常见实现（libstdc++/MSVC STL）通常直接选 async。
 // ============================================================
 
 // 一个耗时的计算任务
@@ -168,8 +170,11 @@ void demo_future_wait() {
                 cout << "第" << attempts << "次检查：还没好，继续等..." << endl;
                 break;
             case future_status::deferred:
-                cout << "任务是延迟执行的，还没开始" << endl;
-                break;
+                // 延迟任务不会自己开始；wait_for 会一直返回 deferred。
+                // 必须调用 get()（或 wait()）才会真正执行，否则会死循环。
+                cout << "任务是延迟执行的，现在调用 get() 触发执行" << endl;
+                cout << "结果: " << f.get() << endl;
+                return;
         }
     }
 }
@@ -258,7 +263,7 @@ void demo_promise_exception() {
 //
 //   1. std::async
 //      - 最方便，直接传函数，返回 future
-//      - 内部其实就是用了 packaged_task + thread
+//      - 标准不规定内部怎么实现：可能是新线程，也可能是线程池
 //
 //   2. std::packaged_task
 //      - 把一个函数"打包"成一个任务，这个任务执行完，
@@ -456,8 +461,9 @@ void demo_three_ways_compared() {
 //   - 先并行下载A和B，都下载完了再处理
 //   - 先查数据库，查到了再调接口
 //
-// C++17 标准库里没有 when_all/when_any（C++20 有，但还不普及），
-// 但我们可以自己简单模拟一下，理解思路就行。
+// C++17 标准库里没有 when_all/when_any。
+// 截至 C++23 也没有；C++26 的 std::execution（P2300）才提供 when_all/when_any，
+// 但编译器/标准库支持还不普及，所以这里先自己简单模拟，理解思路就行。
 //
 // 实际项目中可以用：
 //   - Folly 的 Future 库（Facebook的，功能强大）
@@ -482,7 +488,8 @@ void demo_parallel_orchestration() {
 
     auto download = [](const string& name) -> string {
         cout << "  开始下载: " << name << endl;
-        this_thread::sleep_for(chrono::milliseconds(200 + rand() % 300));
+        // 用名字长度做固定延时，避免多线程同时调用 rand()（C 的 rand 不保证线程安全）
+        this_thread::sleep_for(chrono::milliseconds(200 + static_cast<int>(name.size()) * 50));
         cout << "  下载完成: " << name << endl;
         return name + " 的内容";
     };
@@ -504,8 +511,8 @@ void demo_parallel_orchestration() {
 
     cout << "\n这就是最简单的并行任务编排：" << endl;
     cout << "多个任务并行执行，全部完成后再进行下一步。" << endl;
-    cout << "C++20 有 std::when_all 和 std::when_any，" << endl;
-    cout << "还支持 .then() 链式调用，更方便。" << endl;
+    cout << "标准库没有 std::when_all/when_any；C++26 的 std::execution" << endl;
+    cout << "才提供 when_all/when_any，且支持尚不普及。" << endl;
 }
 
 // ============================================================
@@ -561,12 +568,12 @@ void demo_parallel_quick_sort() {
 
     vector<int> arr2 = arr;  // 复制一份
 
-    // 串行快排
+    // 基准：单线程、高度优化的 std::sort（不是串行版 quick_sort）
     auto start = chrono::steady_clock::now();
-    sort(arr.begin(), arr.end());  // 用标准库的做基准
+    sort(arr.begin(), arr.end());
     auto end = chrono::steady_clock::now();
     auto std_time = chrono::duration<double, milli>(end - start).count();
-    cout << "std::sort 耗时: " << std_time << "ms" << endl;
+    cout << "std::sort（单线程基准）耗时: " << std_time << "ms" << endl;
 
     // 并行快排
     start = chrono::steady_clock::now();
@@ -578,7 +585,10 @@ void demo_parallel_quick_sort() {
     // 验证
     bool correct = (arr == arr2);
     cout << "排序结果" << (correct ? "正确" : "错误！") << endl;
-    cout << "（数组小的时候并行可能更慢，因为线程创建有开销）" << endl;
+    cout << "注意：这不是同算法的严格对比——基准是单线程的 std::sort，" << endl;
+    cout << "      另一边是手写 quick_sort + async。线程创建、数据分布、" << endl;
+    cout << "      重复元素都会影响结果，不能仅凭这两行断言谁更快。" << endl;
+    cout << "      数组较小时，线程开销通常会让并行版本更慢。" << endl;
 }
 
 // ============================================================
@@ -588,8 +598,6 @@ int main() {
     cout << "============================================================" << endl;
     cout << "  并发编程进阶06：异步编程 future/promise" << endl;
     cout << "============================================================" << endl;
-
-    srand(time(nullptr));
 
     demo_async_basic();           // std::async 基本用法
     demo_async_launch_policy();   // launch 策略对比
@@ -630,12 +638,13 @@ int main() {
     cout << "" << endl;
     cout << "4. 但 async 也不是万能的：" << endl;
     cout << "   - 大量小任务用 async 不如线程池（线程创建有开销）" << endl;
-    cout << "   - 复杂的任务依赖关系，链式调用不方便（C++20 有 .then()）" << endl;
+    cout << "   - future 没有 .then() 链式调用（C++20 也没有加进来）" << endl;
     cout << "   - 没法取消任务（future 没有 cancel）" << endl;
     cout << "" << endl;
-    cout << "5. C++20 带来了更好用的东西：" << endl;
-    cout << "   std::jthread（可中断线程）、when_all/when_any、" << endl;
-    cout << "   还有协程（coroutine）。但底层的思想是相通的。" << endl;
+    cout << "5. C++20 及以后带来了更好用的东西：" << endl;
+    cout << "   C++20 有 std::jthread（可中断线程）和协程（coroutine）；" << endl;
+    cout << "   C++26 的 std::execution 才提供 when_all/when_any 和发送者/接收者模型。" << endl;
+    cout << "   但底层的思想是相通的。" << endl;
     cout << "   先把 future/promise 吃透，学新东西就快了。" << endl;
 
     // ============================================================
@@ -648,7 +657,7 @@ int main() {
     cout << "   把一个大数组的每个元素都做某个转换，并行处理。" << endl;
     cout << "   （提示：把数组分成几块，每块一个 async 任务）" << endl;
     cout << "" << endl;
-    cout << "2. 用 promise 实现一个简单的"一次性事件"：" << endl;
+    cout << "2. 用 promise 实现一个简单的“一次性事件”：" << endl;
     cout << "   一个线程等待事件，另一个线程触发事件。" << endl;
     cout << "   （类似 condition_variable，但只能触发一次）" << endl;
     cout << "" << endl;
@@ -658,7 +667,7 @@ int main() {
     cout << "" << endl;
     cout << "4. 思考：future 的 get() 为什么只能调用一次？" << endl;
     cout << "   如果想多次获取结果怎么办？（提示：shared_future）" << endl;
-    cout << "   为什么 future 设计成"一次性"的？" << endl;
+    cout << "   为什么 future 设计成“一次性”的？" << endl;
     cout << "" << endl;
     cout << "5. 查一下 std::async 的默认启动策略：" << endl;
     cout << "   如果你不指定 launch::async 或 launch::deferred，" << endl;
