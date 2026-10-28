@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>观察者模式：谁通知谁，什么时候通知 - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../patterns/index.html">设计模式模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 设计模式</div>
+    <h1>👀 观察者模式：谁通知谁，什么时候通知</h1>
+    <p>注册、注销、通知只有三句话，真正的坑都藏在细节里：先改状态还是先通知？回调里退订会怎样？观察者先死了怎么办？这一页按顺序把这几个坑逐个画出来。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 8</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>patterns/observer.cpp</code> ·
+    相关教程：<a href="../patterns/tutorial.md">patterns/tutorial.md</a> ·
+    配套图解：<a href="visitor.html">访问者模式：两次动态绑定</a>
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '一对多',
+    title: '1. 一个数据源，一堆人关心',
+    caption: '气象站的数据一变，显示屏、手机 App、日志服务都要跟着更新。最直接的做法是在 <code>setMeasurements</code> 里挨个调 <code>update</code>——但气象站从此认识了每一块屏：加一块要改它，删一块也要改它，单测时还得把所有屏都造出来。',
+    code: 'void setMeasurements(float t, float h) {\n    temperature_ = t;\n    humidity_ = h;\n    displayA_.update(t, h);   // 硬编码\n    displayB_.update(t, h);   // 加一块屏就要加一行\n    displayC_.update(t, h);\n}',
+    highlight: [3, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="一个气象站被三块显示板依赖，直接调用写成硬编码">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">一个数据源，三块屏，以后还会更多</text>
+
+  <rect x="30" y="62" width="210" height="104" rx="12" class="svg-box-accent"/>
+  <text x="46" y="88" class="svg-title">气象站</text>
+  <text x="46" y="114" class="svg-mono" style="font-size:11px">WeatherStation</text>
+  <text x="46" y="140" class="svg-small">温度 / 湿度 / 气压</text>
+
+  <rect x="420" y="52" width="310" height="52" rx="10" class="svg-box"/>
+  <text x="436" y="74" class="svg-text">显示屏 A</text>
+  <text x="436" y="94" class="svg-small">温度 + 湿度</text>
+
+  <rect x="420" y="118" width="310" height="52" rx="10" class="svg-box"/>
+  <text x="436" y="140" class="svg-text">手机 App</text>
+  <text x="436" y="160" class="svg-small">只要温度</text>
+
+  <rect x="420" y="184" width="310" height="52" rx="10" class="svg-box"/>
+  <text x="436" y="206" class="svg-text">日志服务</text>
+  <text x="436" y="226" class="svg-small">全部字段都要记</text>
+
+  <path d="M240 108 C320 100 340 80 416 78" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M240 116 H416" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M240 124 C320 132 340 200 416 208" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="252" width="700" height="160" rx="12" class="svg-box-warn"/>
+  <text x="46" y="278" class="svg-title">不加观察者，只能写死</text>
+  <text x="46" y="306" class="svg-mono" style="font-size:11px">void setMeasurements(float t, float h) {</text>
+  <text x="46" y="328" class="svg-mono" style="font-size:11px">    displayA_.update(t, h);   displayB_.update(t, h);   displayC_.update(t, h);</text>
+  <text x="46" y="350" class="svg-mono" style="font-size:11px">}</text>
+  <text x="46" y="378" class="svg-bad-text" style="font-size:11.5px">耦合：气象站的代码里写死了三个具体类型。</text>
+  <text x="46" y="400" class="svg-small">加一块屏要改这里，删一块屏也要改；测试还得把三块屏都造出来。</text>
+</svg>`
+  },
+  {
+    nav: '三件套',
+    title: '2. attach / detach / notify',
+    caption: '观察者把“谁要被通知”交给主题自己维护：<code>attach</code> 注册、<code>detach</code> 注销、<code>notify</code> 遍历通知。主题只依赖抽象接口，不知道具体是哪个显示板，运行期想加想删都行。',
+    code: 'using Observer = std::shared_ptr<IPushObserver>;\n\nclass IPushSubject {\npublic:\n    virtual void attach(Observer) = 0;   // 注册\n    virtual void detach(Observer) = 0;   // 注销\n    virtual void notify() = 0;           // 通知\n};\n// 具体主题内部：list<Observer> observers_',
+    highlight: [1, 5, 6, 7],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="主题内部维护观察者列表，对外提供 attach 注册、detach 注销、notify 遍历通知">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">主题自己维护名单，对外只暴露三个动作</text>
+
+  <rect x="30" y="48" width="300" height="316" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="72" class="svg-small">主题内部</text>
+  <rect x="46" y="86" width="268" height="58" rx="8" class="svg-field"/>
+  <text x="58" y="108" class="svg-mono" style="font-size:11px">std::list&lt;shared_ptr&lt;</text>
+  <text x="58" y="128" class="svg-mono" style="font-size:11px">  IPushObserver&gt;&gt; observers_</text>
+
+  <rect x="46" y="158" width="268" height="34" rx="6" class="svg-box"/>
+  <text x="58" y="180" class="svg-mono" style="font-size:11px">[0] 显示屏 A</text>
+  <rect x="46" y="198" width="268" height="34" rx="6" class="svg-box"/>
+  <text x="58" y="220" class="svg-mono" style="font-size:11px">[1] 手机 App</text>
+  <rect x="46" y="238" width="268" height="34" rx="6" class="svg-box"/>
+  <text x="58" y="260" class="svg-mono" style="font-size:11px">[2] 日志服务</text>
+
+  <text x="46" y="300" class="svg-small">存的是接口指针，不是具体类型</text>
+  <text x="46" y="324" class="svg-small">主题不知道谁在听，也不关心</text>
+
+  <rect x="360" y="70" width="370" height="86" rx="10" class="svg-box-good"/>
+  <text x="376" y="96" class="svg-mono" style="font-size:11px">attach(observer)</text>
+  <text x="376" y="120" class="svg-small">observers_.push_back(observer)　注册</text>
+  <text x="376" y="142" class="svg-small">运行期随时加，不碰主题代码</text>
+
+  <rect x="360" y="172" width="370" height="86" rx="10" class="svg-box-good"/>
+  <text x="376" y="198" class="svg-mono" style="font-size:11px">detach(observer)</text>
+  <text x="376" y="222" class="svg-small">observers_.remove(observer)　注销</text>
+  <text x="376" y="244" class="svg-small">不再收通知，主题也不用改</text>
+
+  <rect x="360" y="274" width="370" height="86" rx="10" class="svg-box-accent"/>
+  <text x="376" y="300" class="svg-mono" style="font-size:11px">notify()</text>
+  <text x="376" y="324" class="svg-small">遍历名单，逐个调 onUpdate(...)</text>
+  <text x="376" y="346" class="svg-small">顺序、次数都由主题决定</text>
+
+  <text x="30" y="392" class="svg-small">主题与观察者之间只剩“抽象耦合”：主题只知道接口，观察者可以随时替换。</text>
+  <text x="30" y="416" class="svg-small">这就是为什么它是“一对多依赖”里最常用的解法，也是 GUI 事件、消息总线的底子。</text>
+</svg>`
+  },
+  {
+    nav: '推 vs 拉',
+    title: '3. 推模型和拉模型：谁决定给什么',
+    caption: '推模型由主题打包好数据再发出去，简单，但主题得知道观察者要什么；拉模型只通知“我变了”（代码里是把主题自身传过去），每个观察者自己取关心的字段。字段多、各方需求不一致时，拉模型更灵活。',
+    code: '// 推：数据由主题打包好\nvoid onUpdate(const std::string& data) override;\n\n// 拉：只给主题指针，自己取需要的\nvoid onUpdate(IPullSubject* s) override {\n    float t = s->getTemperature();\n    float h = s->getHumidity();\n}',
+    highlight: [1, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="推模型由主题打包数据推送，拉模型只传主题指针由观察者自行取字段">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">数据是“送过去”，还是“自己来拿”</text>
+
+  <rect x="30" y="46" width="340" height="304" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="70" class="svg-small">推（Push）</text>
+  <rect x="46" y="82" width="308" height="48" rx="8" class="svg-box-accent"/>
+  <text x="60" y="112" class="svg-mono" style="font-size:11px">WeatherStation_Push</text>
+  <path d="M200 130 V150" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="46" y="154" width="308" height="48" rx="8" class="svg-box-warn"/>
+  <text x="60" y="184" class="svg-mono" style="font-size:11px">"温度: 25°C, 湿度: 60%"</text>
+  <path d="M200 202 V222" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="46" y="226" width="308" height="48" rx="8" class="svg-box-good"/>
+  <text x="60" y="256" class="svg-mono" style="font-size:11px">onUpdate(const string&amp; data)</text>
+  <text x="46" y="300" class="svg-small">数据形状由主题定死</text>
+  <text x="46" y="322" class="svg-small">加字段 = 主题和所有观察者都改</text>
+
+  <rect x="390" y="46" width="340" height="304" rx="12" class="svg-box-ghost"/>
+  <text x="406" y="70" class="svg-small">拉（Pull）</text>
+  <rect x="406" y="82" width="308" height="48" rx="8" class="svg-box-accent"/>
+  <text x="420" y="112" class="svg-mono" style="font-size:11px">WeatherStation_Pull</text>
+  <path d="M560 130 V150" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="570" y="145" class="svg-small">传 this</text>
+  <rect x="406" y="154" width="308" height="86" rx="8" class="svg-box-good"/>
+  <text x="420" y="178" class="svg-mono" style="font-size:11px">onUpdate(IPullSubject* s)</text>
+  <text x="420" y="202" class="svg-small">s-&gt;getTemperature()</text>
+  <text x="420" y="224" class="svg-small">s-&gt;getHumidity()</text>
+  <text x="406" y="268" class="svg-small">每个观察者只取自己关心的</text>
+  <text x="406" y="290" class="svg-small">加字段只改主题</text>
+  <text x="406" y="312" class="svg-small">代价：主题要开放 getter</text>
+
+  <text x="30" y="378" class="svg-small">推：简单直接，适合数据少、需求统一的场景（按钮点击事件、简单回调）。</text>
+  <text x="30" y="402" class="svg-small">拉：观察者各取所需，适合字段多、订阅方差异大的场景（配置中心、模型变更）。</text>
+</svg>`
+  },
+  {
+    nav: '通知时序',
+    title: '4. 先改完状态，再通知',
+    caption: '通知必须放在状态改完之后：先写 <code>temperature_</code> / <code>humidity_</code>，再构造数据、再遍历回调。顺序反了，拉模型的观察者会拿到旧值；通知到一半才改状态，同一轮里前面的人看到旧值、后面的人看到新值。',
+    code: 'void setMeasurements(float t, float h) {\n    temperature_ = t;            // 1. 先改状态\n    humidity_ = h;\n    notify();                    // 2. 再通知\n}\nvoid notify() override {\n    auto snapshot = observers_;  // 3. 拿快照\n    for (auto& o : snapshot)     // 4. 逐个回调\n        o->onUpdate(data);\n}',
+    highlight: [1, 2, 4, 6, 7],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="通知时序：先写状态字段，再构造数据、拷贝名单、逐个回调">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">一次通知里必须按这个顺序</text>
+
+  <rect x="30" y="46" width="400" height="56" rx="10" class="svg-box-accent"/>
+  <text x="46" y="70" class="svg-small">1. 外部调用</text>
+  <text x="46" y="91" class="svg-mono" style="font-size:11px">setMeasurements(25, 60)</text>
+
+  <path d="M230 102 V118" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="122" width="400" height="56" rx="10" class="svg-box-good"/>
+  <text x="46" y="146" class="svg-small">2. 先把状态改完</text>
+  <text x="46" y="167" class="svg-mono" style="font-size:11px">temperature_ = 25; humidity_ = 60;</text>
+
+  <path d="M230 178 V194" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="198" width="400" height="56" rx="10" class="svg-box"/>
+  <text x="46" y="222" class="svg-small">3. 构造要发的内容</text>
+  <text x="46" y="243" class="svg-mono" style="font-size:11px">data = "温度: 25°C, 湿度: 60%"</text>
+
+  <path d="M230 254 V270" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="274" width="400" height="56" rx="10" class="svg-box"/>
+  <text x="46" y="298" class="svg-small">4. 拷一份名单</text>
+  <text x="46" y="319" class="svg-mono" style="font-size:11px">auto snapshot = observers_;</text>
+
+  <path d="M230 330 V346" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="350" width="400" height="56" rx="10" class="svg-box-good"/>
+  <text x="46" y="374" class="svg-small">5. 遍历快照，逐个回调</text>
+  <text x="46" y="395" class="svg-mono" style="font-size:11px">for (o : snapshot) o-&gt;onUpdate(data);</text>
+
+  <rect x="460" y="46" width="270" height="360" rx="12" class="svg-box-ghost"/>
+  <text x="476" y="70" class="svg-title">顺序不能反</text>
+  <text x="476" y="102" class="svg-bad-text" style="font-size:11.5px">先通知、后改状态</text>
+  <text x="476" y="124" class="svg-small">拉模型的观察者拿到旧值</text>
+  <text x="476" y="156" class="svg-bad-text" style="font-size:11.5px">边通知边改状态</text>
+  <text x="476" y="178" class="svg-small">前几个人看到旧值，</text>
+  <text x="476" y="198" class="svg-small">后几个人看到新值</text>
+  <text x="476" y="230" class="svg-good-text" style="font-size:11.5px">先改完，再通知</text>
+  <text x="476" y="252" class="svg-small">所有人看到同一份状态</text>
+  <text x="476" y="290" class="svg-small">快照的意义：遍历期间</text>
+  <text x="476" y="310" class="svg-small">谁 detach 都不影响这一轮</text>
+  <text x="476" y="348" class="svg-small">代价见下一步：这一轮里</text>
+  <text x="476" y="368" class="svg-small">刚退订的人可能还被叫到</text>
+
+  <text x="30" y="430" class="svg-small">一句话：notify 永远放在“状态已经一致”之后。</text>
+</svg>`
+  },
+  {
+    nav: '回调中退订',
+    title: '5. 遍历时被退订：迭代器会失效',
+    caption: '如果观察者在 <code>onUpdate</code> 里 detach 自己，而 <code>notify</code> 正在直接遍历 <code>observers_</code>，<code>remove</code> 会销毁当前节点，接着 <code>++it</code> 就是未定义行为——常见表现是“下一个观察者被跳过”。示例的做法是先拷一份快照再遍历。',
+    code: 'void notify() override {\n    auto snapshot = observers_;   // 先拷贝，遍历副本\n    for (auto& o : snapshot)\n        o->onUpdate(data);\n}\n// 反面写法：直接遍历 observers_\n// 回调里 detach → 迭代器失效',
+    highlight: [1, 2, 5, 6],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="直接遍历观察者链表时，回调中 detach 当前节点会让迭代器失效，改用快照可以避免">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">回调里 detach：正在遍历的那一格被删了</text>
+
+  <rect x="40" y="52" width="110" height="52" rx="8" class="svg-box"/>
+  <text x="56" y="84" class="svg-mono" style="font-size:11px">A</text>
+  <rect x="190" y="52" width="110" height="52" rx="8" class="svg-box-bad"/>
+  <text x="206" y="84" class="svg-mono svg-bad-text" style="font-size:11px">B</text>
+  <rect x="340" y="52" width="110" height="52" rx="8" class="svg-box"/>
+  <text x="356" y="84" class="svg-mono" style="font-size:11px">C</text>
+  <rect x="490" y="52" width="110" height="52" rx="8" class="svg-box"/>
+  <text x="506" y="84" class="svg-mono" style="font-size:11px">D</text>
+
+  <path d="M150 78 H186" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M300 78 H336" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M450 78 H486" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <path d="M245 138 V108" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="252" y="134" class="svg-small">it 当前指向 B</text>
+
+  <rect x="40" y="152" width="700" height="58" rx="10" class="svg-box-bad"/>
+  <text x="56" y="176" class="svg-small">回调里执行 detach(B) → observers_.remove(B)</text>
+  <text x="56" y="198" class="svg-mono" style="font-size:11px">B 被销毁 → 循环里的 ++it 读的是已释放内存</text>
+
+  <rect x="40" y="226" width="700" height="58" rx="10" class="svg-box-warn"/>
+  <text x="56" y="250" class="svg-small">常见症状：C 被跳过、循环提前结束、直接崩溃。</text>
+  <text x="56" y="272" class="svg-small">不同标准库实现表现不同 —— 但都属于未定义行为，不能依赖。</text>
+
+  <rect x="40" y="300" width="700" height="126" rx="10" class="svg-box-good"/>
+  <text x="56" y="324" class="svg-title">解法：遍历副本</text>
+  <text x="56" y="348" class="svg-mono" style="font-size:11px">auto snapshot = observers_;   // 拷贝一份 shared_ptr 列表</text>
+  <rect x="56" y="358" width="120" height="28" rx="6" class="svg-field"/>
+  <text x="70" y="377" class="svg-small">A</text>
+  <rect x="192" y="358" width="120" height="28" rx="6" class="svg-field"/>
+  <text x="206" y="377" class="svg-small">B</text>
+  <rect x="328" y="358" width="120" height="28" rx="6" class="svg-field"/>
+  <text x="342" y="377" class="svg-small">C</text>
+  <rect x="464" y="358" width="120" height="28" rx="6" class="svg-field"/>
+  <text x="478" y="377" class="svg-small">D</text>
+  <text x="600" y="377" class="svg-small">副本照常走完</text>
+  <text x="56" y="412" class="svg-small">remove 只改原件；本轮已拷出的 B 仍会被调用一次 —— 语义上要接受这一点。</text>
+</svg>`
+  },
+  {
+    nav: '信号槽',
+    title: '6. 信号槽：不用继承接口的连接',
+    caption: '信号槽是观察者的现代写法：不用继承接口，lambda、函数对象、成员函数都能连。<code>connect</code> 返回一个 <code>Connection</code> 句柄，<code>disconnect(conn)</code> 按 id 摘掉。注意本示例的 <code>Connection</code> 只是标识，销毁它<strong>不会</strong>自动退订，要显式调用。',
+    code: 'auto c1 = button.onClicked.connect(\n    [](const std::string& n) {\n        std::cout << n << " clicked\\n";\n    });\nauto c2 = button.onClicked.connect(Logger{});\n\nbutton.click();   // 两个槽都被调用\nbutton.onClicked.disconnect(c1);\nbutton.click();   // 只剩 Logger',
+    highlight: [0, 4, 7],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="按钮持有信号，信号里保存多个槽，connect 返回连接标识，disconnect 按标识摘除">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">信号 = 主题，槽 = 不继承接口的回调</text>
+
+  <rect x="30" y="54" width="190" height="150" rx="12" class="svg-box"/>
+  <text x="46" y="80" class="svg-title">Button</text>
+  <text x="46" y="104" class="svg-small">点击时发射信号</text>
+  <rect x="46" y="118" width="158" height="40" rx="8" class="svg-field"/>
+  <text x="58" y="143" class="svg-mono" style="font-size:11px">onClicked</text>
+  <text x="46" y="182" class="svg-small">click() → emit(...)</text>
+
+  <path d="M224 140 H250" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="254" y="48" width="330" height="196" rx="12" class="svg-box-accent"/>
+  <text x="270" y="72" class="svg-small">Signal（模板，任意参数列表）</text>
+  <rect x="270" y="86" width="298" height="38" rx="6" class="svg-field"/>
+  <text x="282" y="110" class="svg-mono" style="font-size:11px">[0] lambda: 打印 "clicked"</text>
+  <rect x="270" y="130" width="298" height="38" rx="6" class="svg-field"/>
+  <text x="282" y="154" class="svg-mono" style="font-size:11px">[1] Logger{}</text>
+  <text x="270" y="194" class="svg-small">emit(args...) 依次调用所有槽</text>
+  <text x="270" y="218" class="svg-small">槽可以是 lambda / 函数对象 / 成员函数</text>
+
+  <rect x="620" y="70" width="110" height="64" rx="8" class="svg-box-good"/>
+  <text x="632" y="94" class="svg-mono" style="font-size:11px">Connection</text>
+  <text x="632" y="118" class="svg-small">{ id = 0 }</text>
+  <text x="612" y="156" class="svg-small">connect() 返回</text>
+
+  <rect x="30" y="266" width="700" height="66" rx="10" class="svg-box-good"/>
+  <text x="46" y="292" class="svg-mono" style="font-size:11px">connect(slot) → Connection{id}</text>
+  <text x="46" y="316" class="svg-mono" style="font-size:11px">disconnect(conn) → remove_if(id 相等)</text>
+
+  <rect x="30" y="344" width="700" height="80" rx="10" class="svg-box-warn"/>
+  <text x="46" y="368" class="svg-title">这个句柄不会自动退订</text>
+  <text x="46" y="392" class="svg-small">Connection 只保存了一个 id，析构时什么都不做；要退订必须显式 disconnect(conn)。</text>
+  <text x="46" y="412" class="svg-small">想要“析构即断开”，得自己再包一层 RAII（scoped connection），本示例没有这么做。</text>
+</svg>`
+  },
+  {
+    nav: 'weak_ptr',
+    title: '7. 观察者先死了，主题还在拿指针',
+    caption: '主题持有 <code>shared_ptr</code> 会延长观察者的寿命：它早该销毁了，却因为主题还拿着引用而活着（泄漏）；反过来若对象已销毁，主题手里就是悬空指针。换成 <code>weak_ptr</code>：不增加引用计数，通知前 <code>lock()</code> 一下，对象没了就跳过并顺手清理。',
+    code: 'void addObserver(std::weak_ptr<IWeakObserver> o) {\n    cleanupExpired();\n    observers_.push_back(o);\n}\nfor (auto& w : observers_) {\n    if (auto o = w.lock())     // 还活着才调\n        o->onEvent(eventId, data);\n}',
+    highlight: [5, 6],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="shared_ptr 列表会延长观察者寿命，weak_ptr 列表在对象销毁后 lock 返回空并跳过">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">谁拥有这个观察者？</text>
+
+  <rect x="30" y="46" width="340" height="300" rx="12" class="svg-box-bad"/>
+  <text x="46" y="70" class="svg-title">shared_ptr：主题也算一个所有者</text>
+  <rect x="46" y="84" width="308" height="48" rx="8" class="svg-field"/>
+  <text x="60" y="107" class="svg-mono" style="font-size:11px">list&lt;shared_ptr&lt;IObserver&gt;&gt;</text>
+  <text x="60" y="124" class="svg-small">主题持有一份强引用</text>
+
+  <rect x="46" y="148" width="308" height="48" rx="8" class="svg-box-warn"/>
+  <text x="60" y="171" class="svg-small">观察者离开作用域，计数 2 → 1</text>
+  <text x="60" y="188" class="svg-small">对象没有被销毁</text>
+
+  <rect x="46" y="212" width="308" height="48" rx="8" class="svg-box-bad"/>
+  <text x="60" y="235" class="svg-small">对象不销毁 → 内存泄漏</text>
+  <text x="60" y="252" class="svg-small">若被别处销毁 → 悬空指针</text>
+
+  <text x="46" y="290" class="svg-small">主题本来不该决定观察者活多久。</text>
+  <text x="46" y="314" class="svg-small">而且它可能比主题先退出，谁都说不准。</text>
+
+  <rect x="390" y="46" width="340" height="300" rx="12" class="svg-box-good"/>
+  <text x="406" y="70" class="svg-title">weak_ptr：只看，不拥有</text>
+  <rect x="406" y="84" width="308" height="48" rx="8" class="svg-field"/>
+  <text x="420" y="107" class="svg-mono" style="font-size:11px">list&lt;weak_ptr&lt;IObserver&gt;&gt;</text>
+  <text x="420" y="124" class="svg-small">不增加引用计数</text>
+
+  <rect x="406" y="148" width="308" height="48" rx="8" class="svg-box-good"/>
+  <text x="420" y="171" class="svg-small">观察者销毁 → weak 自动 expired()</text>
+  <text x="420" y="188" class="svg-small">不需要手动通知主题</text>
+
+  <rect x="406" y="212" width="308" height="48" rx="8" class="svg-box-good"/>
+  <text x="420" y="235" class="svg-small">notify 时 lock() 返回空 → 跳过</text>
+  <text x="420" y="252" class="svg-small">cleanupExpired() 顺手清掉</text>
+
+  <text x="406" y="290" class="svg-small">lock() 成功的那一瞬间拿到强引用，</text>
+  <text x="406" y="314" class="svg-small">回调期间对象不会被别的线程销毁。</text>
+
+  <text x="30" y="374" class="svg-small">规则：主题不拥有观察者 → 用 weak_ptr；观察者需要比主题活得久 → 才考虑 shared_ptr。</text>
+  <text x="30" y="398" class="svg-small">凡是“我认识你但不该决定你活多久”的关系，都先想想 weak_ptr。</text>
+</svg>`
+  },
+  {
+    nav: '线程安全',
+    title: '8. 多线程：锁只包住名单，回调放锁外',
+    caption: '多线程下三件事都要保护：注册、注销、遍历。做法是锁只包住“改列表 / 拷列表”，回调放在锁外——否则回调里再 <code>subscribe</code>，就会对同一把非递归 mutex 二次加锁，直接死锁。拷贝之后回调的是“这一轮开始时”的名单，这个语义要能接受。',
+    code: 'void publish(const EventData& data) {\n    std::vector<ObserverFunc> copy;\n    {\n        std::lock_guard<std::mutex> lock(mutex_);\n        for (auto& p : observers_) copy.push_back(p.second);\n    }\n    for (auto& f : copy) f(data);   // 锁外回调\n}',
+    highlight: [3, 4, 7],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="发布线程持锁拷贝名单后在锁外回调，订阅线程用同一把锁修改名单">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">同一把锁保护名单，回调永远在锁外</text>
+
+  <rect x="30" y="44" width="700" height="118" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="68" class="svg-small">线程 A：publish()</text>
+  <rect x="46" y="80" width="170" height="64" rx="8" class="svg-box-accent"/>
+  <text x="60" y="104" class="svg-small">持锁</text>
+  <text x="60" y="126" class="svg-mono" style="font-size:11px">lock_guard</text>
+  <rect x="240" y="80" width="230" height="64" rx="8" class="svg-box"/>
+  <text x="254" y="104" class="svg-small">拷贝观察者名单</text>
+  <text x="254" y="126" class="svg-mono" style="font-size:11px">copy.push_back(...)</text>
+  <rect x="494" y="80" width="220" height="64" rx="8" class="svg-box-good"/>
+  <text x="508" y="104" class="svg-small">解锁后回调</text>
+  <text x="508" y="126" class="svg-mono" style="font-size:11px">for (f : copy) f(data)</text>
+  <path d="M216 112 H236" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M470 112 H490" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="176" width="700" height="86" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="200" class="svg-small">线程 B：subscribe() / unsubscribe()</text>
+  <text x="46" y="226" class="svg-small">同样先 lock，再 push_back / remove_if —— 两个线程不会同时改名单。</text>
+  <text x="46" y="248" class="svg-small">拿不到锁就阻塞等待，这是正常同步，不是死锁。</text>
+
+  <rect x="30" y="276" width="700" height="84" rx="10" class="svg-box-bad"/>
+  <text x="46" y="300" class="svg-title">如果握着锁直接调回调</text>
+  <text x="46" y="324" class="svg-small">回调里再 subscribe → 同一把非递归 mutex 二次加锁 → 自己等自己，直接死锁。</text>
+  <text x="46" y="346" class="svg-small">回调是用户代码，跑多久、干什么是不可控的，绝不能放在临界区里。</text>
+
+  <text x="30" y="390" class="svg-small">代价：回调用的是“这一轮开始时”的名单 —— 本轮刚订阅的收不到这次，刚退订的可能还收到一次。</text>
+  <text x="30" y="414" class="svg-small">要更强的语义，就得把“名单版本 / 投递队列”想清楚，那是消息总线的范畴了。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

@@ -225,7 +225,13 @@
       <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #f7971e, #ffd200); color: #523831; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(247, 151, 30, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(247, 151, 30, 0.3)';">
         📖 学习指南
       </a>
-      <span style="color: #707070; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <a href="../visuals/observer.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0f766e, #0e7490); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(13, 148, 136, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(13, 148, 136, 0.28)';">
+        🎬 图解观察者
+      </a>
+      <a href="../visuals/visitor.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(124, 58, 237, 0.28)';">
+        🎬 图解访问者
+      </a>
+      <span style="color: #707070; font-size: 13px;">老师傅带你学：先看指南，通知顺序绕不清时对照图解</span>
     </div>
   </div>
 
@@ -364,6 +370,13 @@
       <div class="card-meta"><span class="tag advanced">高级</span></div>
     </a>
   </div>
+
+  <p class="list-note" style="color: #283593;">
+    行为型里有两处最容易绕，各配了一页分步图解（都是 8 步）：<strong>观察者</strong>回答"谁通知谁、什么时候通知"，
+    先看 <strong>第 4 步 通知时序</strong>，再看 <strong>第 5 步 回调里退订</strong>（迭代器失效那段）；
+    <strong>访问者</strong>回答"一次调用怎么发生两次分派"，<strong>第 3、4 步</strong> 是关节，看完再读代码就顺了。
+    入口：<a href="../visuals/observer.html">🎬 图解观察者</a> · <a href="../visuals/visitor.html">🎬 图解访问者</a>。
+  </p>
 
   <div class="feature-section">
     <h2>📚 学习建议</h2>

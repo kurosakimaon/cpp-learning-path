@@ -434,7 +434,7 @@
     <div class="meta-item"><strong>6</strong> 个阶段</div>
     <div class="meta-item"><strong>55</strong> 个代码 Demo<br><span style="font-size:12px;color:#a8b3c4">含Boost共68个</span></div>
     <div class="meta-item"><strong>11</strong> 个构建示例</div>
-    <div class="meta-item"><strong>18</strong> 个可视化页面<br><span style="font-size:12px;color:#a8b3c4">16 个分步图解 + 2 个算法演示</span></div>
+    <div class="meta-item"><strong>20</strong> 个可视化页面<br><span style="font-size:12px;color:#a8b3c4">18 个分步图解 + 2 个算法演示</span></div>
   </div>
 </div>
 
@@ -598,7 +598,7 @@
       <span class="topic-tag">项目结构设计</span>
     </div>
     <div class="stage-files">
-      📁 对应代码（按顺序学）：<code>build_systems/</code> 先把项目构建起来（Makefile 五讲 → CMake 六讲，配 <code>cmake_guide.html</code> 速查） → <code>patterns/</code> 设计模式 → <code>testing/</code> 单元测试 → <code>debugging/</code> 排错手法
+      📁 对应代码（按顺序学）：<code>build_systems/</code> 先把项目构建起来（Makefile 五讲 → CMake 六讲，配 <code>cmake_guide.html</code> 速查） → <code>patterns/</code> 设计模式（配 <a href="visuals/observer.html">观察者</a> / <a href="visuals/visitor.html">访问者</a> 图解） → <code>testing/</code> 单元测试 → <code>debugging/</code> 排错手法
     </div>
   </div>
 
@@ -642,8 +642,8 @@
 <section>
 <h2>🎬 图解专区</h2>
 <p style="color: var(--ink-muted); margin-bottom: 8px;">
-  有些机制只看文字容易似懂非懂：链表的指针到底怎么改？vector 扩容时元素搬到哪？树查找凭什么减半？哈希冲突怎么处理？堆为什么只维护父子关系？所有权怎么就转移了？引用计数什么时候归零？throw 之后栈帧怎么一层层收尾？两个线程谁先看到谁？虚函数调用怎么找到正确实现？运行时又去哪找动态库？两个线程凭什么会互相卡死？一个线程又怎么扛住上万连接？
-  下面十六组分步图解把一次操作拆成若干帧，左边画内存或流程，右边给代码对照，可以逐步翻页，也可以点「自动播放」让它自己走。
+  有些机制只看文字容易似懂非懂：链表的指针到底怎么改？vector 扩容时元素搬到哪？树查找凭什么减半？哈希冲突怎么处理？堆为什么只维护父子关系？所有权怎么就转移了？引用计数什么时候归零？throw 之后栈帧怎么一层层收尾？两个线程谁先看到谁？虚函数调用怎么找到正确实现？运行时又去哪找动态库？两个线程凭什么会互相卡死？一个线程又怎么扛住上万连接？一次调用又怎么发生两次分派？状态变了该通知谁、按什么顺序通知？
+  下面十八组分步图解把一次操作拆成若干帧，左边画内存或流程，右边给代码对照，可以逐步翻页，也可以点「自动播放」让它自己走。
 </p>
 
 <div class="skills-grid">
@@ -757,6 +757,20 @@
     <div class="skill-title">Asio 事件循环：一个线程怎么扛住一万连接？</div>
     <div class="skill-desc">io_context 任务队列、同步与异步、完成回调、异步调用链、单线程并发和 strand 串行化。</div>
     <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">网络编程 · 6 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/observer.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">👀</div>
+    <div class="skill-title">观察者：谁通知谁，按什么顺序通知？</div>
+    <div class="skill-desc">注册与注销、推 vs 拉、先改状态再通知、回调里退订的迭代器陷阱、weak_ptr 与线程安全。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(167,139,250,0.12); color: #c4b5fd; font-size: 0.78rem; font-weight: 600;">设计模式 · 8 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/visitor.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🚪</div>
+    <div class="skill-title">访问者：一次调用，怎么发生两次分派？</div>
+    <div class="skill-desc">accept 与 visit 的两次查表、分派矩阵、加操作与加元素的双向代价、variant + visit。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(167,139,250,0.12); color: #c4b5fd; font-size: 0.78rem; font-weight: 600;">设计模式 · 8 步</div>
   </a>
 </div>
 

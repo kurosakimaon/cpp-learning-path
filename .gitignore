@@ -8,7 +8,7 @@ build/
 cmake-build-*/
 out/
 bin/
-lib/
+/lib/
 *.o
 *.obj
 *.a

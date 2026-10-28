@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>访问者模式：一次调用，两次动态绑定 - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../patterns/index.html">设计模式模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 设计模式</div>
+    <h1>🚪 访问者模式：一次调用，两次动态绑定</h1>
+    <p>双分派听起来玄，拆开看就是两次查表：第一次按“元素是什么”选 <code>accept</code>，第二次按“访问者是什么”选 <code>visit</code>。这一页把两次查表画出来，再比较经典写法、Acyclic Visitor 和 <code>std::visit</code> 各自吃亏在哪。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 8</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>patterns/visitor.cpp</code> ·
+    相关教程：<a href="../patterns/tutorial.md">patterns/tutorial.md</a> ·
+    配套图解：<a href="observer.html">观察者模式：谁通知谁</a>
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '问题',
+    title: '1. 元素不变，操作却一直在加',
+    caption: '表达式树已经有五种节点。现在要“求值”，明天要“打印”，后天还想“常量折叠”“转 JSON”——每加一个操作，五个元素类都要重新改一遍、编一遍、测一遍。元素本身没变，变的是<strong>操作</strong>，这就是访问者要处理的结构。',
+    code: '// 最直接的做法：每个操作都变成元素类里的虚函数\nclass NumberExpr : public IExpression {\npublic:\n    double eval() const override;\n    std::string print() const override;  // 新需求…\n    // 明天还要 fold()、toJson()…\n};',
+    highlight: [4, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="五种表达式元素类，以及不断新增的求值、打印、折叠等操作">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">元素类够用了，操作却一直在加</text>
+
+  <rect x="30" y="46" width="330" height="310" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="70" class="svg-small">元素类层次（已经写好，不想再动）</text>
+
+  <rect x="46" y="82" width="298" height="40" rx="8" class="svg-box-accent"/>
+  <text x="60" y="107" class="svg-mono">IExpression</text>
+  <text x="252" y="107" class="svg-small">accept()</text>
+
+  <line x1="62" y1="122" x2="62" y2="302" stroke="#cbd5e1" stroke-width="1.5"/>
+  <line x1="62" y1="160" x2="74" y2="160" stroke="#cbd5e1" stroke-width="1.5"/>
+  <line x1="62" y1="198" x2="74" y2="198" stroke="#cbd5e1" stroke-width="1.5"/>
+  <line x1="62" y1="236" x2="74" y2="236" stroke="#cbd5e1" stroke-width="1.5"/>
+  <line x1="62" y1="274" x2="74" y2="274" stroke="#cbd5e1" stroke-width="1.5"/>
+  <line x1="62" y1="302" x2="74" y2="302" stroke="#cbd5e1" stroke-width="1.5"/>
+
+  <text x="82" y="164" class="svg-mono">NumberExpr</text>
+  <text x="82" y="202" class="svg-mono">AdditionExpr</text>
+  <text x="82" y="240" class="svg-mono">SubtractionExpr</text>
+  <text x="82" y="278" class="svg-mono">MultiplicationExpr</text>
+  <text x="82" y="306" class="svg-mono">DivisionExpr</text>
+  <text x="46" y="340" class="svg-small">五种节点，结构固定</text>
+
+  <rect x="390" y="46" width="340" height="310" rx="12" class="svg-box-ghost"/>
+  <text x="406" y="70" class="svg-small">每来一个需求，就要改一遍</text>
+
+  <rect x="406" y="88" width="308" height="40" rx="8" class="svg-box-warn"/>
+  <text x="420" y="113" class="svg-text">① 求值 eval()</text>
+  <rect x="406" y="140" width="308" height="40" rx="8" class="svg-box-warn"/>
+  <text x="420" y="165" class="svg-text">② 打印 print()</text>
+  <rect x="406" y="192" width="308" height="40" rx="8" class="svg-box-warn"/>
+  <text x="420" y="217" class="svg-text">③ 常量折叠 fold()</text>
+  <rect x="406" y="244" width="308" height="40" rx="8" class="svg-box-ghost"/>
+  <text x="420" y="269" class="svg-small">④ 以后还会有…</text>
+  <text x="406" y="312" class="svg-small">每加一个 → 五个类各加一个虚函数</text>
+  <text x="406" y="336" class="svg-bad-text" style="font-size:11.5px">3 个操作 × 5 个类 = 15 处修改</text>
+</svg>`
+  },
+  {
+    nav: '把操作变对象',
+    title: '2. 操作搬出去，变成访问者类',
+    caption: '访问者把“操作”从元素里搬出来：元素只留一个 <code>accept(visitor)</code> 入口，访问者则为每种元素提供一个 <code>visit</code> 重载。以后加操作 = 加一个 Visitor 类，元素类的代码一个字不用动。',
+    code: 'class IExpressionVisitor {\npublic:\n    virtual void visit(NumberExpr&) = 0;\n    virtual void visit(AdditionExpr&) = 0;\n    // …每个元素一个重载\n};\nclass IExpression {\npublic:\n    virtual void accept(IExpressionVisitor& v) = 0;\n};',
+    highlight: [2, 3, 9],
+    stage: `
+<svg viewBox="0 0 760 460" role="img" aria-label="元素只保留 accept 入口，访问者接口为每种元素提供一个 visit 重载">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">一个入口换成一组出口</text>
+
+  <rect x="30" y="48" width="286" height="316" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="72" class="svg-small">元素：只留一个入口</text>
+  <rect x="46" y="86" width="254" height="40" rx="8" class="svg-box-accent"/>
+  <text x="60" y="111" class="svg-mono">IExpression</text>
+  <rect x="46" y="134" width="254" height="34" rx="8" class="svg-field"/>
+  <text x="58" y="156" class="svg-mono" style="font-size:11px">accept(IExpressionVisitor&amp;)</text>
+
+  <text x="46" y="196" class="svg-small">五个具体类各自 override，内容都是同一行</text>
+  <text x="60" y="222" class="svg-mono" style="font-size:11px">NumberExpr</text>
+  <text x="60" y="248" class="svg-mono" style="font-size:11px">AdditionExpr</text>
+  <text x="60" y="274" class="svg-mono" style="font-size:11px">SubtractionExpr</text>
+  <text x="60" y="300" class="svg-mono" style="font-size:11px">MultiplicationExpr</text>
+  <text x="60" y="326" class="svg-mono" style="font-size:11px">DivisionExpr</text>
+  <text x="46" y="352" class="svg-small">加操作？这里的代码不动</text>
+
+  <path d="M320 151 H400" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="326" y="142" class="svg-small">accept(v)</text>
+  <text x="326" y="172" class="svg-small">visit(*this)</text>
+
+  <rect x="404" y="48" width="326" height="316" rx="12" class="svg-box-ghost"/>
+  <text x="420" y="72" class="svg-small">访问者：每个操作一个类</text>
+  <rect x="420" y="86" width="294" height="40" rx="8" class="svg-box-accent"/>
+  <text x="434" y="111" class="svg-mono">IExpressionVisitor</text>
+
+  <rect x="420" y="138" width="294" height="26" rx="6" class="svg-field"/>
+  <text x="432" y="156" class="svg-mono" style="font-size:11px">visit(NumberExpr&amp;)</text>
+  <rect x="420" y="168" width="294" height="26" rx="6" class="svg-field"/>
+  <text x="432" y="186" class="svg-mono" style="font-size:11px">visit(AdditionExpr&amp;)</text>
+  <rect x="420" y="198" width="294" height="26" rx="6" class="svg-field"/>
+  <text x="432" y="216" class="svg-mono" style="font-size:11px">visit(SubtractionExpr&amp;)</text>
+  <rect x="420" y="228" width="294" height="26" rx="6" class="svg-field"/>
+  <text x="432" y="246" class="svg-mono" style="font-size:11px">visit(MultiplicationExpr&amp;)</text>
+  <rect x="420" y="258" width="294" height="26" rx="6" class="svg-field"/>
+  <text x="432" y="276" class="svg-mono" style="font-size:11px">visit(DivisionExpr&amp;)</text>
+
+  <rect x="420" y="296" width="140" height="34" rx="8" class="svg-box-good"/>
+  <text x="434" y="318" class="svg-mono" style="font-size:11px">EvalVisitor</text>
+  <rect x="574" y="296" width="140" height="34" rx="8" class="svg-box-good"/>
+  <text x="588" y="318" class="svg-mono" style="font-size:11px">PrintVisitor</text>
+  <text x="420" y="352" class="svg-small">都实现这 5 个 visit</text>
+
+  <text x="30" y="392" class="svg-small">元素数量 × 操作数量 的交叉没有消失，只是从“N 个类各加 M 个函数”变成“N 个 accept + M 个访问者”。</text>
+  <text x="30" y="416" class="svg-small">划算的前提：N 稳定、M 一直涨。反过来就是第 7 步要讲的亏。</text>
+</svg>`
+  },
+  {
+    nav: '第一次分派',
+    title: '3. 第一次分派：按元素类型选 accept',
+    caption: '调用 <code>accept</code> 时，你手里的静态类型通常只是 <code>IExpression&amp;</code>。虚函数调用在运行期查对象的 vptr，找到它真正的类，跑到对应的 <code>accept</code> —— 这一次按<strong>元素类型</strong>分派，跟访问者无关。',
+    code: 'void run(IExpression& expr, IExpressionVisitor& v) {\n    expr.accept(v);   // 静态类型是 IExpression&\n}\n// expr 实际是 NumberExpr  → NumberExpr::accept\n// expr 实际是 AdditionExpr → AdditionExpr::accept\n// 同一条语句，跑的是不同的函数',
+    highlight: [1],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="expr.accept(v) 通过 vptr 查表，选中对象真实类型对应的 accept">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">第一次分派：按元素的动态类型选 accept</text>
+
+  <rect x="30" y="52" width="220" height="92" rx="10" class="svg-box"/>
+  <text x="46" y="76" class="svg-small">调用点看到的静态类型</text>
+  <text x="46" y="103" class="svg-mono">IExpression&amp; e</text>
+  <text x="46" y="127" class="svg-small">编译期只知道“是个元素”</text>
+
+  <path d="M254 98 H330" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="262" y="88" class="svg-small">e.accept(v)</text>
+
+  <rect x="334" y="52" width="186" height="92" rx="10" class="svg-box-accent"/>
+  <text x="350" y="76" class="svg-small">对象里的 vptr</text>
+  <text x="350" y="103" class="svg-mono" style="font-size:11px">→ NumberExpr 的 vtable</text>
+  <text x="350" y="127" class="svg-small">运行期才看得到</text>
+
+  <path d="M524 98 H560" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="564" y="52" width="166" height="92" rx="10" class="svg-box-good"/>
+  <text x="580" y="76" class="svg-small">实际执行</text>
+  <text x="580" y="103" class="svg-mono" style="font-size:11px">NumberExpr::accept</text>
+  <text x="580" y="127" class="svg-small">按元素类型选中</text>
+
+  <rect x="30" y="172" width="700" height="152" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="198" class="svg-small">NumberExpr 的 vtable（示意）：一个类一张表，每格指向一个函数</text>
+  <rect x="46" y="210" width="668" height="38" rx="6" class="svg-field"/>
+  <text x="60" y="234" class="svg-mono" style="font-size:11px">[0] accept(IExpressionVisitor&amp;)  →  &amp;NumberExpr::accept</text>
+  <rect x="46" y="256" width="668" height="38" rx="6" class="svg-field"/>
+  <text x="60" y="280" class="svg-mono" style="font-size:11px">[1] ~NumberExpr()                →  &amp;NumberExpr::~NumberExpr</text>
+  <text x="46" y="312" class="svg-small">换一个 AdditionExpr 对象，同一行 e.accept(v) 就落到 AdditionExpr::accept。</text>
+
+  <text x="30" y="360" class="svg-small">这一步只解决“哪个元素”，还不涉及“哪个访问者”。</text>
+  <text x="30" y="384" class="svg-small">元素类型一确定，下面第二步才有意义。</text>
+  <text x="30" y="408" class="svg-small">所以访问者模式没有任何“魔法”，用的还是普通虚函数调用。</text>
+</svg>`
+  },
+  {
+    nav: '第二次分派',
+    title: '4. 第二次分派：accept 里再选 visit',
+    caption: '<code>accept</code> 里只有一行 <code>visitor.visit(*this)</code>。此时 <code>*this</code> 的静态类型已经具体了（在 <code>NumberExpr</code> 里就是 <code>NumberExpr&amp;</code>），而 <code>visitor</code> 还是基类引用——于是再查一次 vptr，按<strong>访问者类型</strong>选到具体重载。两次绑定合起来，才决定最终跑哪个函数。',
+    code: 'class NumberExpr : public IExpression {\npublic:\n    void accept(IExpressionVisitor& v) override {\n        v.visit(*this);   // 第二次分派\n        // *this: NumberExpr&（已确定）\n        // v    : IExpressionVisitor&（待查）\n    }\n};',
+    highlight: [3, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="元素类型与访问者类型共同决定最终执行哪个 visit 重载，下方是 3 行 2 列的分派矩阵">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">两个维度都参与，才是双分派</text>
+
+  <rect x="30" y="44" width="250" height="66" rx="10" class="svg-box"/>
+  <text x="46" y="66" class="svg-small">元素：第一次已确定</text>
+  <text x="46" y="94" class="svg-mono">NumberExpr</text>
+
+  <rect x="480" y="44" width="250" height="66" rx="10" class="svg-box-accent"/>
+  <text x="496" y="66" class="svg-small">访问者：还是基类引用</text>
+  <text x="496" y="94" class="svg-mono">IExpressionVisitor&amp;</text>
+
+  <path d="M155 110 L300 138" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="56" y="134" class="svg-small">① 按元素选</text>
+  <path d="M605 110 L460 138" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="600" y="132" class="svg-small">② 按访问者选</text>
+
+  <rect x="240" y="140" width="280" height="52" rx="10" class="svg-box-good"/>
+  <text x="256" y="164" class="svg-small">最终执行</text>
+  <text x="256" y="183" class="svg-mono" style="font-size:11px">EvalVisitor::visit(NumberExpr&amp;)</text>
+
+  <rect x="30" y="214" width="700" height="34" rx="8" class="svg-box-accent"/>
+  <text x="46" y="237" class="svg-text" style="font-weight:700">元素 ＼ 访问者</text>
+  <text x="316" y="237" class="svg-text" style="font-weight:700">EvalVisitor</text>
+  <text x="516" y="237" class="svg-text" style="font-weight:700">PrintVisitor</text>
+
+  <rect x="30" y="252" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="279" class="svg-mono" style="font-size:11px">NumberExpr</text>
+  <text x="316" y="279" class="svg-text">取到 1</text>
+  <text x="516" y="279" class="svg-text">输出 “1”</text>
+
+  <rect x="30" y="298" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="325" class="svg-mono" style="font-size:11px">AdditionExpr</text>
+  <text x="316" y="325" class="svg-text">1 + 2 = 3</text>
+  <text x="516" y="325" class="svg-text">输出 “(1 + 2)”</text>
+
+  <rect x="30" y="344" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="371" class="svg-mono" style="font-size:11px">MultiplicationExpr</text>
+  <text x="316" y="371" class="svg-text">3 × 3 = 9</text>
+  <text x="516" y="371" class="svg-text">输出 “(3 × 3)”</text>
+
+  <text x="30" y="412" class="svg-small">同一行换个列，跑的就是另一个函数 —— 元素决定进哪个 accept，访问者决定落到哪个 visit。</text>
+  <text x="30" y="436" class="svg-small">矩阵里每一格，都是“某个访问者的某个 visit 重载”。</text>
+</svg>`
+  },
+  {
+    nav: '求值全程',
+    title: '5. 走一遍：(1 + 2) * 3 怎么求值',
+    caption: '求值就是把整棵树按后序走一遍：每个节点的 <code>visit</code> 先去 <code>accept</code> 左右子树，再合并结果。结果放在访问者自己的成员里带回来，所以同一个访问者对象可以复用于任意一棵树。',
+    code: 'void visit(AdditionExpr& expr) override {\n    expr.getLeft().accept(*this);      // 左子树求值\n    double leftVal = result_;\n    expr.getRight().accept(*this);     // 右子树求值\n    double rightVal = result_;\n    result_ = leftVal + rightVal;      // 合并\n}',
+    highlight: [1, 3, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="表达式树 (1+2)*3 的求值过程，每个节点返回一个值，最后根节点返回 9">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">先递归到叶子，再把值一层层合并回来</text>
+
+  <rect x="300" y="50" width="160" height="46" rx="10" class="svg-box-accent"/>
+  <text x="316" y="70" class="svg-small">乘法节点</text>
+  <text x="316" y="89" class="svg-mono">MulExpr</text>
+  <rect x="470" y="58" width="110" height="32" rx="8" class="svg-box-good"/>
+  <text x="484" y="79" class="svg-mono" style="font-size:11px">返回 9</text>
+
+  <rect x="130" y="140" width="170" height="46" rx="10" class="svg-box-accent"/>
+  <text x="146" y="160" class="svg-small">加法节点</text>
+  <text x="146" y="179" class="svg-mono">AddExpr</text>
+  <rect x="318" y="149" width="96" height="30" rx="8" class="svg-box-good"/>
+  <text x="330" y="169" class="svg-mono" style="font-size:11px">返回 3</text>
+
+  <rect x="480" y="140" width="120" height="46" rx="10" class="svg-box"/>
+  <text x="496" y="160" class="svg-small">数字节点</text>
+  <text x="496" y="179" class="svg-mono">3</text>
+  <rect x="610" y="149" width="96" height="30" rx="8" class="svg-box-good"/>
+  <text x="622" y="169" class="svg-mono" style="font-size:11px">返回 3</text>
+
+  <rect x="40" y="230" width="120" height="46" rx="10" class="svg-box"/>
+  <text x="56" y="250" class="svg-small">数字节点</text>
+  <text x="56" y="269" class="svg-mono">1</text>
+  <rect x="40" y="286" width="120" height="28" rx="8" class="svg-box-good"/>
+  <text x="52" y="305" class="svg-mono" style="font-size:11px">返回 1</text>
+
+  <rect x="240" y="230" width="120" height="46" rx="10" class="svg-box"/>
+  <text x="256" y="250" class="svg-small">数字节点</text>
+  <text x="256" y="269" class="svg-mono">2</text>
+  <rect x="240" y="286" width="120" height="28" rx="8" class="svg-box-good"/>
+  <text x="252" y="305" class="svg-mono" style="font-size:11px">返回 2</text>
+
+  <path d="M380 96 L215 140" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M380 96 L540 140" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M215 186 L100 230" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M215 186 L300 230" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="336" width="700" height="94" rx="10" class="svg-box-ghost"/>
+  <text x="44" y="360" class="svg-small">实际调用顺序（先左后右，值沿调用栈往回传）</text>
+  <text x="44" y="386" class="svg-mono" style="font-size:11px">Mul.accept → visit(Mul) → 左 Add.accept → visit(Add) → 1 → 2 → 3 → 右 3 → 9</text>
+  <text x="44" y="412" class="svg-small">visit 负责“递归子节点 + 合并”，递归由访问者发起，元素只提供 getLeft() / getRight()。</text>
+</svg>`
+  },
+  {
+    nav: '新增操作',
+    title: '6. 加一个 PrintVisitor：元素一行不改',
+    caption: '现在要打印表达式：写一个 <code>PrintVisitor</code> 实现五个 <code>visit</code>，元素类完全不动。以后加“转 JSON”“常量折叠”“类型检查”也是同一个套路——这就是开闭原则里“对扩展开放”的那一半。',
+    code: 'class PrintVisitor : public IExpressionVisitor {\npublic:\n    void visit(AdditionExpr& e) override {\n        e.getLeft().accept(*this);\n        std::string l = output_;\n        e.getRight().accept(*this);\n        output_ = "(" + l + " + " + output_ + ")";\n    }   // 其余四个节点写法相同\nprivate:\n    std::string output_;\n};',
+    highlight: [0, 2],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="新增 PrintVisitor 类，左侧所有元素类都标注为未改动">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">加操作：只写新类，旧类不动</text>
+
+  <rect x="30" y="48" width="330" height="290" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="72" class="svg-small">元素类（一个字都没改）</text>
+  <text x="46" y="106" class="svg-mono" style="font-size:11px">IExpression</text>
+  <text x="310" y="106" class="svg-good-text">✓</text>
+  <text x="46" y="140" class="svg-mono" style="font-size:11px">NumberExpr</text>
+  <text x="310" y="140" class="svg-good-text">✓</text>
+  <text x="46" y="174" class="svg-mono" style="font-size:11px">AdditionExpr</text>
+  <text x="310" y="174" class="svg-good-text">✓</text>
+  <text x="46" y="208" class="svg-mono" style="font-size:11px">SubtractionExpr</text>
+  <text x="310" y="208" class="svg-good-text">✓</text>
+  <text x="46" y="242" class="svg-mono" style="font-size:11px">MultiplicationExpr</text>
+  <text x="310" y="242" class="svg-good-text">✓</text>
+  <text x="46" y="276" class="svg-mono" style="font-size:11px">DivisionExpr</text>
+  <text x="310" y="276" class="svg-good-text">✓</text>
+  <text x="46" y="312" class="svg-small">accept 通道早就留好了</text>
+
+  <path d="M364 190 H410" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="360" y="214" class="svg-small">复用</text>
+
+  <rect x="414" y="96" width="316" height="96" rx="10" class="svg-box-good"/>
+  <text x="430" y="122" class="svg-mono" style="font-size:11px">class PrintVisitor</text>
+  <text x="430" y="146" class="svg-mono" style="font-size:11px">  : public IExpressionVisitor</text>
+  <text x="430" y="174" class="svg-small">新增：实现 5 个 visit 重载</text>
+
+  <rect x="414" y="208" width="316" height="96" rx="10" class="svg-box-ghost"/>
+  <text x="430" y="234" class="svg-mono" style="font-size:11px">EvalVisitor</text>
+  <text x="430" y="258" class="svg-small">之前写的，同样没动</text>
+  <text x="430" y="286" class="svg-small">两个访问者可以同时存在</text>
+
+  <rect x="30" y="360" width="700" height="60" rx="10" class="svg-box-good"/>
+  <text x="46" y="384" class="svg-small">对扩展开放：新操作 = 新 Visitor 类。</text>
+  <text x="46" y="406" class="svg-small">对修改关闭：元素类、已有访问者都不用改，重新编译即可。</text>
+</svg>`
+  },
+  {
+    nav: '新增元素',
+    title: '7. 反过来：加一种元素要改所有访问者',
+    caption: '另一半代价：新增 <code>ModExpr</code> 时，抽象访问者要加一个纯虚函数，所有已存在的访问者都得补实现——少一个就编译不过（这其实是好事，漏处理会当场发现）。Acyclic Visitor 用 <code>dynamic_cast</code> 绕开强绑定；<code>variant</code> 把类型集合钉死在编译期。',
+    code: '// 新增 ModExpr：抽象接口必须加一个重载\nclass IExpressionVisitor {\npublic:\n    // 所有 Visitor 都要补这个重载\n    virtual void visit(ModExpr&) = 0;\n    // …\n};',
+    highlight: [4],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="三种实现方式在新增操作与新增元素两个方向上的代价对比表">
+  <text x="30" y="28" class="svg-title">没有免费的午餐：把“什么时候改代码”换个位置</text>
+
+  <rect x="30" y="44" width="700" height="36" rx="8" class="svg-box-accent"/>
+  <text x="46" y="67" class="svg-text" style="font-weight:700">实现方式</text>
+  <text x="244" y="67" class="svg-text" style="font-weight:700">新增一个操作</text>
+  <text x="524" y="67" class="svg-text" style="font-weight:700">新增一种元素</text>
+
+  <rect x="30" y="84" width="700" height="76" rx="6" class="svg-field"/>
+  <text x="46" y="106" class="svg-mono" style="font-size:11px">经典访问者</text>
+  <text x="46" y="128" class="svg-small">双分派 + 纯虚 visit</text>
+  <text x="244" y="108" class="svg-good-text" style="font-size:11.5px">✓ 写一个新 Visitor</text>
+  <text x="244" y="130" class="svg-small">元素类完全不动</text>
+  <text x="524" y="104" class="svg-bad-text" style="font-size:11.5px">✗ 改抽象接口</text>
+  <text x="524" y="124" class="svg-small">所有 Visitor 都要补一个实现</text>
+  <text x="524" y="144" class="svg-small">少一个就编译不过</text>
+
+  <rect x="30" y="166" width="700" height="76" rx="6" class="svg-field"/>
+  <text x="46" y="188" class="svg-mono" style="font-size:11px">Acyclic Visitor</text>
+  <text x="46" y="210" class="svg-small">dynamic_cast 跳过分派</text>
+  <text x="244" y="194" class="svg-good-text" style="font-size:11.5px">✓ 写一个新 Visitor</text>
+  <text x="244" y="216" class="svg-small">不关心某类就不实现</text>
+  <text x="524" y="190" class="svg-warn" style="font-size:11.5px;fill:#b45309;font-weight:700">△ 加元素 + 一个元素接口</text>
+  <text x="524" y="212" class="svg-small">旧 Visitor 不用改，类型不匹配就跳过</text>
+  <text x="524" y="232" class="svg-small">代价：运行期转换开销</text>
+
+  <rect x="30" y="248" width="700" height="76" rx="6" class="svg-field"/>
+  <text x="46" y="270" class="svg-mono" style="font-size:11px">variant + visit</text>
+  <text x="46" y="292" class="svg-small">类型集合编译期封闭</text>
+  <text x="244" y="276" class="svg-good-text" style="font-size:11.5px">✓ 写一个新的重载集合</text>
+  <text x="244" y="298" class="svg-small">不用碰任何元素类型</text>
+  <text x="524" y="272" class="svg-bad-text" style="font-size:11.5px">✗ 改 variant 的类型列表</text>
+  <text x="524" y="294" class="svg-small">每个 std::visit 处都要补分支</text>
+  <text x="524" y="314" class="svg-small">好在编译期就报错</text>
+
+  <text x="30" y="360" class="svg-small">经验法则：元素类型稳定、操作经常变 → 经典访问者；类型集合小且封闭 → variant。</text>
+  <text x="30" y="384" class="svg-small">两边都在变 → 先别上模式，虚函数或 if-else 可能更省事。</text>
+  <text x="30" y="410" class="svg-bad-text" style="font-size:11.5px">隐藏代价：经典访问者还得开放 getLeft()/getRight() 之类的接口，封装被打开一个口子。</text>
+</svg>`
+  },
+  {
+    nav: 'variant 替代',
+    title: '8. 现代替代：variant + std::visit',
+    caption: '类型只有有限几种、而且都写得出来时，<code>std::variant</code> + <code>std::visit</code> 最省心：不用基类、不用 <code>accept</code>，漏写一个重载编译期就报错。类型集合需要运行期扩展（插件、脚本）时，才回到虚函数或 Acyclic Visitor。',
+    code: 'using ShapeV = std::variant<\n    CircleV, RectangleV, TriangleV>;\n\ndouble area(const ShapeV& s) {\n    return std::visit(AreaVisitorV{}, s);\n}\n// AreaVisitorV 为每种类型重载 operator()\n// 漏一种 → 编译期报错',
+    highlight: [4],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="variant 同一时刻只存放一种类型，std::visit 根据实际类型选中对应的重载">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="28" class="svg-title">variant + visit：编译器替你查漏</text>
+
+  <rect x="30" y="50" width="240" height="160" rx="10" class="svg-box"/>
+  <text x="46" y="74" class="svg-small">variant 里同一时刻只放一个</text>
+  <rect x="46" y="88" width="208" height="30" rx="6" class="svg-field"/>
+  <text x="58" y="108" class="svg-mono" style="font-size:11px">CircleV</text>
+  <rect x="46" y="124" width="208" height="30" rx="6" class="svg-box-accent"/>
+  <text x="58" y="144" class="svg-mono" style="font-size:11px">RectangleV ← 当前</text>
+  <rect x="46" y="160" width="208" height="30" rx="6" class="svg-field"/>
+  <text x="58" y="180" class="svg-mono" style="font-size:11px">TriangleV</text>
+
+  <path d="M274 128 H326" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="276" y="118" class="svg-small">std::visit</text>
+
+  <rect x="330" y="58" width="400" height="40" rx="8" class="svg-field"/>
+  <text x="344" y="84" class="svg-mono" style="font-size:11px">operator()(const CircleV&amp;)</text>
+  <rect x="330" y="106" width="400" height="40" rx="8" class="svg-box-accent"/>
+  <text x="344" y="132" class="svg-mono" style="font-size:11px">operator()(const RectangleV&amp;)  ← 选中</text>
+  <rect x="330" y="154" width="400" height="40" rx="8" class="svg-field"/>
+  <text x="344" y="180" class="svg-mono" style="font-size:11px">operator()(const TriangleV&amp;)</text>
+
+  <rect x="30" y="232" width="700" height="78" rx="10" class="svg-box-good"/>
+  <text x="46" y="258" class="svg-title">好处</text>
+  <text x="46" y="282" class="svg-small">类型集合编译期封闭：漏掉一个重载直接编译失败；没有虚函数，调用可内联。</text>
+  <text x="46" y="302" class="svg-small">元素不必继承同一个基类，也不用写 accept —— 双分派交给标准库。</text>
+
+  <rect x="30" y="324" width="700" height="78" rx="10" class="svg-box-warn"/>
+  <text x="46" y="350" class="svg-title">代价</text>
+  <text x="46" y="374" class="svg-small">加一个新形状 = 改 variant 类型 → 所有 std::visit 处都要补分支（好在编译期报错）。</text>
+  <text x="46" y="394" class="svg-small">类型集合要运行期才确定（插件、脚本）就用不了，只能回到虚函数或 Acyclic。</text>
+
+  <text x="30" y="430" class="svg-small">重载集合可以写成带多个 operator() 的结构体，也可以用 Overloaded{...} 合并 lambda，两者等价。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>
