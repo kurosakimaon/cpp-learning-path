@@ -56,6 +56,7 @@
 #include <mutex>
 #include <thread>
 #include <cassert>
+#include <chrono>
 #include <sstream>
 
 // ============================================================

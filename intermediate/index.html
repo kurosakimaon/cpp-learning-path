@@ -8,7 +8,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #5569c3 0%, #764ba2 100%);
     min-height: 100vh;
     padding: 30px 20px;
     color: #333;
@@ -18,7 +18,7 @@
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -30,7 +30,7 @@
 
   .header { text-align: center; color: white; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
-  .header p { font-size: 16px; opacity: 0.95; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -40,7 +40,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .intro-section h2 {
-    color: #667eea;
+    color: #4f62b6;
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
@@ -95,6 +95,29 @@
   .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
   .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
   .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .card-step {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #e3f2fd;
+    color: #1565c0;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .list-note {
+    color: #5e35b1;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: -6px 0 16px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.78);
+    border-left: 3px solid currentColor;
+    border-radius: 0 10px 10px 0;
+  }
+  .list-note a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .list-note a:hover { text-decoration: underline; }
 
   .tag {
     padding: 3px 10px;
@@ -106,7 +129,7 @@
   .tag.elementary { background: #e0f2f1; color: #00695c; }
   .tag.intermediate { background: #e3f2fd; color: #1565c0; }
   .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.advanced { background: #fff3e0; color: #be4300; }
   .tag.expert { background: #ffebee; color: #c62828; }
 
   .feature-section {
@@ -117,7 +140,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .feature-section h2 {
-    color: #667eea;
+    color: #4f62b6;
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
@@ -145,7 +168,7 @@
   }
   .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
   .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #667eea; }
+  .master-section li strong { color: #4f62b6; }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -175,22 +198,33 @@
       这是一个重要的转折点。学完本模块，你的代码质量会有质的飞跃：更安全、更简洁、更符合 C++ 的"道"。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #667eea, #764ba2); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #586dca, #764ba2); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(102, 126, 234, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(102, 126, 234, 0.3)';">
         📖 学习指南
       </a>
-      <a href="../visuals/memory_model.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #667eea; text-decoration: none; border: 2px solid #667eea; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#667eea';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#667eea';">
+      <a href="../visuals/memory_model.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #4f62b6; text-decoration: none; border: 2px solid #667eea; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#667eea';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#667eea';">
         🎬 图解 RAII
       </a>
-      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <a href="../visuals/smart_ptr.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #764ba2; text-decoration: none; border: 2px solid #764ba2; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#764ba2';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#764ba2';">
+        🎬 图解智能指针
+      </a>
+      <span style="color: #6e6e6e; font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
   <div class="section-title">
     <span>📂</span> 学习文件列表
   </div>
+  <p class="list-note">
+    五张卡片就是教程里的<strong>五个台阶</strong>，按 <strong>第 1 步 → 第 5 步</strong> 往下走，别先学后面的。
+    <strong>第 1 步 内存模型与 RAII</strong> 要先啃下来——后面四步全都建在它上面；
+    <strong>第 2 步 容器</strong> 和 <strong>第 3 步 算法与迭代器</strong> 合起来就是页头说的 STL 三板斧——先会存，再会算；
+    <strong>第 4 步 智能指针</strong> 把第 1 步的 RAII 思想落到日常写法上；<strong>第 5 步 编程规范</strong> 收尾，把前四步固化成习惯。
+    每一步该重点关注什么，见 <a href="tutorial.md">📖 学习指南</a>。
+  </p>
 
   <div class="card-grid">
     <a href="memory_model_raii.cpp" class="card">
+      <div class="card-step">第 1 步 · 灵魂</div>
       <div class="card-icon">🧠</div>
       <div class="card-title">内存模型与 RAII（C++灵魂）</div>
       <div class="card-desc">堆/栈/全局区、对象生命周期、RAII 思想详解。理解了 RAII，才算真正入门了 C++。</div>
@@ -198,6 +232,7 @@
     </a>
 
     <a href="stl_containers.cpp" class="card">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">📦</div>
       <div class="card-title">STL 容器详解与底层原理</div>
       <div class="card-desc">vector/list/deque/map/set/unordered_map 等容器的用法、区别、底层实现和适用场景。</div>
@@ -205,6 +240,7 @@
     </a>
 
     <a href="stl_algorithms.cpp" class="card">
+      <div class="card-step">第 3 步</div>
       <div class="card-icon">⚡</div>
       <div class="card-title">STL 算法与迭代器深入</div>
       <div class="card-desc">常用算法（排序/查找/遍历/变换）、迭代器分类、仿函数与 lambda 结合使用。</div>
@@ -212,6 +248,7 @@
     </a>
 
     <a href="smart_ptr_deep.cpp" class="card">
+      <div class="card-step">第 4 步</div>
       <div class="card-icon">🛡️</div>
       <div class="card-title">智能指针深入与常见陷阱</div>
       <div class="card-desc">unique_ptr/shared_ptr/weak_ptr 原理、用法、循环引用问题、线程安全性分析。</div>
@@ -219,6 +256,7 @@
     </a>
 
     <a href="coding_practices.cpp" class="card">
+      <div class="card-step">第 5 步</div>
       <div class="card-icon">📏</div>
       <div class="card-title">编程规范与最佳实践</div>
       <div class="card-desc">命名规范、代码组织、异常安全、const 正确性、Google C++ Style 精华解读。</div>

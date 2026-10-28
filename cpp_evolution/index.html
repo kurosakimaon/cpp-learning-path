@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>版本演进 · C++11→14→17 - C++ 学习路线</title>
+<title>版本演进 · C++11→14→17→20 - C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -19,7 +19,7 @@
     display: inline-block;
     padding: 8px 16px;
     background: rgba(255,255,255,0.25);
-    color: #006064;
+    color: #005053;
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
@@ -29,9 +29,9 @@
   }
   .back-btn:hover { background: rgba(255,255,255,0.4); }
 
-  .header { text-align: center; color: #006064; margin-bottom: 30px; }
+  .header { text-align: center; color: #005053; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(255,255,255,0.3); }
-  .header p { font-size: 16px; opacity: 0.9; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -41,7 +41,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .intro-section h2 {
-    color: #0097a7;
+    color: #00737f;
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
@@ -51,7 +51,7 @@
   .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: #006064;
+    color: #005053;
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
@@ -103,7 +103,7 @@
   .tag.elementary { background: #e0f2f1; color: #00695c; }
   .tag.intermediate { background: #e3f2fd; color: #1565c0; }
   .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.advanced { background: #fff3e0; color: #be4300; }
   .tag.expert { background: #ffebee; color: #c62828; }
   .tag.introductory { background: #f3e5f5; color: #7b1fa2; }
 
@@ -115,7 +115,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .feature-section h2 {
-    color: #0097a7;
+    color: #00737f;
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
@@ -146,7 +146,7 @@
   .timeline-item .year {
     font-size: 28px;
     font-weight: 700;
-    color: #0097a7;
+    color: #00737f;
     margin-bottom: 6px;
   }
   .timeline-item .label {
@@ -160,6 +160,47 @@
     color: #666;
     line-height: 1.8;
   }
+  .timeline-item .highlights a {
+    color: #007782;
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(0,131,143,0.45);
+  }
+  .timeline-item .highlights a:hover { border-bottom-style: solid; }
+  .timeline-item .deep-link {
+    margin-top: 10px;
+    padding-top: 9px;
+    border-top: 1px dashed #b2ebf2;
+    text-align: left;
+    font-size: 12px;
+    color: #555;
+    line-height: 1.8;
+  }
+  .timeline-item .deep-link a { color: #00695c; font-weight: 700; text-decoration: none; }
+  .timeline-item .deep-link a:hover { text-decoration: underline; }
+
+  .card-step {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #e0f7fa;
+    color: #007782;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .list-note {
+    color: #005053;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: -6px 0 16px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.78);
+    border-left: 3px solid currentColor;
+    border-radius: 0 10px 10px 0;
+  }
+  .list-note a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .list-note a:hover { text-decoration: underline; }
 
   .master-section {
     background: linear-gradient(135deg, #fdfbfb, #ebedee);
@@ -178,7 +219,7 @@
   }
   .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
   .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #0097a7; }
+  .master-section li strong { color: #00737f; }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -195,7 +236,7 @@
   <a href="../学习路线图.html" class="back-btn">← 返回总路线图</a>
 
   <div class="header">
-    <h1>📜 版本演进 · C++11 → 14 → 17</h1>
+    <h1>📜 版本演进 · C++11 → 14 → 17 → 20</h1>
     <p>理解每个版本的核心变化 · 掌握 C++ 现代化的脉络</p>
   </div>
 
@@ -211,29 +252,44 @@
       了解版本演进，不仅能帮你在不同编译器环境下写出兼容的代码，
       更能让你<strong>站在设计者的角度理解 C++ 的发展方向</strong>。
     </p>
+    <p style="margin-top: 10px; background: #f0fdfa; border-left: 4px solid #00bcd4; border-radius: 8px; padding: 12px 16px;">
+      <strong>本模块和 💜 现代 C++ 特性模块怎么分工？</strong>
+      这里负责<strong>横向脉络</strong>——哪个版本加入了什么、为什么要加；
+      每个特性<strong>纵向怎么写、有哪些坑</strong>，全部在
+      <a href="../cpp17/index.html" style="color: #00695c; font-weight: 700;">cpp17/ 模块</a>里逐个深潜，本模块不重复讲解。
+      建议先在这里建立地图，再去那边逐个攻透。
+    </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #00c9ff, #00bcd4); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0, 188, 212, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(0, 188, 212, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #007d9f, #007f90); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0, 188, 212, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(0, 188, 212, 0.3)';">
         📖 学习指南
       </a>
-      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <a href="../cpp17/index.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #00737f; text-decoration: none; border: 2px solid #0097a7; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#0097a7';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#0097a7';">
+        💜 现代 C++ 特性深潜
+      </a>
+      <span style="color: #707070; font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
   <div class="feature-section">
     <h2>🗓️ 版本演进时间线</h2>
+    <p>
+      下面只是<strong>地图</strong>：每个名字都是一个链接，点下去就是该特性的详解文件。
+      标在「本模块」里的讲原理与背景，标在「cpp17/」里的讲写法与坑——同一个特性不会在两处重复展开。
+    </p>
     <div class="timeline">
       <div class="timeline-item">
         <div class="year">C++11</div>
         <div class="label">划时代的革命</div>
         <div class="highlights">
-          • 移动语义 & 右值引用<br>
-          • auto / decltype<br>
+          • <a href="../cpp17/move_semantics_advanced.cpp" title="写法与坑在 cpp17 模块">移动语义 &amp; 右值引用</a><br>
+          • <a href="../cpp17/type_deduction.cpp" title="推导规则细节在 cpp17 模块">auto / decltype</a><br>
           • lambda 表达式<br>
-          • 智能指针<br>
+          • <a href="../intermediate/smart_ptr_deep.cpp" title="智能指针专题在中间件模块">智能指针</a><br>
           • 范围 for 循环<br>
-          • 线程支持库<br>
+          • <a href="../concurrency/index.html" title="并发是独立模块">线程支持库</a><br>
           • constexpr 初版
         </div>
+        <div class="deep-link">🔎 原理详解：本模块 <a href="cpp11_core_features.cpp">cpp11_core_features.cpp</a>（步骤 ②）</div>
       </div>
       <div class="timeline-item">
         <div class="year">C++14</div>
@@ -247,21 +303,21 @@
           • make_unique<br>
           • 共享的互斥量
         </div>
+        <div class="deep-link">🔎 原理详解：本模块 <a href="cpp14_features.cpp">cpp14_features.cpp</a>（步骤 ③）</div>
       </div>
       <div class="timeline-item">
         <div class="year">C++17</div>
         <div class="label">实用主义</div>
         <div class="highlights">
-          • 结构化绑定<br>
-          • if constexpr<br>
-          • 折叠表达式<br>
-          • std::optional<br>
-          • std::variant<br>
-          • std::any<br>
-          • string_view<br>
-          • filesystem<br>
-          • 并行算法
+          • <a href="../cpp17/structured_binding.cpp">结构化绑定</a><br>
+          • <a href="../cpp17/if_constexpr.cpp">if constexpr</a><br>
+          • <a href="../cpp17/fold_expressions.cpp">折叠表达式</a><br>
+          • <a href="../cpp17/optional_variant_any.cpp">std::optional / variant / any</a><br>
+          • <a href="../cpp17/string_view_filesystem.cpp">string_view</a><br>
+          • <a href="../cpp17/string_view_filesystem.cpp">filesystem</a><br>
+          • <a href="../cpp17/parallel_algorithms.cpp">并行算法</a>
         </div>
+        <div class="deep-link">🔎 逐个深潜：<a href="../cpp17/index.html">cpp17/ 模块</a>（本模块只讲来历，不重复写法）</div>
       </div>
     </div>
   </div>
@@ -269,31 +325,39 @@
   <div class="section-title">
     <span>📂</span> 学习文件列表
   </div>
+  <p class="list-note">
+    按 <strong>① → ④</strong> 的顺序学：先在 ① 建立整张地图，再逐版本深入，④ 只需了解。
+    C++17 各特性的详细用法在 <a href="../cpp17/index.html">💜 现代 C++ 特性模块</a>，学完 ① 就可以过去，不必等本模块读完。
+  </p>
 
   <div class="card-grid">
+    <a href="evolution_comparison.cpp" class="card">
+      <div class="card-step">第 1 步</div>
+      <div class="card-icon">📊</div>
+      <div class="card-title">跨版本演进对比（10 个主题）</div>
+      <div class="card-desc">按主题横向对比 C++98→11→14→17 的变化。同一个问题在不同版本中的不同解法，一目了然。先读它，建立整体地图。</div>
+      <div class="card-meta"><span class="tag intermediate">中级</span></div>
+    </a>
+
     <a href="cpp11_core_features.cpp" class="card">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🚀</div>
       <div class="card-title">C++11 核心特性深度解析</div>
-      <div class="card-desc">移动语义、lambda、智能指针、auto/decltype、范围for、constexpr 等 C++11 最重要特性的原理与实战。</div>
+      <div class="card-desc">移动语义、lambda、智能指针、auto/decltype、范围for、constexpr 等 C++11 最重要特性的原理与实战。现代 C++ 的基石。</div>
       <div class="card-meta"><span class="tag intermediate">中级</span></div>
     </a>
 
     <a href="cpp14_features.cpp" class="card">
+      <div class="card-step">第 3 步</div>
       <div class="card-icon">🔧</div>
       <div class="card-title">C++14 特性详解</div>
-      <div class="card-desc">函数返回值推导、泛型 lambda、变量模板、二进制字面量、make_unique 等 C++14 新特性全解析。</div>
-      <div class="card-meta"><span class="tag intermediate">中级</span></div>
-    </a>
-
-    <a href="evolution_comparison.cpp" class="card">
-      <div class="card-icon">📊</div>
-      <div class="card-title">跨版本演进对比（10 个主题）</div>
-      <div class="card-desc">按主题横向对比 C++98→11→14→17 的变化。同一个问题在不同版本中的不同解法，一目了然。</div>
+      <div class="card-desc">函数返回值推导、泛型 lambda、变量模板、二进制字面量、make_unique 等 C++14 新特性全解析。是小版本，快速过一遍即可。</div>
       <div class="card-meta"><span class="tag intermediate">中级</span></div>
     </a>
 
     <a href="cpp20_overview.cpp" class="card">
-      <div class="card-icon">🚀</div>
+      <div class="card-step">第 4 步</div>
+      <div class="card-icon">🔭</div>
       <div class="card-title">C++20/23 速览</div>
       <div class="card-desc">Concepts、Ranges、协程、模块、std::expected、std::print、mdspan……快速了解现代 C++ 的最新特性，知道有这么回事就行。</div>
       <div class="card-meta"><span class="tag introductory">了解</span></div>
@@ -303,6 +367,7 @@
   <div class="feature-section">
     <h2>📚 学习建议</h2>
     <ul>
+      <li><strong>本模块负责"脉络"，<code>cpp17/</code> 负责"细节"</strong>：在这里搞清楚"哪个版本加了什么、为什么加"就够了，具体怎么写、有哪些坑，跟着时间线里的链接跳到对应文件，不要把两处都读一遍。</li>
       <li><strong>先掌握 C++11</strong>：C++11 是现代 C++ 的基石。把 C++11 的核心特性吃透了，C++14 和 C++17 都是在此基础上的增量更新。</li>
       <li><strong>横向对比学习效果最好</strong>：推荐重点看"跨版本演进对比"，同一个主题（比如遍历、类型推导、初始化）在不同版本中的写法对比，能让你对 C++ 的发展脉络有非常清晰的认识。</li>
       <li><strong>关注"为什么加入这个特性"</strong>：每个新特性都不是拍脑袋加的。了解它解决了什么痛点，你才能真正理解它的价值，也知道什么时候该用它。</li>

@@ -304,7 +304,7 @@ void mergeSortHelper(vector<int>& arr, int left, int right) {
 }
 
 void mergeSort(vector<int>& arr) {
-    mergeSortHelper(arr, 0, arr.size() - 1);
+    mergeSortHelper(arr, 0, static_cast<int>(arr.size()) - 1);
 }
 
 // ============================================================================
@@ -390,7 +390,7 @@ void quickSortHelper(vector<int>& arr, int left, int right) {
 }
 
 void quickSort(vector<int>& arr) {
-    quickSortHelper(arr, 0, arr.size() - 1);
+    quickSortHelper(arr, 0, static_cast<int>(arr.size()) - 1);
 }
 
 // ============================================================================

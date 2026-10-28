@@ -8,7 +8,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #11998e 0%, #38ef7d 100%);
+    background: linear-gradient(135deg, #0e7d74 0%, #1e7f43 100%);
     min-height: 100vh;
     padding: 30px 20px;
     color: #333;
@@ -18,7 +18,7 @@
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -30,7 +30,7 @@
 
   .header { text-align: center; color: white; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
-  .header p { font-size: 16px; opacity: 0.95; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -40,7 +40,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .intro-section h2 {
-    color: #11998e;
+    color: #0d756c;
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
@@ -112,6 +112,29 @@
     gap: 8px;
     flex-wrap: wrap;
   }
+  .card-step {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #e0f2f1;
+    color: #00695c;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .list-note {
+    color: #00695c;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: -6px 0 16px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.78);
+    border-left: 3px solid currentColor;
+    border-radius: 0 10px 10px 0;
+  }
+  .list-note a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .list-note a:hover { text-decoration: underline; }
 
   .tag {
     padding: 3px 10px;
@@ -123,7 +146,7 @@
   .tag.elementary { background: #e0f2f1; color: #00695c; }
   .tag.intermediate { background: #e3f2fd; color: #1565c0; }
   .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.advanced { background: #fff3e0; color: #be4300; }
   .tag.expert { background: #ffebee; color: #c62828; }
 
   .feature-section {
@@ -134,7 +157,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .feature-section h2 {
-    color: #11998e;
+    color: #0d756c;
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
@@ -182,7 +205,7 @@
     line-height: 2;
     font-size: 14px;
   }
-  .master-section li strong { color: #11998e; }
+  .master-section li strong { color: #0d756c; }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -213,22 +236,29 @@
       别急着赶进度，<strong>每一个例子都亲手敲一遍、跑一遍、改一遍</strong>，这才是真正的学习。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #11998e, #38ef7d); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(17, 153, 142, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(17, 153, 142, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0e8278, #1f8445); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(17, 153, 142, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(17, 153, 142, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(17, 153, 142, 0.3)';">
         📖 学习指南
       </a>
-      <a href="../visuals/vtable.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #11998e; text-decoration: none; border: 2px solid #11998e; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#11998e';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#11998e';">
+      <a href="../visuals/vtable.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #0d756c; text-decoration: none; border: 2px solid #11998e; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#11998e';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#11998e';">
         🎬 图解多态
       </a>
-      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: #6f6f6f; font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
   <div class="section-title">
     <span>📂</span> 学习文件列表
   </div>
+  <p class="list-note">
+    <strong>10 张卡片 = 10 章</strong>，按 <strong>第 1 步 → 第 10 步</strong> 一张张往下学，别跳——前面每一章都是后面那一章的地基。
+    途中有两道坎：<strong>第 4 步 指针与引用</strong>，跨过去后面一马平川；<strong>第 7 步 → 第 8 步 面向对象</strong>，
+    先在<strong>第 7 步</strong>把封装、构造/析构、深浅拷贝搞牢，再进<strong>第 8 步</strong>学继承，最后才碰多态，顺序别颠倒。
+    每章的重点和练习见 <a href="tutorial.md">📖 学习指南</a>。
+  </p>
 
   <div class="card-grid">
     <a href="01_basics.cpp" class="card">
+      <div class="card-step">第 1 步</div>
       <div class="card-icon">🔤</div>
       <div class="card-title">01 · 基础语法</div>
       <div class="card-desc">变量、数据类型、运算符、流程控制（if/switch/for/while）。C++ 的 ABC，一切的起点。</div>
@@ -236,6 +266,7 @@
     </a>
 
     <a href="02_functions.cpp" class="card">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🔧</div>
       <div class="card-title">02 · 函数</div>
       <div class="card-desc">函数定义、参数传递（值/指针/引用）、函数重载、递归。学会把代码拆成一块块的。</div>
@@ -243,6 +274,7 @@
     </a>
 
     <a href="03_array_string.cpp" class="card">
+      <div class="card-step">第 3 步</div>
       <div class="card-icon">📋</div>
       <div class="card-title">03 · 数组与字符串</div>
       <div class="card-desc">数组、C 风格字符串、std::string 用法大全。处理批量数据的基础工具。</div>
@@ -250,6 +282,7 @@
     </a>
 
     <a href="04_pointer_reference.cpp" class="card">
+      <div class="card-step">第 4 步 · 第一道坎</div>
       <div class="card-icon">🎯</div>
       <div class="card-title">04 · 指针与引用（重点）</div>
       <div class="card-desc">指针是什么、怎么用、和引用的区别。C/C++ 的灵魂，也是新手最懵的地方，务必搞懂！</div>
@@ -257,6 +290,7 @@
     </a>
 
     <a href="05_struct.cpp" class="card">
+      <div class="card-step">第 5 步</div>
       <div class="card-icon">🏗️</div>
       <div class="card-title">05 · 结构体实战</div>
       <div class="card-desc">结构体定义 + 学生管理系统完整实战。把前面学的全串起来，做一个小项目。</div>
@@ -264,6 +298,7 @@
     </a>
 
     <a href="06_file_io.cpp" class="card">
+      <div class="card-step">第 6 步</div>
       <div class="card-icon">📁</div>
       <div class="card-title">06 · 文件读写</div>
       <div class="card-desc">文件读写、流操作（ifstream/ofstream/fstream）、RAII 初体验。数据持久化的第一步。</div>
@@ -271,6 +306,7 @@
     </a>
 
     <a href="07_class_basics.cpp" class="card">
+      <div class="card-step">第 7 步 · 第二道坎</div>
       <div class="card-icon">📦</div>
       <div class="card-title">07 · 类与对象基础</div>
       <div class="card-desc">类与对象、封装、构造函数、析构函数、深浅拷贝。面向对象编程的第一堂课。</div>
@@ -278,6 +314,7 @@
     </a>
 
     <a href="08_inheritance_polymorphism.cpp" class="card">
+      <div class="card-step">第 8 步 · 核心</div>
       <div class="card-icon">🔄</div>
       <div class="card-title">08 · 继承与多态（核心）</div>
       <div class="card-desc">继承、虚函数、多态、纯虚函数与抽象类。OOP 三大特性中最重要的一个，务必吃透。</div>
@@ -285,6 +322,7 @@
     </a>
 
     <a href="09_operator_overload.cpp" class="card">
+      <div class="card-step">第 9 步</div>
       <div class="card-icon">➕</div>
       <div class="card-title">09 · 运算符重载</div>
       <div class="card-desc">运算符重载、友元函数、仿函数（函数对象）。让你的类用起来像内置类型一样自然。</div>
@@ -292,6 +330,7 @@
     </a>
 
     <a href="10_template_intro.cpp" class="card">
+      <div class="card-step">第 10 步</div>
       <div class="card-icon">🧩</div>
       <div class="card-title">10 · 模板入门 + STL 初步</div>
       <div class="card-desc">函数模板、类模板、STL 容器初步认识（vector/string）。泛型编程的起点。</div>

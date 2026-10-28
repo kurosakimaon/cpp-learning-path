@@ -9,7 +9,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    background: linear-gradient(135deg, #945a9a 0%, #c04455 100%);
     min-height: 100vh;
     padding: 20px;
     color: #333;
@@ -24,14 +24,14 @@
   }
   .subtitle {
     text-align: center;
-    color: rgba(255,255,255,0.85);
+    color: #fff;
     margin-bottom: 20px;
     font-size: 14px;
   }
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -40,6 +40,23 @@
     transition: background 0.2s;
   }
   .back-btn:hover { background: rgba(255,255,255,0.3); }
+  .guide-banner {
+    margin: 0 0 18px;
+    padding: 12px 18px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.92);
+    color: #7a1c3f;
+    font-size: 13.5px;
+    line-height: 1.8;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+  }
+  .guide-banner a {
+    color: #c2185b;
+    font-weight: 700;
+    text-decoration: none;
+    border-bottom: 1px dashed rgba(194,24,91,0.4);
+  }
+  .guide-banner a:hover { color: #8e0f42; border-bottom-style: solid; }
   .tabs {
     display: flex;
     gap: 8px;
@@ -48,7 +65,7 @@
   }
   .tab {
     padding: 10px 20px;
-    background: rgba(255,255,255,0.3);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     border-radius: 8px;
     cursor: pointer;
@@ -57,9 +74,10 @@
     font-size: 14px;
   }
   .tab:hover { background: rgba(255,255,255,0.4); }
+  .tab:focus-visible { outline: 3px solid #fff; outline-offset: 2px; }
   .tab.active {
     background: white;
-    color: #f5576c;
+    color: #c64657;
     box-shadow: 0 4px 12px rgba(0,0,0,0.15);
   }
   .panel {
@@ -102,18 +120,18 @@
   }
   button:hover {
     border-color: #f5576c;
-    color: #f5576c;
+    color: #c64657;
   }
   button.primary {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
+    background: linear-gradient(135deg, #995ea0, #c74758);
     color: white;
     border: none;
   }
   button.primary:hover { color: white; transform: translateY(-1px); }
-  button.danger { background: #ff6b6b; color: white; border: none; }
-  button.danger:hover { background: #ee5a5a; color: white; }
-  button.warn { background: #ffa751; color: white; border: none; }
-  button.warn:hover { background: #ff9536; color: white; }
+  button.danger { background: #be5050; color: white; border: none; }
+  button.danger:hover { background: #c54a4a; color: white; }
+  button.warn { background: #9e6832; color: white; border: none; }
+  button.warn:hover { background: #a96224; color: white; }
   .visual-area {
     min-height: 300px;
     padding: 20px;
@@ -142,8 +160,8 @@
     border-top: 1px solid #eee;
   }
   .stat-item { text-align: center; flex: 1; }
-  .stat-value { font-size: 24px; font-weight: 700; color: #f5576c; }
-  .stat-label { font-size: 12px; color: #888; margin-top: 4px; }
+  .stat-value { font-size: 24px; font-weight: 700; color: #c64657; }
+  .stat-label { font-size: 12px; color: #696969; margin-top: 4px; }
 
   /* 链表样式 */
   .linked-list {
@@ -167,7 +185,7 @@
   .node-box {
     width: 70px;
     height: 70px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -179,12 +197,12 @@
     position: relative;
   }
   .node-box.highlight {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
+    background: linear-gradient(135deg, #995ea0, #c74758);
     box-shadow: 0 4px 15px rgba(245, 87, 108, 0.5);
     transform: scale(1.1);
   }
   .node-box.new {
-    background: linear-gradient(135deg, #11998e, #38ef7d);
+    background: linear-gradient(135deg, #0e8278, #1f8445);
     box-shadow: 0 4px 15px rgba(56, 239, 125, 0.5);
   }
   .node-arrow {
@@ -205,7 +223,7 @@
   .node-null {
     padding: 8px 12px;
     background: #ddd;
-    color: #666;
+    color: #5e5e5e;
     border-radius: 6px;
     font-size: 12px;
     font-weight: 600;
@@ -215,7 +233,7 @@
     top: -24px;
     left: 50%;
     transform: translateX(-50%);
-    background: #f5576c;
+    background: #c74758;
     color: white;
     padding: 2px 8px;
     border-radius: 4px;
@@ -233,7 +251,7 @@
   .stack-item {
     width: 120px;
     height: 45px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     border-radius: 6px;
     display: flex;
     align-items: center;
@@ -249,10 +267,10 @@
     to { opacity: 1; transform: translateY(0); }
   }
   .stack-item.highlight {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
+    background: linear-gradient(135deg, #995ea0, #c74758);
   }
   .stack-top-label {
-    color: #f5576c;
+    color: #c64657;
     font-size: 12px;
     font-weight: 700;
     margin-bottom: 4px;
@@ -274,7 +292,7 @@
   .queue-item {
     width: 70px;
     height: 70px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     border-radius: 8px;
     display: flex;
     align-items: center;
@@ -286,10 +304,10 @@
     animation: slideIn 0.3s ease;
   }
   .queue-item.front {
-    background: linear-gradient(135deg, #11998e, #38ef7d);
+    background: linear-gradient(135deg, #0e8278, #1f8445);
   }
   .queue-item.rear {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
+    background: linear-gradient(135deg, #995ea0, #c74758);
   }
 
   /* 二叉树样式 */
@@ -302,7 +320,7 @@
     width: 50px;
     height: 50px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -314,12 +332,12 @@
     z-index: 2;
   }
   .tree-node.highlight {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
+    background: linear-gradient(135deg, #995ea0, #c74758);
     transform: scale(1.15);
     box-shadow: 0 4px 15px rgba(245, 87, 108, 0.5);
   }
   .tree-node.found {
-    background: linear-gradient(135deg, #11998e, #38ef7d);
+    background: linear-gradient(135deg, #0e8278, #1f8445);
   }
   .tree-level {
     display: flex;
@@ -379,7 +397,7 @@
   }
   .hash-element {
     padding: 6px 12px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     color: white;
     border-radius: 6px;
     font-size: 13px;
@@ -387,11 +405,11 @@
     animation: popIn 0.3s ease;
   }
   .hash-element.highlight {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
+    background: linear-gradient(135deg, #995ea0, #c74758);
     transform: scale(1.1);
   }
   .hash-element.new {
-    background: linear-gradient(135deg, #11998e, #38ef7d);
+    background: linear-gradient(135deg, #0e8278, #1f8445);
   }
 
   /* 堆样式 */
@@ -405,7 +423,7 @@
   .heap-item {
     width: 50px;
     height: 50px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     border-radius: 8px;
     display: flex;
     flex-direction: column;
@@ -420,11 +438,11 @@
     position: absolute;
     top: -16px;
     font-size: 10px;
-    color: #999;
+    color: #696969;
     font-weight: 500;
   }
   .heap-item.highlight {
-    background: linear-gradient(135deg, #f093fb, #f5576c);
+    background: linear-gradient(135deg, #995ea0, #c74758);
     transform: scale(1.1);
   }
 
@@ -458,18 +476,30 @@
   <h1>🌳 数据结构可视化</h1>
   <p class="subtitle">7种经典数据结构 · 交互式演示 · 原理讲解</p>
 
-  <div class="tabs">
-    <div class="tab active" data-tab="linkedlist">单链表</div>
-    <div class="tab" data-tab="stack">栈</div>
-    <div class="tab" data-tab="queue">队列</div>
-    <div class="tab" data-tab="bst">二叉搜索树</div>
-    <div class="tab" data-tab="hashtable">哈希表</div>
-    <div class="tab" data-tab="heap">堆</div>
-    <div class="tab" data-tab="array">动态数组</div>
+  <div class="guide-banner">
+    <strong>🧭 想先看机制？</strong>
+    六组分步图解：
+    <a href="../visuals/linked_list.html">链表</a>、
+    <a href="../visuals/dynamic_array.html">动态数组</a>、
+    <a href="../visuals/stack_queue.html">栈与队列</a>、
+    <a href="../visuals/tree.html">二叉搜索树</a>、
+    <a href="../visuals/hash_table.html">哈希表</a>、
+    <a href="../visuals/heap.html">堆</a>。
+    图解一步一帧讲清指针和下标怎么变，这一页则适合自己动手点按钮试。
+  </div>
+
+  <div class="tabs" role="tablist" aria-label="数据结构类型">
+    <div class="tab active" role="tab" id="dtab-linkedlist" aria-selected="true" aria-controls="panel-linkedlist" tabindex="0" data-tab="linkedlist">单链表</div>
+    <div class="tab" role="tab" id="dtab-stack" aria-selected="false" aria-controls="panel-stack" tabindex="-1" data-tab="stack">栈</div>
+    <div class="tab" role="tab" id="dtab-queue" aria-selected="false" aria-controls="panel-queue" tabindex="-1" data-tab="queue">队列</div>
+    <div class="tab" role="tab" id="dtab-bst" aria-selected="false" aria-controls="panel-bst" tabindex="-1" data-tab="bst">二叉搜索树</div>
+    <div class="tab" role="tab" id="dtab-hashtable" aria-selected="false" aria-controls="panel-hashtable" tabindex="-1" data-tab="hashtable">哈希表</div>
+    <div class="tab" role="tab" id="dtab-heap" aria-selected="false" aria-controls="panel-heap" tabindex="-1" data-tab="heap">堆</div>
+    <div class="tab" role="tab" id="dtab-array" aria-selected="false" aria-controls="panel-array" tabindex="-1" data-tab="array">动态数组</div>
   </div>
 
   <!-- 链表 -->
-  <div class="panel active" id="panel-linkedlist">
+  <div class="panel active" id="panel-linkedlist" role="tabpanel" aria-labelledby="dtab-linkedlist">
     <div class="controls">
       <input type="number" id="llValue" placeholder="数值" value="42">
       <button class="primary" onclick="ll_insertHead()">头插</button>
@@ -500,7 +530,7 @@
   </div>
 
   <!-- 栈 -->
-  <div class="panel" id="panel-stack">
+  <div class="panel" id="panel-stack" role="tabpanel" aria-labelledby="dtab-stack">
     <div class="controls">
       <input type="number" id="stackValue" placeholder="数值" value="1">
       <button class="primary" onclick="stack_push()">入栈 push</button>
@@ -526,7 +556,7 @@
   </div>
 
   <!-- 队列 -->
-  <div class="panel" id="panel-queue">
+  <div class="panel" id="panel-queue" role="tabpanel" aria-labelledby="dtab-queue">
     <div class="controls">
       <input type="number" id="queueValue" placeholder="数值" value="10">
       <button class="primary" onclick="queue_enqueue()">入队 enqueue</button>
@@ -552,7 +582,7 @@
   </div>
 
   <!-- 二叉搜索树 -->
-  <div class="panel" id="panel-bst">
+  <div class="panel" id="panel-bst" role="tabpanel" aria-labelledby="dtab-bst">
     <div class="controls">
       <input type="number" id="bstValue" placeholder="数值" value="50">
       <button class="primary" onclick="bst_insert()">插入</button>
@@ -583,7 +613,7 @@
   </div>
 
   <!-- 哈希表 -->
-  <div class="panel" id="panel-hashtable">
+  <div class="panel" id="panel-hashtable" role="tabpanel" aria-labelledby="dtab-hashtable">
     <div class="controls">
       <input type="number" id="htKey" placeholder="键" value="42">
       <input type="text" id="htValue" placeholder="值" value="hello">
@@ -612,7 +642,7 @@
   </div>
 
   <!-- 堆 -->
-  <div class="panel" id="panel-heap">
+  <div class="panel" id="panel-heap" role="tabpanel" aria-labelledby="dtab-heap">
     <div class="controls">
       <input type="number" id="heapValue" placeholder="数值" value="50">
       <button class="primary" onclick="heap_insert()">插入</button>
@@ -623,9 +653,9 @@
     </div>
     <div class="visual-area">
       <div style="width:100%;">
-        <div style="text-align:center; color:#888; font-size:12px; margin-bottom:8px;">数组表示（堆的底层是数组）</div>
+        <div style="text-align:center; color:#696969; font-size:12px; margin-bottom:8px;">数组表示（堆的底层是数组）</div>
         <div class="heap-array" id="heapArrayDisplay"></div>
-        <div style="text-align:center; color:#888; font-size:12px; margin:16px 0 8px;">树形表示</div>
+        <div style="text-align:center; color:#696969; font-size:12px; margin:16px 0 8px;">树形表示</div>
         <div class="tree-container" id="heapTreeDisplay"></div>
       </div>
     </div>
@@ -646,7 +676,7 @@
   </div>
 
   <!-- 动态数组 -->
-  <div class="panel" id="panel-array">
+  <div class="panel" id="panel-array" role="tabpanel" aria-labelledby="dtab-array">
     <div class="controls">
       <input type="number" id="arrValue" placeholder="数值" value="10">
       <button class="primary" onclick="arr_pushBack()">尾插 push_back</button>
@@ -676,14 +706,34 @@
 
 <script>
 // ========== Tab 切换 ==========
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+
+  function select(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+    });
+    document.querySelectorAll('.panel').forEach(function (p) {
+      p.classList.toggle('active', p.id === 'panel-' + tab.dataset.tab);
+    });
+    if (focus) tab.focus();
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () { select(tab); });
+    tab.addEventListener('keydown', function (e) {
+      var i = tabs.indexOf(tab), next = null;
+      if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+      else if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+      else if (e.key === 'Home') next = tabs[0];
+      else if (e.key === 'End') next = tabs[tabs.length - 1];
+      if (next) { e.preventDefault(); select(next, true); }
+    });
   });
-});
+})();
 
 // ========== 1. 单链表 ==========
 let ll_head = null;
@@ -872,7 +922,7 @@ function stack_render(highlightTop = false) {
   const container = document.getElementById('stackDisplay');
   container.innerHTML = '';
   if (stack_data.length === 0) {
-    container.innerHTML = '<div style="color:#999; padding:20px;">空栈</div>';
+    container.innerHTML = '<div style="color:#696969; padding:20px;">空栈</div>';
     document.getElementById('stackSize').textContent = 0;
     return;
   }
@@ -935,7 +985,7 @@ function queue_render() {
   const container = document.getElementById('queueDisplay');
   container.innerHTML = '';
   if (queue_data.length === 0) {
-    container.innerHTML = '<div style="color:#999; padding:20px;">空队列</div>';
+    container.innerHTML = '<div style="color:#696969; padding:20px;">空队列</div>';
     document.getElementById('queueSize').textContent = 0;
     return;
   }
@@ -1003,7 +1053,7 @@ function bst_render() {
   const container = document.getElementById('bstDisplay');
   container.innerHTML = '';
   if (!bst_root) {
-    container.innerHTML = '<div style="color:#999;">空树</div>';
+    container.innerHTML = '<div style="color:#696969;">空树</div>';
     document.getElementById('bstSize').textContent = 0;
     document.getElementById('bstHeight').textContent = 0;
     return;
@@ -1027,14 +1077,14 @@ function bst_render() {
         leftWrap.innerHTML = '';
         leftWrap.appendChild(build(node.left));
       } else {
-        leftWrap.innerHTML = '<div style="color:#ccc; font-size:11px;">∅</div>';
+        leftWrap.innerHTML = '<div style="color:#6a6a6a; font-size:11px;">∅</div>';
       }
       const rightWrap = document.createElement('div');
       rightWrap.className = 'tree-node-wrapper';
       if (node.right) {
         rightWrap.appendChild(build(node.right));
       } else {
-        rightWrap.innerHTML = '<div style="color:#ccc; font-size:11px;">∅</div>';
+        rightWrap.innerHTML = '<div style="color:#6a6a6a; font-size:11px;">∅</div>';
       }
       children.appendChild(leftWrap);
       children.appendChild(rightWrap);
@@ -1193,7 +1243,7 @@ function ht_render(findKey = null) {
     const bucketEl = document.createElement('div');
     bucketEl.className = 'hash-bucket';
     if (bucket.length === 0) {
-      bucketEl.innerHTML = '<span style="color:#ccc; font-size:12px;">空</span>';
+      bucketEl.innerHTML = '<span style="color:#6a6a6a; font-size:12px;">空</span>';
     } else {
       bucket.forEach(item => {
         const el = document.createElement('div');
@@ -1318,7 +1368,7 @@ function heap_render() {
     arrContainer.appendChild(item);
   });
   if (heap_data.length === 0) {
-    arrContainer.innerHTML = '<div style="color:#999;">空堆</div>';
+    arrContainer.innerHTML = '<div style="color:#696969;">空堆</div>';
   }
 
   // 树形表示
@@ -1348,7 +1398,7 @@ function heap_render() {
         node.textContent = heap_data[idx];
         wrapper.appendChild(node);
       } else {
-        wrapper.innerHTML = '<div style="color:#ddd;">·</div>';
+        wrapper.innerHTML = '<div style="color:#696969;">·</div>';
       }
       levelEl.appendChild(wrapper);
     }
@@ -1484,13 +1534,13 @@ function arr_render() {
       border-radius: 8px;
       display: flex; align-items: center; justify-content: center;
       font-size: 18px; font-weight: 700;
-      color: ${i < arr_data.length ? '#667eea' : '#ccc'};
+      color: ${i < arr_data.length ? '#667eea' : '#6a6a6a'};
       background: ${i < arr_data.length ? 'linear-gradient(135deg, #eef0ff, #f0efff)' : '#fafafa'};
       position: relative;
     `;
     cell.textContent = i < arr_data.length ? arr_data[i] : '·';
     const idxLabel = document.createElement('div');
-    idxLabel.style.cssText = 'position:absolute; top:-20px; font-size:11px; color:#999;';
+    idxLabel.style.cssText = 'position:absolute; top:-20px; font-size:11px; color:#696969;';
     idxLabel.textContent = '[' + i + ']';
     cell.appendChild(idxLabel);
     container.appendChild(cell);

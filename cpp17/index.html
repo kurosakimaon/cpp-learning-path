@@ -18,7 +18,7 @@
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -30,7 +30,7 @@
 
   .header { text-align: center; color: white; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.25); }
-  .header p { font-size: 16px; opacity: 0.95; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -91,6 +91,29 @@
   .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
   .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
   .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .card-step {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #f3e5f5;
+    color: #6a1b9a;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .list-note {
+    color: #4a148c;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: -6px 0 16px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.78);
+    border-left: 3px solid currentColor;
+    border-radius: 0 10px 10px 0;
+  }
+  .list-note a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .list-note a:hover { text-decoration: underline; }
 
   .tag {
     padding: 3px 10px;
@@ -102,7 +125,7 @@
   .tag.elementary { background: #e0f2f1; color: #00695c; }
   .tag.intermediate { background: #e3f2fd; color: #1565c0; }
   .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.advanced { background: #fff3e0; color: #be4300; }
   .tag.expert { background: #ffebee; color: #c62828; }
 
   .feature-section {
@@ -172,23 +195,48 @@
       这些特性不是炫技用的，它们能让你的代码<strong>更简洁、更安全、更快</strong>。
       学会用现代 C++ 的方式思考，你会发现原来 C++ 也可以写得这么优雅。
     </p>
+    <p style="margin-top: 10px; background: #f6effb; border-left: 4px solid #8e2de2; border-radius: 8px; padding: 12px 16px;">
+      <strong>本模块和 📜 版本演进模块怎么分工？</strong>
+      这里负责<strong>纵向深潜</strong>——每个特性一个文件，讲透写法、原理和坑；
+      "哪个版本加了什么、为什么要加"这类<strong>横向脉络</strong>在
+      <a href="../cpp_evolution/index.html" style="color: #6a1b9a; font-weight: 700;">cpp_evolution/ 模块</a>，两边内容不重复。
+      如果你是第一次接触现代 C++，先去那边建立地图再回来；如果只是想查某个特性怎么用，直接按下面的 ①→⑧ 学。
+    </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
       <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #8e2de2, #4a00e0); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(142, 45, 226, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(142, 45, 226, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(142, 45, 226, 0.3)';">
         📖 学习指南
       </a>
+      <a href="../cpp_evolution/index.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #8e2de2; text-decoration: none; border: 2px solid #8e2de2; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#8e2de2';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#8e2de2';">
+        📜 先看版本脉络
+      </a>
       <a href="../visuals/move_semantics.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #8e2de2; text-decoration: none; border: 2px solid #8e2de2; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#8e2de2';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#8e2de2';">
         🎬 图解移动语义
       </a>
-      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: #6c6c6c; font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
   <div class="section-title">
     <span>📂</span> 学习文件列表
   </div>
+  <p class="list-note">
+    卡片已按<strong>优先级</strong>排好：<strong>①</strong> 移动语义是重中之重，务必吃透；
+    <strong>②③</strong> 是日常写代码立刻用得上的语法糖；<strong>④⑤</strong> 是模板利器，写模板不多可先放一放；
+    <strong>⑥⑦</strong> 是实用工具类；<strong>⑧</strong> 了解即可。
+    这些特性<strong>出自哪个版本、为什么会被加入</strong>，在 <a href="../cpp_evolution/index.html">📜 版本演进模块</a>，本模块不重复。
+  </p>
 
   <div class="card-grid">
+    <a href="move_semantics_advanced.cpp" class="card">
+      <div class="card-step">第 1 步 · 重中之重</div>
+      <div class="card-icon">⚡</div>
+      <div class="card-title">移动语义深入与完美转发</div>
+      <div class="card-desc">左值右值深度辨析、移动构造/赋值、std::move 原理、完美转发与万能引用。C++11 以来最重要的特性，其他现代特性都建立在它之上。</div>
+      <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
+    </a>
+
     <a href="type_deduction.cpp" class="card">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🔍</div>
       <div class="card-title">类型推导（auto/decltype/CTAD）</div>
       <div class="card-desc">auto 推导规则、decltype 用法、类模板实参推导、推导指引。少写类型，多思考逻辑。</div>
@@ -196,6 +244,7 @@
     </a>
 
     <a href="structured_binding.cpp" class="card">
+      <div class="card-step">第 3 步</div>
       <div class="card-icon">🔗</div>
       <div class="card-title">结构化绑定与 tuple-like 协议</div>
       <div class="card-desc">结构化绑定语法、自定义类型支持 tuple-like 协议、结构化绑定的三种场景。</div>
@@ -203,6 +252,7 @@
     </a>
 
     <a href="if_constexpr.cpp" class="card">
+      <div class="card-step">第 4 步</div>
       <div class="card-icon">🔀</div>
       <div class="card-title">编译期分支与类型分发</div>
       <div class="card-desc">if constexpr 用法、编译期类型分发、替代 SFINAE 的新方式、标签分发对比。</div>
@@ -210,6 +260,7 @@
     </a>
 
     <a href="fold_expressions.cpp" class="card">
+      <div class="card-step">第 5 步</div>
       <div class="card-icon">📐</div>
       <div class="card-title">折叠表达式与变参模板</div>
       <div class="card-desc">变参模板进阶、四种折叠表达式语法、典型应用场景（求和、打印、调用）。</div>
@@ -217,30 +268,26 @@
     </a>
 
     <a href="optional_variant_any.cpp" class="card">
+      <div class="card-step">第 6 步</div>
       <div class="card-icon">🎭</div>
       <div class="card-title">optional / variant / any</div>
       <div class="card-desc">三种可选用类型全解析：可选值、类型安全联合体、类型擦除容器。各自适用场景。</div>
       <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
     </a>
 
-    <a href="parallel_algorithms.cpp" class="card">
-      <div class="card-icon">🚀</div>
-      <div class="card-title">并行算法与执行策略</div>
-      <div class="card-desc">STL 并行算法入门、执行策略（seq/par/par_unseq）、性能对比与注意事项。</div>
-      <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
-    </a>
-
     <a href="string_view_filesystem.cpp" class="card">
+      <div class="card-step">第 7 步</div>
       <div class="card-icon">📝</div>
       <div class="card-title">string_view 与 filesystem</div>
-      <div class="card-desc">string_view 零拷贝字符串视图、filesystem 跨平台文件系统操作库。</div>
+      <div class="card-desc">string_view 零拷贝字符串视图、filesystem 跨平台文件系统操作库。注意悬空视图这个坑。</div>
       <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
     </a>
 
-    <a href="move_semantics_advanced.cpp" class="card">
-      <div class="card-icon">⚡</div>
-      <div class="card-title">移动语义深入与完美转发</div>
-      <div class="card-desc">左值右值深度辨析、移动构造/赋值、std::move 原理、完美转发与万能引用。</div>
+    <a href="parallel_algorithms.cpp" class="card">
+      <div class="card-step">第 8 步 · 了解即可</div>
+      <div class="card-icon">🚀</div>
+      <div class="card-title">并行算法与执行策略</div>
+      <div class="card-desc">STL 并行算法入门、执行策略（seq/par/par_unseq）、性能对比与注意事项。实际项目用得不多，需要时能想起来就行。</div>
       <div class="card-meta"><span class="tag upper-intermediate">中高级</span></div>
     </a>
   </div>

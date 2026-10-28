@@ -148,10 +148,9 @@ namespace various_ops {
 
 template <typename... Args>
 void print_all(Args&&... args) {
-    ((std::cout << args << " "), ...);  // 逗号运算符左折叠
-    // 等价于: ((cout << a1 << " ") << a2 << " ") ... 不对
-    // 实际是: (cout << a1 << " "), (cout << a2 << " "), ...
-    // 逗号运算符依次执行每个表达式
+    ((std::cout << args << " "), ...);  // (E, ...) 一元右折叠，运算符是逗号
+    // 展开成 (cout << a1 << " "), (cout << a2 << " "), ...
+    // 逗号运算符保证从左到右依次求值，所以打印顺序就是参数顺序
     std::cout << "\n";
 }
 
@@ -539,7 +538,7 @@ bool any_negative(Args... args) {
 }
 
 void demo_validation() {
-    std::cout << "\n===== 5.3 参数校验模式 =====\n";
+    std::cout << "\n===== 5.4 参数校验模式 =====\n";
 
     std::cout << std::boolalpha;
     std::cout << "all_positive(1, 2, 3) = " << all_positive(1, 2, 3) << "\n";
@@ -579,7 +578,7 @@ auto sum_wrappers(Args... args) {
 }
 
 void demo_custom_operator_fold() {
-    std::cout << "\n===== 6.1 自定义类型运算符折叠 =====\n";
+    std::cout << "\n===== 6.2 自定义类型运算符折叠 =====\n";
 
     IntWrapper result = sum_wrappers(IntWrapper(1), IntWrapper(2), IntWrapper(3));
     std::cout << "自定义类型折叠求和: " << result.value << "\n";
@@ -608,7 +607,7 @@ void print_with_index(Args... args) {
 }
 
 void demo_eval_order() {
-    std::cout << "\n===== 6.2 求值顺序（逗号折叠保证顺序） =====\n";
+    std::cout << "\n===== 6.4 求值顺序（逗号折叠保证顺序） =====\n";
     print_with_index("a", "b", "c", "d");
 }
 
@@ -616,7 +615,7 @@ void demo_eval_order() {
 // 复杂的折叠表达式可读性差，适当使用初始化列表或递归更清晰
 
 void demo_readability() {
-    std::cout << "\n===== 6.3 可读性建议 =====\n";
+    std::cout << "\n===== 6.5 可读性建议 =====\n";
     std::cout << "简单的求和/打印/逻辑运算：适合折叠表达式\n";
     std::cout << "复杂的多步逻辑：考虑用初始化列表 + 普通循环\n";
     std::cout << "递归终止条件明确的：用 if constexpr + 递归\n";

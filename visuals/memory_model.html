@@ -314,7 +314,7 @@ window.STEPS = [
     nav: '构造析构顺序',
     title: '7. 构造与析构，顺序正好相反',
     caption: '构造顺序：基类 → 成员（按声明顺序）→ 派生类构造函数体。析构顺序严格相反：派生类析构体 → 成员（逆序）→ 基类。局部对象之间也按声明的逆序销毁。这决定了依赖关系该由谁持有谁。',
-    code: 'struct Base   { Base()  { /* 1 */ } ~Base()  { /* 6 */ } };\nstruct Member { Member(){ /* 2 */ } ~Member(){ /* 5 */ } };\nstruct Derived : Base {\n  Member m;\n  Derived() { /* 3 */ }   // 4：对象可用\n  ~Derived(){ /* 3 */ }   // 从这里开始销毁\n};',
+    code: 'struct Base { Base() {/*1*/} ~Base() {/*6*/} };\nstruct Member{ Member() {/*2*/} ~Member() {/*5*/} };\nstruct Derived : Base {\n  Member m;\n  Derived() { /*3*/ }        // 对象可用\n  ~Derived() { /*3*/ }       // 从这开始销毁\n};',
     highlight: [0, 1, 4],
     stage: `
 <svg viewBox="0 0 760 460" role="img" aria-label="构造顺序为基类、成员、派生类，析构顺序完全相反">

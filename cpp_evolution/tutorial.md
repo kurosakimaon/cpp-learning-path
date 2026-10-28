@@ -27,30 +27,35 @@
 
 ## 三、文件列表与学习重点
 
-咱一共 4 个文件，不多，但信息量很大：
+咱一共 4 个文件，不多，但信息量很大。
+下面已经按学习顺序排好了，从上往下读就行：
 
 ```text
-  cpp11_core_features.cpp     ← C++11 核心特性（革命性！）
+  ① evolution_comparison.cpp    ← 版本演进对比（总览，先读这个）
+    重点：各版本特性对照表、演进脉络、设计思想变化
+
+  ② cpp11_core_features.cpp     ← C++11 核心特性（革命性！）
     重点：右值引用与移动语义、lambda、智能指针、
           auto/decltype、范围 for、nullptr、override/final
 
-  cpp14_features.cpp          ← C++14 特性（小步完善）
+  ③ cpp14_features.cpp          ← C++14 特性（小步完善）
     重点：泛型 lambda、变量模板、make_unique、
           返回类型推导、二进制字面量
 
-  evolution_comparison.cpp    ← 版本演进对比（总览）
-    重点：各版本特性对照表、演进脉络、设计思想变化
-
-  cpp20_overview.cpp          ← C++20/23 新特性概览（需要 C++20 编译器）
+  ④ cpp20_overview.cpp          ← C++20/23 新特性概览（需要 C++20 编译器）
     重点：concepts/requires、ranges、协程、modules 四大件，
           以及 if consteval、std::format、ranges::to 等实用特性
 ```
 
+一句话概括本模块的定位：**只讲"哪个版本加了什么、为什么加"**。
+每个 C++17 特性**具体怎么写、有哪些坑**，都在隔壁
+[`../cpp17/`](../cpp17/index.html) 模块里，本模块不重复展开。
+
 ## 四、学习顺序建议
 
-师傅建议你这么学：
+师傅给你排了四步，按顺序走，别跳：
 
-### 先看总览（evolution_comparison.cpp）
+### 第 1 步：先看总览（`evolution_comparison.cpp`）
 
 先把这个文件过一遍，建立整体概念。
 C++11 有什么、C++14 加了什么、C++17 又加了什么，
@@ -58,7 +63,7 @@ C++11 有什么、C++14 加了什么、C++17 又加了什么，
 
 别上来就扎进细节里，先看全貌。
 
-### 再深入 C++11（cpp11_core_features.cpp）
+### 第 2 步：再深入 C++11（`cpp11_core_features.cpp`）
 
 C++11 是革命性的版本，重要性怎么强调都不为过。
 可以说，C++11 之前是"古典 C++"，
@@ -72,14 +77,40 @@ C++11 的核心特性，每一个都要理解：
 - auto/decltype → 类型推导的开始
 - 范围 for → 语法糖，但很好用
 
-### 最后看 C++14（cpp14_features.cpp）
+这里同样只讲背景和原理。移动语义、类型推导这两块
+要真正写熟，去第 5 步的两个文件。
+
+### 第 3 步：快速过 C++14（`cpp14_features.cpp`）
 
 C++14 是个"小版本"，特性不多，
 主要是对 C++11 的完善和补充。
 快速过一遍就行，知道有这些东西。
 
-然后你可以对照 cpp17 模块的内容，
-看看 C++17 又加了什么。
+### 第 4 步：C++20/23 只需了解（`cpp20_overview.cpp`）
+
+ Concepts、Ranges、协程、模块……这一步的目标是
+"知道 C++ 往哪走"，不是把它们全学会。
+细节看本指南第八节。
+
+### 第 5 步：交接去 cpp17 模块
+
+到这里，本模块的地图就画完了。接下来换到
+[💜 现代 C++ 特性模块](../cpp17/index.html)，
+按它的 ①→⑧ 优先级逐个深潜。对照关系给你列好了：
+
+| 想学的特性 | 去哪个文件 |
+| --- | --- |
+| 移动语义深入、完美转发 | `../cpp17/move_semantics_advanced.cpp` |
+| auto / decltype / CTAD | `../cpp17/type_deduction.cpp` |
+| 结构化绑定 | `../cpp17/structured_binding.cpp` |
+| `if constexpr` | `../cpp17/if_constexpr.cpp` |
+| 折叠表达式 | `../cpp17/fold_expressions.cpp` |
+| `optional` / `variant` / `any` | `../cpp17/optional_variant_any.cpp` |
+| `string_view`、`filesystem` | `../cpp17/string_view_filesystem.cpp` |
+| 并行算法 | `../cpp17/parallel_algorithms.cpp` |
+
+分工记住这一句就够了：
+**本模块管"脉络"，cpp17/ 管"细节"，同一个特性不要读两遍。**
 
 ## 五、核心知识点梳理
 
@@ -122,15 +153,13 @@ C++14 没什么革命性的东西，
 C++17 的特性很多，但大部分是"锦上添花"的语法糖。
 虽然不是革命性的，但确实让代码更好写了。
 
-代表特性：
+它的设计取向很明确：**把大家每天在用库里的东西
+（`optional`、`variant`、`string_view`、`filesystem`）
+收编进标准，把模板里那些繁琐写法（变参展开、SFINAE 分支）
+用新语法简化。** 所以这一版没有大概念，全是很实际的改进。
 
-- 结构化绑定：`auto [a, b] = pair;`
-- `if constexpr`：编译期条件判断
-- 折叠表达式：可变参数模板展开更简单
-- `optional`/`variant`/`any`：三个实用类型
-- `string_view`：字符串视图，避免拷贝
-- `filesystem`：标准文件系统库
-- 并行算法：STL 算法的并行版本
+代表特性清单在第四节的时间线和交接表里，本指南不再逐个展开——
+每一个的写法、原理和坑，都在 `../cpp17/` 对应文件里。
 
 一句话：C++17 让 C++ 写起来更舒服了。
 

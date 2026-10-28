@@ -19,7 +19,7 @@
     display: inline-block;
     padding: 8px 16px;
     background: rgba(255,255,255,0.25);
-    color: #5d4037;
+    color: #523831;
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
@@ -29,9 +29,9 @@
   }
   .back-btn:hover { background: rgba(255,255,255,0.4); }
 
-  .header { text-align: center; color: #5d4037; margin-bottom: 30px; }
+  .header { text-align: center; color: #523831; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(255,255,255,0.3); }
-  .header p { font-size: 16px; opacity: 0.9; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -41,7 +41,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .intro-section h2 {
-    color: #e65100;
+    color: #b74000;
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
@@ -51,7 +51,7 @@
   .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: #5d4037;
+    color: #523831;
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
@@ -63,7 +63,7 @@
     display: inline-block;
     padding: 4px 14px;
     background: rgba(255,255,255,0.3);
-    color: #5d4037;
+    color: #523831;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
@@ -103,6 +103,29 @@
   .card-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 6px; }
   .card-desc { font-size: 12.5px; color: #666; line-height: 1.6; margin-bottom: 12px; }
   .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
+  .card-step {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #fff8e1;
+    color: #b74000;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .list-note {
+    color: #523831;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: -6px 0 16px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.78);
+    border-left: 3px solid currentColor;
+    border-radius: 0 10px 10px 0;
+  }
+  .list-note a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .list-note a:hover { text-decoration: underline; }
 
   .tag {
     padding: 3px 10px;
@@ -114,7 +137,7 @@
   .tag.elementary { background: #e0f2f1; color: #00695c; }
   .tag.intermediate { background: #e3f2fd; color: #1565c0; }
   .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.advanced { background: #fff3e0; color: #b74000; }
   .tag.expert { background: #ffebee; color: #c62828; }
 
   .feature-section {
@@ -125,7 +148,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .feature-section h2 {
-    color: #e65100;
+    color: #b74000;
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
@@ -148,7 +171,7 @@
     padding: 16px;
     border-left: 4px solid #f7971e;
   }
-  .pattern-type h4 { color: #e65100; margin-bottom: 8px; font-size: 15px; }
+  .pattern-type h4 { color: #b74000; margin-bottom: 8px; font-size: 15px; }
   .pattern-type p { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
 
   .master-section {
@@ -168,7 +191,7 @@
   }
   .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
   .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #e65100; }
+  .master-section li strong { color: #b74000; }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -199,10 +222,10 @@
       学设计模式不是为了在面试时背诵，而是为了<strong>面对复杂问题时，能快速找到合适的设计思路</strong>。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #f7971e, #ffd200); color: #5d4037; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(247, 151, 30, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(247, 151, 30, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #f7971e, #ffd200); color: #523831; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(247, 151, 30, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(247, 151, 30, 0.3)';">
         📖 学习指南
       </a>
-      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: #707070; font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
@@ -227,9 +250,14 @@
   <div class="section-title">
     <span>🏗️</span> 创建型模式
   </div>
+  <p class="list-note">
+    设计模式这一模块，<strong>就从这三张卡片起步</strong>：创建型最好理解也最常用，按 <strong>第 1 步 单例 → 第 2 步 工厂 → 第 3 步 建造者</strong> 看，
+    先把"对象到底怎么造出来"的三种思路立住，再往结构型走。顺序依据见 <a href="tutorial.md">📖 学习指南</a>。
+  </p>
 
   <div class="card-grid">
     <a href="singleton.cpp" class="card">
+      <div class="card-step">第 1 步</div>
       <div class="card-icon">1️⃣</div>
       <div class="card-title">单例模式</div>
       <div class="card-desc">4 种经典实现对比：饿汉式、懒汉式、双检锁、Meyers 单例，另附依赖注入替代方案。线程安全分析。</div>
@@ -237,6 +265,7 @@
     </a>
 
     <a href="factory_abstract.cpp" class="card">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🏭</div>
       <div class="card-title">工厂方法 + 抽象工厂</div>
       <div class="card-desc">工厂方法、抽象工厂、模板工厂、注册式工厂四级进阶，对比各自的适用场景。</div>
@@ -244,6 +273,7 @@
     </a>
 
     <a href="builder.cpp" class="card">
+      <div class="card-step">第 3 步</div>
       <div class="card-icon">🔨</div>
       <div class="card-title">建造者模式</div>
       <div class="card-desc">Fluent 链式调用 + 模板建造者。创建复杂对象的利器，参数再多也不怕乱。</div>
@@ -254,9 +284,14 @@
   <div class="section-title">
     <span>🔌</span> 结构型模式
   </div>
+  <p class="list-note">
+    结构型稍微抽象一点，但按顺序看并不难：<strong>第 1 步 适配器 → 第 2 步 装饰器 → 第 3 步 代理</strong>。
+    这三张卡片讲的其实是同一件事——<strong>组合优于继承</strong>，重点体会怎么把类和对象拼成更大的结构。
+  </p>
 
   <div class="card-grid">
     <a href="adapter.cpp" class="card">
+      <div class="card-step">第 1 步</div>
       <div class="card-icon">🔌</div>
       <div class="card-title">适配器模式</div>
       <div class="card-desc">对象适配器、类适配器、接口适配、双向适配。让不兼容的接口也能一起工作。</div>
@@ -264,6 +299,7 @@
     </a>
 
     <a href="decorator.cpp" class="card">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🎨</div>
       <div class="card-title">装饰器模式</div>
       <div class="card-desc">数据流装饰、CRTP 静态装饰、函数装饰器。动态给对象添加功能，比继承更灵活。</div>
@@ -271,6 +307,7 @@
     </a>
 
     <a href="proxy.cpp" class="card">
+      <div class="card-step">第 3 步</div>
       <div class="card-icon">🎭</div>
       <div class="card-title">代理模式</div>
       <div class="card-desc">虚拟代理、保护代理、缓存代理、智能指针代理。控制对对象的访问，隐藏真实细节。</div>
@@ -281,9 +318,14 @@
   <div class="section-title">
     <span>🎭</span> 行为型模式
   </div>
+  <p class="list-note">
+    行为型模式最多、也最灵活，放在最后学。<strong>第 1 步 观察者</strong> 和 <strong>第 2 步 策略</strong> 日常最常用，先把这俩搞懂；
+    再按 <strong>第 3 步 命令 → 第 4 步 状态</strong> 往下走；<strong>第 5 步 访问者</strong> 最复杂，所以排到最后一张，一时看不懂可以先跳过。
+  </p>
 
   <div class="card-grid">
     <a href="observer.cpp" class="card">
+      <div class="card-step">第 1 步 · 最常用</div>
       <div class="card-icon">👀</div>
       <div class="card-title">观察者模式</div>
       <div class="card-desc">推模型/拉模型、信号槽实现、线程安全版本。一对多通知的经典方案。</div>
@@ -291,30 +333,34 @@
     </a>
 
     <a href="strategy.cpp" class="card">
+      <div class="card-step">第 2 步 · 最常用</div>
       <div class="card-icon">♟️</div>
       <div class="card-title">策略模式</div>
       <div class="card-desc">经典实现、function 版本、模板策略、策略组合。封装算法，灵活切换。</div>
       <div class="card-meta"><span class="tag advanced">高级</span></div>
     </a>
 
-    <a href="visitor.cpp" class="card">
-      <div class="card-icon">🚪</div>
-      <div class="card-title">访问者模式</div>
-      <div class="card-desc">经典访问者、Acyclic Visitor、std::variant 替代方案。双分派的艺术。</div>
+    <a href="command.cpp" class="card">
+      <div class="card-step">第 3 步</div>
+      <div class="card-icon">📜</div>
+      <div class="card-title">命令模式</div>
+      <div class="card-desc">撤销重做、命令队列、宏命令。把请求封装成对象，玩法超多。</div>
       <div class="card-meta"><span class="tag advanced">高级</span></div>
     </a>
 
     <a href="state.cpp" class="card">
+      <div class="card-step">第 4 步</div>
       <div class="card-icon">🔄</div>
       <div class="card-title">状态模式</div>
       <div class="card-desc">状态机完整实现，状态转换、状态行为封装。消除大量 if-else 的神器。</div>
       <div class="card-meta"><span class="tag advanced">高级</span></div>
     </a>
 
-    <a href="command.cpp" class="card">
-      <div class="card-icon">📜</div>
-      <div class="card-title">命令模式</div>
-      <div class="card-desc">撤销重做、命令队列、宏命令。把请求封装成对象，玩法超多。</div>
+    <a href="visitor.cpp" class="card">
+      <div class="card-step">第 5 步 · 最难放最后</div>
+      <div class="card-icon">🚪</div>
+      <div class="card-title">访问者模式</div>
+      <div class="card-desc">经典访问者、Acyclic Visitor、std::variant 替代方案。双分派的艺术。</div>
       <div class="card-meta"><span class="tag advanced">高级</span></div>
     </a>
   </div>

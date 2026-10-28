@@ -62,7 +62,8 @@ int main()
 
     ifstream inFile("demo_text.txt");
 
-    if (!inFile) {  // 也可以直接用 ifstream 对象判断，等价于 !is_open()
+    if (!inFile) {  // ifstream 能转成 bool，检查的是流状态（等价于 inFile.fail()）；
+                    // 刚构造完时它和 !is_open() 表现一致，但两者并不等价
         cout << "文件打开失败！" << endl;
         return 1;
     }

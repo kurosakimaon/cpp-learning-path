@@ -18,7 +18,7 @@
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.15);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -30,7 +30,7 @@
 
   .header { text-align: center; color: white; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4); }
-  .header p { font-size: 16px; opacity: 0.9; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -93,6 +93,8 @@
   }
   .card.makefile::before { background: linear-gradient(90deg, #455a64, #78909c); }
   .card.cmake::before { background: linear-gradient(90deg, #1a237e, #3949ab); }
+  .card.guide { background: linear-gradient(160deg, #fff8e1, #ffffff 55%); }
+  .card.guide::before { background: linear-gradient(90deg, #ff8f00, #ffb300); }
   .card:hover {
     transform: translateY(-5px);
     box-shadow: 0 15px 40px rgba(0,0,0,0.3);
@@ -104,7 +106,7 @@
   .card-folder {
     display: inline-block;
     font-size: 11px;
-    color: #888;
+    color: #6f6f6f;
     font-family: Consolas, Monaco, monospace;
     margin-bottom: 8px;
   }
@@ -115,11 +117,11 @@
     font-size: 11px;
     font-weight: 600;
   }
-  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
+  .tag.beginner { background: #e8f5e9; color: #235e26; }
   .tag.elementary { background: #e0f2f1; color: #00695c; }
   .tag.intermediate { background: #e3f2fd; color: #1565c0; }
   .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.advanced { background: #fff3e0; color: #be4300; }
   .tag.expert { background: #ffebee; color: #c62828; }
 
   .tool-compare {
@@ -150,7 +152,7 @@
     color: #555;
     line-height: 1.8;
   }
-  .tool-box .pros strong { color: #2e7d32; }
+  .tool-box .pros strong { color: #235e26; }
 
   .feature-section {
     background: rgba(255,255,255,0.95);
@@ -225,7 +227,7 @@
     border-radius: 0 8px 8px 0;
     margin-top: 16px;
   }
-  .tip-box strong { color: #2e7d32; display: block; margin-bottom: 6px; }
+  .tip-box strong { color: #235e26; display: block; margin-bottom: 6px; }
   .tip-box p { color: #1b5e20; margin: 0; line-height: 1.8; font-size: 13px; }
   .tip-box code { background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 3px; color: #c62828; font-size: 12px; }
 
@@ -260,8 +262,12 @@
       两者都掌握，你才能在各种项目中游刃有余。
     </p>
     <div style="margin-top: 20px;">
+      <a href="cmake_guide.html" style="display: inline-block; padding: 11px 24px; background: #ac6100; color: #fff; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 14px;">🧭 CMake 实操速查</a>
+      <span style="margin-left: 10px; color: #6c6c6c; font-size: 13px;">装好 CMake 后照着敲：命令 + 每一步该看到什么输出</span>
+    </div>
+    <div style="margin-top: 14px;">
       <a href="../visuals/linking.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #3f51b5; text-decoration: none; border: 2px solid #3f51b5; border-radius: 30px; font-weight: 600; font-size: 14px;">🎬 图解库链接</a>
-      <span style="margin-left: 10px; color: #777; font-size: 13px;">.a / .so 是怎么被找到的？一页看懂</span>
+      <span style="margin-left: 10px; color: #6c6c6c; font-size: 13px;">.a / .so 是怎么被找到的？一页看懂</span>
     </div>
   </div>
 
@@ -345,9 +351,17 @@
   <div class="section-title">
     <span>🏗️</span> CMake 路线
   </div>
-  <div class="section-subtitle">6 个层级，从三板斧到工业级项目</div>
+  <div class="section-subtitle">6 个层级，从三板斧到工业级项目；按 01 → 06 顺序学，每讲跑通再看下一讲。速查手册不列入顺序，随时回来查。</div>
 
   <div class="card-grid">
+    <a href="cmake_guide.html" class="card cmake guide">
+      <div class="card-icon">🧭</div>
+      <div class="card-folder">cmake_guide.html</div>
+      <div class="card-title">速查 · CMake 实操手册</div>
+      <div class="card-desc">命令速查表（configure / build / install / test）+ 01→06 每一讲"该看到什么输出"逐条对照 + 12 条常见报错怎么办。第一遍跟读，之后当字典查。</div>
+      <div class="card-meta"><span class="tag beginner">必备</span><span class="tag upper-intermediate">随用随查</span></div>
+    </a>
+
     <a href="cmake_01_basic/index.html" class="card cmake">
       <div class="card-icon">🌱</div>
       <div class="card-folder">cmake_01_basic/</div>
@@ -402,6 +416,7 @@
     <ul>
       <li><strong>先学 Makefile 再学 CMake</strong>：Makefile 让你理解构建的本质（目标→依赖→命令），学完 Makefile 再看 CMake，你会发现 CMake 只是在更高层次上做同样的事。</li>
       <li><strong>每个例子都亲手跑一遍</strong>：构建系统是动手的学问。光看没用，每个示例都自己 cmake/make 一遍，观察输出，修改参数试试效果。</li>
+      <li><strong>CMake 卡住了就查<a href="cmake_guide.html">实操速查</a></strong>：那一页把四条命令、六讲的预期输出和 12 种常见报错写成对照表。第一次通读，之后遇到报错直接翻第五节。</li>
       <li><strong>重点掌握现代 CMake</strong>：传统 CMake（用全局变量的那种）已经过时了。学 CMake 一定要学"基于目标"的现代写法——target_* 系列命令、PUBLIC/PRIVATE/INTERFACE 这些概念。</li>
       <li><strong>完整项目示例是精华</strong>：Makefile 04 和 CMake 06 是集大成的完整项目，里面包含了很多工程化的最佳实践。仔细研究它们的目录结构和构建脚本。</li>
       <li><strong>实际项目中用 CMake</strong>：除非维护老项目，否则新项目优先选 CMake。跨平台、生态好、IDE 支持好，是现在 C++ 构建的事实标准。</li>

@@ -105,6 +105,8 @@
 别上来就折腾 `relaxed`、`acquire-release`，
 那玩意儿一般人搞不定。
 
+> 🎬 内存序总记混？看[内存序图解](../visuals/memory_order.html)：重排、happens-before、relaxed、发布订阅、seq_cst，以及 x86 与 ARM 的差异。
+
 ### 第五步：线程池与 async（05~06）
 
 实际项目中，你很少直接裸用 `thread`，

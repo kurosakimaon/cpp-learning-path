@@ -172,7 +172,8 @@ void demo3_thread_id_and_hardware() {
 
     cout << "主线程 ID：" << this_thread::get_id() << endl;
     cout << "CPU 支持的硬件并发数：" << thread::hardware_concurrency() << endl;
-    cout << "（这个数就是你 CPU 的逻辑核心数，比如 8 核 16 线程就显示 16）" << endl;
+    cout << "（通常是 CPU 的逻辑核心数，比如 8 核 16 线程会显示 16；"
+            "但标准只把它当提示，拿不到信息时返回 0，别当硬上限用）" << endl;
 
     thread t([]() {
         cout << "子线程 ID：" << this_thread::get_id() << endl;

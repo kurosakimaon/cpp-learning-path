@@ -8,7 +8,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #ff6b6b 0%, #ffa751 100%);
+    background: linear-gradient(135deg, #b84d4d 0%, #986430 100%);
     min-height: 100vh;
     padding: 30px 20px;
     color: #333;
@@ -18,7 +18,7 @@
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -30,7 +30,7 @@
 
   .header { text-align: center; color: white; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.2); }
-  .header p { font-size: 16px; opacity: 0.95; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -40,7 +40,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .intro-section h2 {
-    color: #e65100;
+    color: #ae3d00;
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
@@ -91,6 +91,29 @@
   .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
   .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
   .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
+  .card-step {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #fff3e0;
+    color: #ae3d00;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .list-note {
+    color: #ad310a;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: -6px 0 16px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.78);
+    border-left: 3px solid currentColor;
+    border-radius: 0 10px 10px 0;
+  }
+  .list-note a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .list-note a:hover { text-decoration: underline; }
 
   .tag {
     padding: 3px 10px;
@@ -102,7 +125,7 @@
   .tag.elementary { background: #e0f2f1; color: #00695c; }
   .tag.intermediate { background: #e3f2fd; color: #1565c0; }
   .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #e65100; }
+  .tag.advanced { background: #fff3e0; color: #ae3d00; }
   .tag.expert { background: #ffebee; color: #c62828; }
 
   .warning-banner {
@@ -112,8 +135,8 @@
     padding: 18px 22px;
     margin-bottom: 24px;
   }
-  .warning-banner strong { color: #bf360c; font-size: 15px; }
-  .warning-banner p { color: #e65100; font-size: 13px; margin-top: 6px; line-height: 1.6; }
+  .warning-banner strong { color: #ad310a; font-size: 15px; }
+  .warning-banner p { color: #ae3d00; font-size: 13px; margin-top: 6px; line-height: 1.6; }
 
   .feature-section {
     background: rgba(255,255,255,0.95);
@@ -123,7 +146,7 @@
     box-shadow: 0 8px 30px rgba(0,0,0,0.1);
   }
   .feature-section h2 {
-    color: #e65100;
+    color: #ae3d00;
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
@@ -151,7 +174,7 @@
   }
   .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
   .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #e65100; }
+  .master-section li strong { color: #ae3d00; }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -188,25 +211,35 @@
       并发编程难，但也最有价值。掌握了它，你才能写出充分利用多核性能的高性能程序。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #ff6b6b, #ffa751); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255, 107, 107, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(255, 107, 107, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #be5050, #9e6832); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(255, 107, 107, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(255, 107, 107, 0.3)';">
         📖 学习指南
       </a>
-      <a href="../visuals/concurrency.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #6366f1, #0ea5e9); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(79, 70, 229, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(79, 70, 229, 0.28)';">
+      <a href="../visuals/concurrency.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #6063ea, #0a7bae); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(79, 70, 229, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(79, 70, 229, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(79, 70, 229, 0.28)';">
         🎬 图解并发时序
       </a>
-      <a href="../visuals/ipc.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0f766e, #22c55e); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(13, 148, 136, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(13, 148, 136, 0.28)';">
+      <a href="../visuals/ipc.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0f766e, #17853f); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(13, 148, 136, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(13, 148, 136, 0.28)';">
         🎬 图解 IPC
       </a>
-      <span style="color: #777; font-size: 13px;">先看指南再动手；时序绕不清时对照图解</span>
+      <a href="../visuals/memory_order.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(124, 58, 237, 0.28)';">
+        🎬 图解内存序
+      </a>
+      <span style="color: #707070; font-size: 13px;">先看指南再动手；时序绕不清时对照图解</span>
     </div>
   </div>
 
   <div class="section-title">
     <span>📂</span> 学习文件列表
   </div>
+  <p class="list-note">
+    卡片顺序就是把上面那句<strong>循序渐进</strong>落到具体章节：按 <strong>第 1 步 → 第 6 步</strong> 一张张往下学。
+    <strong>第 5 步</strong> 由 <strong>05 线程池</strong> 和 <strong>06 异步编程</strong> 两个文件合成——它们都是"更高层次的抽象"，属于同一步。
+    <strong>第 3 步 竞态与死锁</strong> 是全模块的核心；<strong>第 4 步 内存序</strong> 最难，一时看不懂很正常，可以先放一放往下走。
+    每个台阶的讲法见 <a href="tutorial.md">📖 学习指南</a>。
+  </p>
 
   <div class="card-grid">
     <a href="01_threading_basics.cpp" class="card">
+      <div class="card-step">第 1 步</div>
       <div class="card-icon">🧵</div>
       <div class="card-title">01 · 线程基础</div>
       <div class="card-desc">std::thread 创建与管理、join/detach、线程参数传递、线程 ID 与硬件并发数。</div>
@@ -214,6 +247,7 @@
     </a>
 
     <a href="02_synchronization.cpp" class="card">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🔒</div>
       <div class="card-title">02 · 同步原语</div>
       <div class="card-desc">mutex/recursive_mutex/timed_mutex、条件变量、shared_mutex 读写锁、call_once。</div>
@@ -221,6 +255,7 @@
     </a>
 
     <a href="03_race_deadlock.cpp" class="card">
+      <div class="card-step">第 3 步 · 重中之重</div>
       <div class="card-icon">💀</div>
       <div class="card-title">03 · 竞态与死锁</div>
       <div class="card-desc">竞态条件演示、数据竞争的危害、死锁的四种必要条件、死锁避免（固定顺序/scoped_lock/层次锁）。</div>
@@ -228,6 +263,7 @@
     </a>
 
     <a href="04_atomic_memory.cpp" class="card">
+      <div class="card-step">第 4 步 · 最难可先放</div>
       <div class="card-icon">⚛️</div>
       <div class="card-title">04 · 原子操作与内存序（高级）</div>
       <div class="card-desc">std::atomic 原子类型、六种内存序详解、无锁数据结构实现（无锁栈）。</div>
@@ -235,6 +271,7 @@
     </a>
 
     <a href="05_thread_pool.cpp" class="card">
+      <div class="card-step">第 5 步 · 集大成</div>
       <div class="card-icon">🏊</div>
       <div class="card-title">05 · 线程池实现</div>
       <div class="card-desc">从 0 实现一个完整的线程池：任务队列、工作线程、任务提交、优雅关闭、并行计算示例。</div>
@@ -242,6 +279,7 @@
     </a>
 
     <a href="06_async_future.cpp" class="card">
+      <div class="card-step">第 5 步</div>
       <div class="card-icon">🔮</div>
       <div class="card-title">06 · 异步编程</div>
       <div class="card-desc">std::async、future/promise、packaged_task、shared_future，高层次异步编程工具。</div>
@@ -249,6 +287,7 @@
     </a>
 
     <a href="07_ipc_shared_memory.cpp" class="card">
+      <div class="card-step">第 6 步</div>
       <div class="card-icon">📡</div>
       <div class="card-title">07 · 进程间通信（高级）</div>
       <div class="card-desc">共享内存、消息队列、进程间同步。需要 Boost.Interprocess 库支持。</div>

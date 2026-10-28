@@ -55,7 +55,7 @@ window.STEPS = [
     nav: '初始状态',
     title: '1. a 拥有堆上的缓冲区',
     caption: '<code>std::vector</code> 对象本身通常放在栈上，里面保存指针、size、capacity 三个字段；真正存放元素的缓冲区在堆上。对象的析构函数负责释放这块缓冲区。',
-    code: 'std::vector<int> a{1, 2, 3};   // size=3, capacity 通常 >= 3',
+    code: 'std::vector<int> a{1, 2, 3};   // size=3, cap >=3',
     highlight: [0],
     stage: `
 <svg viewBox="0 0 760 420" role="img" aria-label="栈上的 vector 对象 a 指向堆上的缓冲区">
@@ -303,7 +303,7 @@ window.STEPS = [
     nav: '移动赋值与移后状态',
     title: '7. 移动赋值：先释放旧的，再接管新的',
     caption: '移动赋值也是所有权转移，但目标对象可能已经持有资源：先把 <code>x</code> 原来的缓冲区释放，再接管 <code>y</code> 的缓冲区，最后把 <code>y</code> 置空。自己实现时要处理自赋值；被移动后的对象仍然可以析构、赋值，但不要读它的具体值。',
-    code: 'x = std::move(y);   // 移动赋值：释放旧资源 + 接管新资源',
+    code: 'x = std::move(y);   // 移动赋值：释旧接新',
     highlight: [0],
     stage: `
 <svg viewBox="0 0 760 450" role="img" aria-label="移动赋值前后，x 释放旧缓冲区并接管 y 的缓冲区">

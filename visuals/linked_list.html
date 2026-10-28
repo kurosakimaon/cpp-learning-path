@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单链表：指针到底怎么接？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../algorithms/index.html">算法模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 数据结构</div>
+    <h1>🧷 单链表：指针到底怎么接？</h1>
+    <p>链表难的不是概念，而是指针改动的顺序：先接哪根、后动哪个，错了就丢节点。这一页把插入、删除、反转拆成逐帧动画，最后再和数组算一笔缓存账。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 7</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应源码：<a href="../algorithms/data_structures.cpp">algorithms/data_structures.cpp</a> ·
+    交互沙盘：<a href="../algorithms/data_structures_visualizer.html">数据结构可视化</a> ·
+    相关教程：<a href="../algorithms/tutorial.md">algorithms/tutorial.md</a> ·
+    图中地址是示意值，真实地址由运行时决定。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '节点与 head',
+    title: '1. 节点分散在堆上，靠 next 串起来',
+    caption: '链表节点不要求连续存放：每个节点存一个值，再存<strong>下一个节点的地址</strong>。整条链只靠 <code>head</code> 这个入口指针找到，所以 head 一旦丢失，后面的节点就再也找不回来了。',
+    code: 'struct Node {\n    int value;\n    Node* next;\n};\nNode* head = nullptr;  // 空链表',
+    highlight: [0, 1, 2, 4],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="head 指针指向堆上分散的节点，每个节点的 next 指向下一个节点">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="36" class="svg-title">节点地址不连续，但逻辑上是一条链</text>
+  <text x="30" y="58" class="svg-small">下面每个方框都是一次 new 出来的节点，住在堆里</text>
+
+  <rect x="30" y="92" width="96" height="60" rx="9" class="svg-box-accent svg-pulse"/>
+  <text x="78" y="116" text-anchor="middle" class="svg-title">head</text>
+  <text x="78" y="138" text-anchor="middle" class="svg-small">唯一入口</text>
+
+  <g>
+    <rect x="190" y="92" width="142" height="60" rx="8" class="svg-box"/>
+    <line x1="262" y1="92" x2="262" y2="152" stroke="#cbd5e1" stroke-width="1.2"/>
+    <text x="226" y="118" text-anchor="middle" class="svg-mono">5</text>
+    <text x="226" y="138" text-anchor="middle" class="svg-small">value</text>
+    <text x="296" y="118" text-anchor="middle" class="svg-small">next</text>
+    <text x="296" y="138" text-anchor="middle" class="svg-mono" style="font-size:11px">0x2a80</text>
+    <text x="226" y="174" text-anchor="middle" class="svg-small">0x1000</text>
+  </g>
+
+  <g>
+    <rect x="360" y="92" width="142" height="60" rx="8" class="svg-box"/>
+    <line x1="432" y1="92" x2="432" y2="152" stroke="#cbd5e1" stroke-width="1.2"/>
+    <text x="396" y="118" text-anchor="middle" class="svg-mono">12</text>
+    <text x="396" y="138" text-anchor="middle" class="svg-small">value</text>
+    <text x="466" y="118" text-anchor="middle" class="svg-small">next</text>
+    <text x="466" y="138" text-anchor="middle" class="svg-mono" style="font-size:11px">0x3f40</text>
+    <text x="396" y="174" text-anchor="middle" class="svg-small">0x2a80</text>
+  </g>
+
+  <g>
+    <rect x="530" y="92" width="142" height="60" rx="8" class="svg-box"/>
+    <line x1="602" y1="92" x2="602" y2="152" stroke="#cbd5e1" stroke-width="1.2"/>
+    <text x="566" y="118" text-anchor="middle" class="svg-mono">7</text>
+    <text x="566" y="138" text-anchor="middle" class="svg-small">value</text>
+    <text x="636" y="118" text-anchor="middle" class="svg-small">next</text>
+    <text x="636" y="138" text-anchor="middle" class="svg-mono" style="font-size:11px">nullptr</text>
+    <text x="566" y="174" text-anchor="middle" class="svg-small">0x3f40</text>
+  </g>
+
+  <line x1="128" y1="122" x2="184" y2="122" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <line x1="334" y1="122" x2="354" y2="122" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="504" y1="122" x2="524" y2="122" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="232" width="642" height="92" rx="12" class="svg-box-ghost"/>
+  <text x="50" y="260" class="svg-text">一个节点 = 数据 + 下一个节点的地址</text>
+  <text x="50" y="286" class="svg-small">找第 i 个元素只能从头走，不能像数组那样直接算地址</text>
+  <text x="50" y="308" class="svg-small">最后一个节点的 next 必须是 nullptr，否则遍历停不下来</text>
+
+  <text x="30" y="372" class="svg-bad-text">head 丢了 = 整条链丢了；链表节点不会自己释放，记得 delete。</text>
+  <text x="30" y="400" class="svg-small">图中的 0x1000 / 0x2a80 只是示意：节点通常分散在堆的不同位置。</text>
+</svg>`
+  },
+  {
+    nav: '头插',
+    title: '2. 头插：先接新节点，再动 head',
+    caption: '头插只有两步：① 新节点的 <code>next</code> 指向原来的 head；② 再让 head 指向新节点。顺序反过来，head 先指向新节点，旧链表就没人引用了，直接泄漏。',
+    code: 'Node* node = new Node{7, head};  // ① 接上旧表\nhead = node;                     // ② 移动入口\n// 等价写法：\n// node->next = head;\n// head = node;',
+    highlight: [0, 1, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="头插时新节点的 next 先指向旧表头，然后 head 再指向新节点">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-title">目标：把 7 插到最前面</text>
+
+  <rect x="24" y="196" width="92" height="58" rx="9" class="svg-box-accent"/>
+  <text x="70" y="220" text-anchor="middle" class="svg-title">head</text>
+  <text x="70" y="240" text-anchor="middle" class="svg-small">入口</text>
+
+  <rect x="150" y="104" width="142" height="60" rx="8" class="svg-box-accent svg-pulse"/>
+  <line x1="222" y1="104" x2="222" y2="164" stroke="#6366f1" stroke-width="1.4"/>
+  <text x="186" y="130" text-anchor="middle" class="svg-mono">7</text>
+  <text x="186" y="150" text-anchor="middle" class="svg-small">新节点</text>
+  <text x="256" y="130" text-anchor="middle" class="svg-small">next</text>
+  <text x="256" y="150" text-anchor="middle" class="svg-mono" style="font-size:11px">0x1000</text>
+
+  <rect x="360" y="150" width="142" height="60" rx="8" class="svg-box"/>
+  <line x1="432" y1="150" x2="432" y2="210" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="396" y="176" text-anchor="middle" class="svg-mono">5</text>
+  <text x="466" y="176" text-anchor="middle" class="svg-small">next</text>
+  <text x="396" y="196" text-anchor="middle" class="svg-small">原 head</text>
+
+  <rect x="530" y="150" width="142" height="60" rx="8" class="svg-box"/>
+  <line x1="602" y1="150" x2="602" y2="210" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="566" y="176" text-anchor="middle" class="svg-mono">12</text>
+  <text x="636" y="176" text-anchor="middle" class="svg-mono" style="font-size:11px">nullptr</text>
+
+  <line x1="504" y1="180" x2="524" y2="180" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="292" y1="134" x2="354" y2="170" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <path d="M116 224 C142 224 146 190 150 166" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+
+  <circle cx="318" cy="112" r="13" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="318" y="117" text-anchor="middle" class="svg-mono" style="font-size:12px;fill:#4338ca">1</text>
+  <circle cx="132" cy="184" r="13" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
+  <text x="132" y="189" text-anchor="middle" class="svg-mono" style="font-size:12px;fill:#4338ca">2</text>
+
+  <text x="30" y="300" class="svg-text">① node-&gt;next = head;　先让新节点接住旧链表</text>
+  <text x="30" y="328" class="svg-text">② head = node;　　　 再移动入口</text>
+
+  <rect x="30" y="350" width="642" height="44" rx="10" class="svg-box-bad"/>
+  <text x="48" y="378" class="svg-bad-text">反着来：head = node 之后，旧表头没人引用，旧链表就泄漏了。</text>
+</svg>`
+  },
+  {
+    nav: '尾插',
+    title: '3. 尾插：没有 tail 指针就得走到底',
+    caption: '只保存 head 时，尾插必须先遍历到最后一个节点，代价 O(n)。如果额外维护一个 <code>tail</code> 指针，尾插就是 O(1)。代价是空链表、删除尾节点时都要额外维护 tail，容易漏改。',
+    code: 'Node* cur = head;\nwhile (cur->next) cur = cur->next;  // 找尾：O(n)\ncur->next = new Node{9, nullptr};  // 挂上去\n// 维护 tail 时：tail->next = node; tail = node;',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="只有 head 时尾插需要遍历整条链表，维护 tail 可直接插入">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-title">尾插 9：先找到最后一个节点</text>
+
+  <rect x="24" y="108" width="86" height="54" rx="8" class="svg-box-accent"/>
+  <text x="67" y="140" text-anchor="middle" class="svg-title">head</text>
+
+  <rect x="140" y="108" width="130" height="54" rx="8" class="svg-box"/>
+  <text x="205" y="140" text-anchor="middle" class="svg-mono">5</text>
+  <rect x="290" y="108" width="130" height="54" rx="8" class="svg-box"/>
+  <text x="355" y="140" text-anchor="middle" class="svg-mono">12</text>
+  <rect x="440" y="108" width="130" height="54" rx="8" class="svg-box-warn"/>
+  <text x="505" y="140" text-anchor="middle" class="svg-mono">7</text>
+  <text x="505" y="178" text-anchor="middle" class="svg-small">最后一个节点 · next = nullptr</text>
+
+  <line x1="110" y1="135" x2="136" y2="135" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="270" y1="135" x2="286" y2="135" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="420" y1="135" x2="436" y2="135" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <path d="M66 100 C66 72 205 72 205 100" class="svg-arrow svg-flow" style="stroke:#64748b" marker-end="url(#ahd)"/>
+  <path d="M205 100 C205 84 355 84 355 100" class="svg-arrow svg-flow" style="stroke:#64748b" marker-end="url(#ahd)"/>
+  <path d="M355 100 C355 84 505 84 505 100" class="svg-arrow svg-flow" style="stroke:#64748b" marker-end="url(#ahd)"/>
+  <text x="260" y="64" class="svg-small">cur 一步步走到尾：走 n 步，O(n)</text>
+
+  <rect x="620" y="108" width="110" height="54" rx="8" class="svg-box-accent svg-pulse"/>
+  <text x="675" y="140" text-anchor="middle" class="svg-mono">9</text>
+  <line x1="570" y1="135" x2="616" y2="135" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="590" y="98" text-anchor="middle" class="svg-small">挂到尾部</text>
+
+  <rect x="420" y="244" width="230" height="70" rx="10" class="svg-box-good"/>
+  <text x="438" y="270" class="svg-text">如果维护 tail 指针</text>
+  <text x="438" y="296" class="svg-small">tail-&gt;next = node; tail = node;  → O(1)</text>
+  <line x1="535" y1="244" x2="535" y2="186" class="svg-arrow-bad" marker-end="url(#ah)"/>
+
+  <text x="30" y="280" class="svg-text">只有 head：找尾 O(n)</text>
+  <text x="30" y="308" class="svg-small">删除尾节点仍然要 O(n)：单链表拿不到前驱</text>
+  <text x="30" y="336" class="svg-small">维护 tail 能加速尾插，但空表、删尾、拼接都要同步更新</text>
+  <text x="30" y="380" class="svg-small">图中的虚线表示遍历路径，不是真实指针。</text>
+</svg>`
+  },
+  {
+    nav: '删除',
+    title: '4. 删除：先改链，再 delete',
+    caption: '单链表删除节点必须找到<strong>前驱</strong>：让 <code>prev-&gt;next</code> 跨过目标节点，然后再 <code>delete</code>。顺序不能反：先 delete 就再也读不到 <code>cur-&gt;next</code> 了；删完还访问 cur 就是悬空指针。',
+    code: 'Node* prev = head;\nwhile (prev && prev->next != target)\n    prev = prev->next;\nif (prev) {\n    prev->next = target->next;  // 先跨过\n    delete target;              // 再释放\n}',
+    highlight: [4, 5, 6],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="删除中间节点时前驱的 next 跨过目标节点，然后释放目标节点">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-title">删除中间的 20</text>
+
+  <rect x="140" y="66" width="94" height="46" rx="8" class="svg-box-accent"/>
+  <text x="187" y="95" text-anchor="middle" class="svg-mono">prev</text>
+  <rect x="330" y="66" width="94" height="46" rx="8" class="svg-box-bad"/>
+  <text x="377" y="95" text-anchor="middle" class="svg-mono">cur</text>
+  <line x1="187" y1="112" x2="187" y2="144" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="377" y1="112" x2="377" y2="144" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="120" y="148" width="140" height="58" rx="8" class="svg-box"/>
+  <line x1="192" y1="148" x2="192" y2="206" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="156" y="174" text-anchor="middle" class="svg-mono">10</text>
+  <text x="226" y="174" text-anchor="middle" class="svg-small">next</text>
+
+  <rect x="310" y="148" width="140" height="58" rx="8" class="svg-box-bad" opacity=".62"/>
+  <line x1="382" y1="148" x2="382" y2="206" stroke="#ef4444" stroke-width="1.2"/>
+  <text x="346" y="174" text-anchor="middle" class="svg-mono">20</text>
+  <text x="416" y="174" text-anchor="middle" class="svg-small">next</text>
+  <text x="380" y="236" text-anchor="middle" class="svg-bad-text">delete cur</text>
+
+  <rect x="500" y="148" width="140" height="58" rx="8" class="svg-box"/>
+  <line x1="572" y1="148" x2="572" y2="206" stroke="#cbd5e1" stroke-width="1.2"/>
+  <text x="536" y="174" text-anchor="middle" class="svg-mono">30</text>
+  <text x="606" y="174" text-anchor="middle" class="svg-mono" style="font-size:11px">nullptr</text>
+
+  <line x1="260" y1="177" x2="306" y2="177" class="svg-arrow-bad" marker-end="url(#ah)"/>
+  <line x1="450" y1="177" x2="496" y2="177" class="svg-arrow" marker-end="url(#ah)"/>
+  <path d="M262 190 C300 262 468 262 500 190" class="svg-arrow-accent svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="330" y="286" class="svg-good-text">prev-&gt;next = cur-&gt;next（先跨过）</text>
+
+  <text x="30" y="336" class="svg-bad-text">✗ 先 delete cur：cur-&gt;next 已经读不到，后面的节点全丢</text>
+  <text x="30" y="364" class="svg-bad-text">✗ delete 之后继续用 cur：悬空指针，行为未定义</text>
+  <text x="30" y="392" class="svg-small">删头节点要单独更新 head；单链表删尾仍需先找到前驱，O(n)。</text>
+</svg>`
+  },
+  {
+    nav: '查找 O(n)',
+    title: '5. 查找：数组能算地址，链表只能走',
+    caption: '数组元素连续，<code>a[i]</code> 用一次地址计算就能直达；链表节点分散，想找第 i 个只能从 head 一路 <code>next</code> 过去，O(n)。这也是链表遍历通常更慢的根源：不是指针跳转本身，而是<strong>缓存不友好</strong>。',
+    code: 'Node* find(Node* head, int target) {\n    for (Node* p = head; p; p = p->next)\n        if (p->value == target) return p;\n    return nullptr;\n}\n// 数组：a[i] → base + i * sizeof(T)，O(1)',
+    highlight: [1, 2, 5],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="数组可以按地址直接访问，链表需要从头逐个遍历">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahd" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#64748b"/></marker>
+  </defs>
+
+  <text x="30" y="34" class="svg-title">数组：连续内存，下标直接算地址</text>
+  <rect x="30" y="56" width="160" height="76" rx="9" class="svg-box-accent"/>
+  <text x="110" y="82" text-anchor="middle" class="svg-mono">a[i]</text>
+  <text x="110" y="104" text-anchor="middle" class="svg-small">base + i × 4</text>
+  <text x="110" y="122" text-anchor="middle" class="svg-small">O(1) 次访存</text>
+
+  <g>
+    <rect x="250" y="64" width="62" height="54" rx="6" class="svg-box"/>
+    <rect x="312" y="64" width="62" height="54" rx="6" class="svg-box"/>
+    <rect x="374" y="64" width="62" height="54" rx="6" class="svg-box-accent svg-pulse"/>
+    <rect x="436" y="64" width="62" height="54" rx="6" class="svg-box"/>
+    <rect x="498" y="64" width="62" height="54" rx="6" class="svg-box"/>
+    <rect x="560" y="64" width="62" height="54" rx="6" class="svg-box"/>
+    <text x="281" y="98" text-anchor="middle" class="svg-mono">10</text>
+    <text x="343" y="98" text-anchor="middle" class="svg-mono">20</text>
+    <text x="405" y="98" text-anchor="middle" class="svg-mono">30</text>
+    <text x="467" y="98" text-anchor="middle" class="svg-mono">40</text>
+    <text x="529" y="98" text-anchor="middle" class="svg-mono">50</text>
+    <text x="591" y="98" text-anchor="middle" class="svg-mono">60</text>
+    <text x="281" y="136" text-anchor="middle" class="svg-small">[0]</text>
+    <text x="343" y="136" text-anchor="middle" class="svg-small">[1]</text>
+    <text x="405" y="136" text-anchor="middle" class="svg-small">[2]</text>
+    <text x="467" y="136" text-anchor="middle" class="svg-small">[3]</text>
+    <text x="529" y="136" text-anchor="middle" class="svg-small">[4]</text>
+    <text x="591" y="136" text-anchor="middle" class="svg-small">[5]</text>
+  </g>
+  <line x1="192" y1="96" x2="246" y2="94" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="636" y="88" class="svg-good-text">一次命中</text>
+  <text x="636" y="110" class="svg-small">整块通常在同一</text>
+  <text x="636" y="130" class="svg-small">条 cache line</text>
+
+  <line x1="30" y1="170" x2="730" y2="170" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="5 5"/>
+
+  <text x="30" y="202" class="svg-title">链表：节点分散，只能从头串过去</text>
+  <rect x="30" y="226" width="86" height="52" rx="8" class="svg-box-accent"/>
+  <text x="73" y="258" text-anchor="middle" class="svg-title">head</text>
+
+  <rect x="150" y="226" width="120" height="52" rx="8" class="svg-box"/>
+  <text x="210" y="258" text-anchor="middle" class="svg-mono">10</text>
+  <rect x="310" y="226" width="120" height="52" rx="8" class="svg-box"/>
+  <text x="370" y="258" text-anchor="middle" class="svg-mono">20</text>
+  <rect x="470" y="226" width="120" height="52" rx="8" class="svg-box-accent"/>
+  <text x="530" y="258" text-anchor="middle" class="svg-mono">30</text>
+  <rect x="630" y="226" width="100" height="52" rx="8" class="svg-box"/>
+  <text x="680" y="258" text-anchor="middle" class="svg-mono">40</text>
+
+  <line x1="116" y1="252" x2="146" y2="252" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="270" y1="252" x2="306" y2="252" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="430" y1="252" x2="466" y2="252" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="590" y1="252" x2="626" y2="252" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <path d="M73 292 C73 340 210 340 210 282" class="svg-arrow-bad svg-flow" marker-end="url(#ahd)"/>
+  <text x="120" y="322" class="svg-small">①</text>
+  <path d="M210 292 C210 340 370 340 370 282" class="svg-arrow-bad svg-flow" marker-end="url(#ahd)"/>
+  <text x="270" y="322" class="svg-small">②</text>
+  <path d="M370 292 C370 340 530 340 530 282" class="svg-arrow-bad svg-flow" marker-end="url(#ahd)"/>
+  <text x="430" y="322" class="svg-small">③</text>
+
+  <text x="30" y="378" class="svg-bad-text">找第 3 个：链表走了 3 步，且节点可能分布在 3 条不同的 cache line 上。</text>
+  <text x="30" y="406" class="svg-small">所以“链表插入 O(1)”有个前提：你已经拿到了那个位置的指针/迭代器；找位置本身仍是 O(n)。</text>
+</svg>`
+  },
+  {
+    nav: '反转',
+    title: '6. 反转：三个指针，每次只掉一个头',
+    caption: '反转的核心是维护一个不变式：<code>prev</code> 指向已经反转好的部分，<code>cur</code> 指向还没处理的部分。每轮先存下 <code>next</code>，再让 <code>cur-&gt;next</code> 掉头指向 prev，最后两个指针一起前移。<strong>不先存 next，掉头之后就找不到后面的节点了。</strong>',
+    code: 'Node *prev = nullptr, *cur = head;\nwhile (cur) {\n    Node* next = cur->next;  // ① 存后继\n    cur->next = prev;        // ② 掉头\n    prev = cur;              // ③ prev 前移\n    cur = next;              // ④ cur 前移\n}\nhead = prev;',
+    highlight: [2, 3, 4, 5],
+    ms: 9000,
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="三指针反转链表，一轮只反转一条边">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+
+  <text x="30" y="30" class="svg-title">初始：prev = ∅，cur = 第一个节点</text>
+  <text x="540" y="30" class="svg-small">每一轮只反转 cur 的一条边</text>
+
+  <rect x="40" y="58" width="86" height="40" rx="8" class="svg-box"/>
+  <text x="83" y="84" text-anchor="middle" class="svg-mono" style="font-size:11px">prev = ∅</text>
+  <rect x="190" y="58" width="86" height="40" rx="8" class="svg-box-accent"/>
+  <text x="233" y="84" text-anchor="middle" class="svg-mono" style="font-size:11px">cur</text>
+  <rect x="340" y="58" width="86" height="40" rx="8" class="svg-box-warn"/>
+  <text x="383" y="84" text-anchor="middle" class="svg-mono" style="font-size:11px">next</text>
+
+  <rect x="150" y="112" width="110" height="50" rx="7" class="svg-box-accent"/>
+  <text x="205" y="143" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="310" y="112" width="110" height="50" rx="7" class="svg-box"/>
+  <text x="365" y="143" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="470" y="112" width="110" height="50" rx="7" class="svg-box"/>
+  <text x="525" y="143" text-anchor="middle" class="svg-mono">3</text>
+
+  <line x1="260" y1="136" x2="306" y2="136" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="420" y1="136" x2="466" y2="136" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="580" y1="136" x2="620" y2="136" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="630" y="142" class="svg-mono" style="font-size:12px">∅</text>
+
+  <line x1="233" y1="98" x2="233" y2="108" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="383" y1="98" x2="383" y2="108" class="svg-arrow" style="stroke:#d97706" marker-end="url(#ah)"/>
+
+  <line x1="30" y1="196" x2="730" y2="196" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="5 5"/>
+
+  <text x="30" y="226" class="svg-title">两轮之后：1、2 已经掉头，prev 跟到 2，cur 指向 3</text>
+
+  <rect x="40" y="252" width="86" height="40" rx="8" class="svg-box-good"/>
+  <text x="83" y="278" text-anchor="middle" class="svg-mono" style="font-size:11px">prev</text>
+  <rect x="470" y="252" width="86" height="40" rx="8" class="svg-box-accent"/>
+  <text x="513" y="278" text-anchor="middle" class="svg-mono" style="font-size:11px">cur</text>
+
+  <rect x="150" y="306" width="110" height="50" rx="7" class="svg-box-good"/>
+  <text x="205" y="337" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="310" y="306" width="110" height="50" rx="7" class="svg-box-good"/>
+  <text x="365" y="337" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="470" y="306" width="110" height="50" rx="7" class="svg-box-accent"/>
+  <text x="525" y="337" text-anchor="middle" class="svg-mono">3</text>
+
+  <path d="M470 330 C458 318 438 318 424 330" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M310 330 C298 318 278 318 264 330" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <line x1="150" y1="330" x2="110" y2="330" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="88" y="336" class="svg-mono" style="font-size:12px">∅</text>
+
+  <line x1="83" y1="292" x2="342" y2="304" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+  <line x1="513" y1="292" x2="513" y2="302" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <text x="30" y="398" class="svg-text">每轮四步：存 next → 掉头 → prev 前移 → cur 前移</text>
+  <text x="30" y="422" class="svg-bad-text">少存 next，掉头后 cur-&gt;next 已被覆盖，后面的节点就找不到了。</text>
+</svg>`
+  },
+  {
+    nav: '怎么选',
+    title: '7. 链表 vs 数组：别只看 Big-O',
+    caption: '理论上“链表中间插入 O(1)”，但找位置仍是 O(n)，而且节点分散、每个节点多一个指针。实际工程里 <code>std::vector</code> 通常是默认选择；<code>std::list</code> 适合频繁整段搬家（splice）或需要节点地址长期稳定的场景。',
+    code: 'std::list<int> a = {1, 2, 3, 4};\nstd::list<int> b = {5, 6};\nauto it = std::next(a.begin());\na.erase(it);                  // 已有位置：O(1)\na.splice(a.end(), b);         // 节点搬家，不拷贝元素',
+    highlight: [0, 2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="vector 与 list 在随机访问、插入删除、缓存和迭代器稳定性上的对比">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">选型对照：先问访问模式，再问插入频率</text>
+
+  <rect x="24" y="52" width="712" height="44" rx="8" class="svg-box-accent"/>
+  <text x="42" y="80" class="svg-text" style="font-weight:700">比较项</text>
+  <text x="250" y="80" class="svg-text" style="font-weight:700">std::vector（动态数组）</text>
+  <text x="535" y="80" class="svg-text" style="font-weight:700">std::list（双向链表）</text>
+
+  <rect x="24" y="96" width="712" height="48" rx="8" class="svg-field"/>
+  <text x="42" y="125" class="svg-text">随机访问 a[i]</text>
+  <text x="250" y="125" class="svg-good-text">O(1)，连续内存</text>
+  <text x="535" y="125" class="svg-bad-text">O(n)，只能从头走</text>
+
+  <rect x="24" y="144" width="712" height="48" rx="8" class="svg-field"/>
+  <text x="42" y="173" class="svg-text">中间插入 / 删除</text>
+  <text x="250" y="173" class="svg-bad-text">O(n) 搬移元素</text>
+  <text x="535" y="173" class="svg-good-text">已有位置 O(1)</text>
+
+  <rect x="24" y="192" width="712" height="48" rx="8" class="svg-field"/>
+  <text x="42" y="221" class="svg-text">内存与缓存</text>
+  <text x="250" y="221" class="svg-good-text">紧凑，遍历快</text>
+  <text x="535" y="221" class="svg-bad-text">多两个指针，易 cache miss</text>
+
+  <rect x="24" y="240" width="712" height="48" rx="8" class="svg-field"/>
+  <text x="42" y="269" class="svg-text">迭代器 / 引用稳定性</text>
+  <text x="250" y="269" class="svg-bad-text">扩容后全部失效</text>
+  <text x="535" y="269" class="svg-good-text">节点地址稳定，除非删除该节点</text>
+
+  <rect x="24" y="288" width="712" height="48" rx="8" class="svg-field"/>
+  <text x="42" y="317" class="svg-text">典型场景</text>
+  <text x="250" y="317" class="svg-text">默认首选；尾部增删、批量遍历</text>
+  <text x="535" y="317" class="svg-text">频繁 splice、稳定引用、LRU 链</text>
+
+  <rect x="24" y="352" width="712" height="58" rx="10" class="svg-box-good"/>
+  <text x="42" y="376" class="svg-text">经验法则：没有测量之前，优先 vector；真的需要“把节点搬来搬去”再考虑 list。</text>
+  <text x="42" y="400" class="svg-small">std::forward_list 是单链表，省一个指针，但不提供 size() 和反向遍历。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

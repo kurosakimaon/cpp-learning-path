@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>智能指针：所有权、引用计数与循环引用 - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../intermediate/index.html">进阶模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 内存管理</div>
+    <h1>🔑 智能指针：谁拥有这个对象？</h1>
+    <p>智能指针解决的不是“怎么 new”，而是“谁来 delete”。这一页把 unique_ptr 的独占、shared_ptr 的控制块与引用计数、weak_ptr 的观察，以及最容易踩的循环引用逐帧画出来。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 7</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应源码：<a href="../intermediate/smart_ptr_deep.cpp">intermediate/smart_ptr_deep.cpp</a> ·
+    相关教程：<a href="../intermediate/tutorial.md">intermediate/tutorial.md</a> ·
+    图解只画典型实现；标准只规定行为，不规定控制块的具体布局。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: 'unique_ptr 独占',
+    title: '1. unique_ptr：只有我能释放',
+    caption: 'unique_ptr 表达<strong>独占所有权</strong>：同一个对象只能有一个 unique_ptr 指着它。它不能拷贝，只能移动；移动之后源指针变成 <code>nullptr</code>。代价几乎为零——大小通常和一个裸指针相同，也没有引用计数。',
+    code: 'auto p = std::make_unique<Node>(1);\n// auto q = p;      // 错误：不可拷贝\nauto q = std::move(p);     // 所有权转移\n// p == nullptr，q 持有对象',
+    highlight: [1, 2],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="unique_ptr 通过移动把对象所有权从 p 转给 q，p 变为空">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">移动前：p 独占对象</text>
+  <rect x="30" y="52" width="700" height="118" rx="12" class="svg-box-ghost"/>
+  <rect x="52" y="76" width="190" height="70" rx="8" class="svg-box-accent"/>
+  <text x="68" y="102" class="svg-text">栈 · p</text>
+  <text x="68" y="128" class="svg-mono" style="font-size:11px">0x7f2a1000</text>
+  <rect x="500" y="74" width="200" height="74" rx="8" class="svg-box-good"/>
+  <text x="518" y="100" class="svg-text">堆 · Node</text>
+  <text x="518" y="126" class="svg-mono">{ id = 1 }</text>
+  <line x1="246" y1="111" x2="494" y2="111" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="300" y="98" class="svg-small">唯一持有</text>
+
+  <text x="30" y="208" class="svg-mono" style="fill:#4338ca">auto q = std::move(p);</text>
+  <text x="30" y="232" class="svg-small">拷贝构造被 delete，只能移动</text>
+
+  <text x="30" y="272" class="svg-title">移动后：q 接管，p 变空</text>
+  <rect x="30" y="290" width="700" height="104" rx="12" class="svg-box-ghost"/>
+  <rect x="52" y="310" width="120" height="64" rx="8" class="svg-box"/>
+  <text x="66" y="334" class="svg-text">栈 · p</text>
+  <text x="66" y="358" class="svg-mono" style="fill:#b91c1c">nullptr</text>
+  <rect x="196" y="310" width="150" height="64" rx="8" class="svg-box-good"/>
+  <text x="212" y="334" class="svg-text">栈 · q</text>
+  <text x="212" y="358" class="svg-mono" style="font-size:11px">0x7f2a1000</text>
+  <rect x="500" y="306" width="200" height="72" rx="8" class="svg-box-good"/>
+  <text x="518" y="332" class="svg-text">同一个 Node</text>
+  <text x="518" y="356" class="svg-mono">{ id = 1 }</text>
+  <line x1="352" y1="342" x2="494" y2="342" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="404" y="330" class="svg-small">所有权已转移</text>
+
+  <text x="30" y="420" class="svg-small">对象没有搬动，只是指针换了个主人；unique_ptr 的大小通常与裸指针相同。</text>
+</svg>`
+  },
+  {
+    nav: '两个指针',
+    title: '2. shared_ptr 的本体只有两个指针',
+    caption: 'shared_ptr 对象本身很小：一个指针指向对象，另一个指针指向<strong>控制块</strong>。控制块里放着强引用计数、弱引用计数、删除器和分配器。多个 shared_ptr 共享同一个控制块，所以计数能同步。',
+    code: 'auto sp = std::make_shared<Node>(1);\n// sp 本体：[对象指针][控制块指针]\n// 控制块：strong=1, weak=0, deleter, allocator',
+    highlight: [1, 2],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="shared_ptr 栈对象里有两个指针，分别指向堆上的对象和控制块">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">一个 shared_ptr，两个指针</text>
+
+  <rect x="30" y="70" width="230" height="120" rx="10" class="svg-box-accent"/>
+  <text x="46" y="96" class="svg-text">栈 · sp</text>
+  <rect x="46" y="108" width="198" height="30" rx="5" class="svg-field"/>
+  <text x="56" y="128" class="svg-mono" style="font-size:11px">对象指针  0x1000</text>
+  <rect x="46" y="146" width="198" height="30" rx="5" class="svg-field"/>
+  <text x="56" y="166" class="svg-mono" style="font-size:11px">控制块指针 0x2000</text>
+
+  <rect x="490" y="58" width="230" height="96" rx="10" class="svg-box-good"/>
+  <text x="506" y="84" class="svg-text">堆 · Node</text>
+  <text x="506" y="110" class="svg-mono">{ id = 1 }</text>
+  <text x="506" y="134" class="svg-small">地址 0x1000</text>
+
+  <rect x="470" y="210" width="260" height="170" rx="10" class="svg-box-warn"/>
+  <text x="486" y="236" class="svg-title">控制块（共享）</text>
+  <text x="486" y="264" class="svg-mono">strong = 1</text>
+  <text x="486" y="290" class="svg-mono">weak   = 0</text>
+  <text x="486" y="318" class="svg-small">删除器 / 分配器（类型已擦除）</text>
+  <text x="486" y="344" class="svg-small">对象指针 0x1000</text>
+  <text x="486" y="368" class="svg-small">对象本体不在控制块里</text>
+
+  <path d="M262 123 C340 100 400 90 486 96" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <path d="M262 161 C330 205 380 260 466 276" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="330" y="88" class="svg-small">① 指向对象</text>
+  <text x="330" y="248" class="svg-small">② 指向控制块</text>
+
+  <text x="30" y="330" class="svg-small">拷贝 shared_ptr 复制的是这两个指针，</text>
+  <text x="30" y="354" class="svg-small">然后对同一个控制块把 strong 加一。</text>
+  <text x="30" y="390" class="svg-small">控制块在堆上，所有副本共享同一份计数。</text>
+</svg>`
+  },
+  {
+    nav: '计数增减',
+    title: '3. 拷贝加一，销毁减一，归零才析构',
+    caption: '每次拷贝 shared_ptr，强计数 +1；每次销毁（或 reset），强计数 -1。只有强计数降到 0 时才析构对象、释放对象内存。只要还有一个强引用，对象就活着。weak 计数不参与这个判断。',
+    code: 'auto a = std::make_shared<Node>(); // strong = 1\n{\n    auto b = a;                      // strong = 2\n    auto c = b;                      // strong = 3\n}                                    // strong = 1\n// a 离开作用域 → strong = 0 → 析构 Node',
+    highlight: [2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 400" role="img" aria-label="shared_ptr 的强引用计数从 1 增加到 3 再回到 0，归零时析构对象">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">强计数的一生</text>
+
+  <rect x="36" y="80" width="126" height="80" rx="9" class="svg-box-good"/>
+  <text x="99" y="108" text-anchor="middle" class="svg-text">a 创建</text>
+  <text x="99" y="136" text-anchor="middle" class="svg-mono">strong = 1</text>
+
+  <rect x="178" y="80" width="126" height="80" rx="9" class="svg-box-good"/>
+  <text x="241" y="108" text-anchor="middle" class="svg-text">b = a</text>
+  <text x="241" y="136" text-anchor="middle" class="svg-mono">strong = 2</text>
+
+  <rect x="320" y="80" width="126" height="80" rx="9" class="svg-box-good"/>
+  <text x="383" y="108" text-anchor="middle" class="svg-text">c = b</text>
+  <text x="383" y="136" text-anchor="middle" class="svg-mono">strong = 3</text>
+
+  <rect x="462" y="80" width="126" height="80" rx="9" class="svg-box-accent"/>
+  <text x="525" y="108" text-anchor="middle" class="svg-text">b、c 离开</text>
+  <text x="525" y="136" text-anchor="middle" class="svg-mono">strong = 1</text>
+
+  <rect x="604" y="80" width="126" height="80" rx="9" class="svg-box-bad svg-pulse"/>
+  <text x="667" y="108" text-anchor="middle" class="svg-text">a 离开</text>
+  <text x="667" y="136" text-anchor="middle" class="svg-mono">strong = 0</text>
+
+  <line x1="166" y1="120" x2="174" y2="120" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="308" y1="120" x2="316" y2="120" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="450" y1="120" x2="458" y2="120" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="592" y1="120" x2="600" y2="120" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <text x="30" y="212" class="svg-small">每次拷贝 +1，每次销毁 -1；计数本身是原子的。</text>
+
+  <line x1="667" y1="162" x2="667" y2="230" class="svg-arrow-bad" marker-end="url(#ah)"/>
+  <rect x="500" y="238" width="230" height="76" rx="10" class="svg-box-bad"/>
+  <text x="516" y="264" class="svg-bad-text">强计数归零</text>
+  <text x="516" y="288" class="svg-text">析构 Node，释放对象内存</text>
+
+  <rect x="36" y="238" width="420" height="76" rx="10" class="svg-box-good"/>
+  <text x="52" y="264" class="svg-good-text">只要 strong &gt; 0</text>
+  <text x="52" y="288" class="svg-text">对象就活着；weak 不延长寿命</text>
+
+  <text x="30" y="354" class="svg-small">控制块自己的释放看 weak 计数：最后一个 weak 也走了，控制块才回收。</text>
+  <text x="30" y="380" class="svg-small">第 5 步会看到：对象已释放，但 weak_ptr 还能安全地问“它还在吗”。</text>
+</svg>`
+  },
+  {
+    nav: 'make_shared',
+    title: '4. make_shared 一次分配；别用同一个裸指针建两个 shared_ptr',
+    caption: 'make_shared 把对象和控制块放在<strong>同一块分配</strong>里，少一次 new，局部性也更好。反过来，用同一个裸指针构造两个 shared_ptr，会得到两个互不知情的控制块，两个强计数都从 1 开始，最后各 delete 一次——double free。',
+    code: 'auto sp = std::make_shared<Node>();  // 一次分配\nNode* raw = new Node();\nstd::shared_ptr<Node> a(raw);        // 控制块 A\nstd::shared_ptr<Node> b(raw);        // 控制块 B\n// 两个控制块各 delete 一次 → double free',
+    highlight: [2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 410" role="img" aria-label="make_shared 一次分配对象与控制块，而同一个裸指针构造两个 shared_ptr 会产生两个控制块">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="24" y="32" class="svg-title">make_shared：一次分配</text>
+  <rect x="20" y="48" width="350" height="290" rx="12" class="svg-box-good"/>
+  <rect x="40" y="96" width="310" height="170" rx="9" class="svg-box-good"/>
+  <rect x="40" y="96" width="310" height="80" rx="9" class="svg-field"/>
+  <text x="58" y="124" class="svg-text">Node 对象</text>
+  <text x="58" y="150" class="svg-mono">{ id = 1 }</text>
+  <rect x="40" y="176" width="310" height="90" rx="9" class="svg-field"/>
+  <text x="58" y="204" class="svg-text">控制块</text>
+  <text x="58" y="230" class="svg-mono" style="font-size:11px">strong = 1, weak = 0</text>
+  <text x="58" y="252" class="svg-small">deleter / allocator</text>
+  <text x="40" y="296" class="svg-small">一次 new，两块内存相邻</text>
+  <text x="40" y="320" class="svg-small">少一次分配，缓存更友好</text>
+
+  <text x="400" y="32" class="svg-title">同一个裸指针建两次：灾难</text>
+  <rect x="390" y="48" width="350" height="290" rx="12" class="svg-box-bad"/>
+  <rect x="410" y="96" width="120" height="60" rx="7" class="svg-box"/>
+  <text x="422" y="122" class="svg-text">Node</text>
+  <text x="422" y="144" class="svg-mono" style="font-size:11px">raw</text>
+  <rect x="580" y="76" width="140" height="66" rx="7" class="svg-box-warn"/>
+  <text x="594" y="100" class="svg-text">控制块 A</text>
+  <text x="594" y="124" class="svg-mono">strong = 1</text>
+  <rect x="580" y="170" width="140" height="66" rx="7" class="svg-box-warn"/>
+  <text x="594" y="194" class="svg-text">控制块 B</text>
+  <text x="594" y="218" class="svg-mono">strong = 1</text>
+  <line x1="534" y1="118" x2="576" y2="108" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="534" y1="136" x2="576" y2="198" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="410" y="256" class="svg-bad-text">A 归零 → delete raw</text>
+  <text x="410" y="280" class="svg-bad-text">B 归零 → delete raw 第二次</text>
+  <text x="410" y="312" class="svg-mono" style="fill:#b91c1c;font-size:11px">double free</text>
+
+  <text x="24" y="372" class="svg-small">正确做法：make_shared，或让一个 shared_ptr 从另一个拷贝出来。</text>
+  <text x="24" y="396" class="svg-small">用 .get() 得到的裸指针只能观察，不能再拿去建 shared_ptr。</text>
+</svg>`
+  },
+  {
+    nav: 'weak_ptr',
+    title: '5. weak_ptr：可以观察，但不拥有',
+    caption: 'weak_ptr 指向控制块，<strong>不增加强计数</strong>，所以不会延长对象寿命。它没有 <code>-&gt;</code>；要用时先 <code>lock()</code> 拿到 shared_ptr：对象还活着就成功，否则得到空指针。对象销毁后，控制块因为 weak 还在而继续保留，weak_ptr 才能安全地判断“已失效”。',
+    code: 'std::weak_ptr<Node> w = sp;   // weak +1\nif (auto p = w.lock()) {      // 对象活着才有 p\n    p->use();\n}\n// sp 销毁后：w.expired() == true',
+    highlight: [0, 1],
+    stage: `
+<svg viewBox="0 0 760 400" role="img" aria-label="weak_ptr 不增加强计数，对象释放后 weak_ptr 通过控制块得知对象已失效">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="24" y="32" class="svg-title">sp 还在：对象活着</text>
+  <rect x="20" y="48" width="350" height="270" rx="12" class="svg-box-ghost"/>
+  <rect x="40" y="80" width="140" height="66" rx="7" class="svg-box-good"/>
+  <text x="54" y="106" class="svg-text">Node</text>
+  <text x="54" y="130" class="svg-mono" style="font-size:11px">id = 1</text>
+  <rect x="210" y="70" width="140" height="120" rx="7" class="svg-box-accent"/>
+  <text x="224" y="96" class="svg-text">控制块</text>
+  <text x="224" y="122" class="svg-mono">strong = 1</text>
+  <text x="224" y="148" class="svg-mono">weak = 1</text>
+  <text x="224" y="174" class="svg-small">对象指针有效</text>
+  <rect x="40" y="196" width="140" height="58" rx="7" class="svg-box"/>
+  <text x="54" y="220" class="svg-text">weak_ptr w</text>
+  <text x="54" y="242" class="svg-small">不拥有对象</text>
+  <line x1="184" y1="113" x2="206" y2="113" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="184" y1="225" x2="206" y2="194" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="40" y="290" class="svg-small">lock() 成功，拿到一个临时 shared_ptr</text>
+
+  <text x="394" y="32" class="svg-title">sp 销毁后：对象已释放</text>
+  <rect x="390" y="48" width="350" height="270" rx="12" class="svg-box-ghost"/>
+  <rect x="410" y="80" width="140" height="66" rx="7" class="svg-box-ghost"/>
+  <text x="424" y="106" class="svg-text">Node</text>
+  <text x="424" y="130" class="svg-small">内存已归还</text>
+  <line x1="414" y1="84" x2="546" y2="142" class="svg-cross"/>
+  <line x1="546" y1="84" x2="414" y2="142" class="svg-cross"/>
+  <rect x="580" y="70" width="140" height="120" rx="7" class="svg-box-warn"/>
+  <text x="594" y="96" class="svg-text">控制块</text>
+  <text x="594" y="122" class="svg-mono">strong = 0</text>
+  <text x="594" y="148" class="svg-mono">weak = 1</text>
+  <text x="594" y="174" class="svg-small">对象指针悬空</text>
+  <rect x="410" y="196" width="140" height="58" rx="7" class="svg-box"/>
+  <text x="424" y="220" class="svg-text">weak_ptr w</text>
+  <text x="424" y="242" class="svg-small">expired() == true</text>
+  <line x1="554" y1="225" x2="576" y2="180" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="580" y="230" width="140" height="50" rx="7" class="svg-box-bad"/>
+  <text x="594" y="252" class="svg-bad-text">lock()</text>
+  <text x="594" y="270" class="svg-small">返回空 shared_ptr</text>
+  <text x="410" y="298" class="svg-small">控制块等 weak 也归零才释放</text>
+
+  <text x="24" y="356" class="svg-small">weak_ptr 常用于：观察者、缓存、以及下一步要讲的“反向引用”。</text>
+  <text x="24" y="382" class="svg-small">不要用 w.lock() 的结果长期持有对象，否则又变回强引用。</text>
+</svg>`
+  },
+  {
+    nav: '循环引用',
+    title: '6. 两个 shared_ptr 互指，计数永远不归零',
+    caption: '父节点用 shared_ptr 持有子节点，子节点也用 shared_ptr 指回父节点，就形成了<strong>环</strong>。外部引用消失后，父的强计数被子节点的成员占着，子的强计数被父节点的成员占着，两边都到不了 0，对象<strong>不可达却泄漏</strong>。',
+    code: 'struct Child;                      // 前置声明\nstruct Parent {\n    std::shared_ptr<Child> child;    // 父持有子\n};\nstruct Child {\n    std::shared_ptr<Parent> parent;  // 形成环\n};',
+    highlight: [2, 5],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="父子节点用 shared_ptr 互相持有，外部引用消失后两个强计数仍为 1，造成内存泄漏">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="24" y="30" class="svg-title">p 还在：Parent strong = 2</text>
+  <rect x="20" y="46" width="350" height="280" rx="12" class="svg-box-ghost"/>
+  <rect x="40" y="66" width="140" height="52" rx="7" class="svg-box-accent"/>
+  <text x="54" y="90" class="svg-text">外部 p</text>
+  <text x="54" y="108" class="svg-small">shared_ptr</text>
+  <rect x="40" y="150" width="140" height="110" rx="7" class="svg-box-accent"/>
+  <text x="54" y="176" class="svg-text">Parent</text>
+  <text x="54" y="202" class="svg-mono">strong = 2</text>
+  <text x="54" y="228" class="svg-small">child 成员</text>
+  <text x="54" y="248" class="svg-small">parent 被指向</text>
+  <rect x="220" y="150" width="130" height="110" rx="7" class="svg-box-accent"/>
+  <text x="234" y="176" class="svg-text">Child</text>
+  <text x="234" y="202" class="svg-mono">strong = 1</text>
+  <text x="234" y="228" class="svg-small">parent 成员</text>
+  <text x="234" y="248" class="svg-small">child 被指向</text>
+  <line x1="110" y1="122" x2="110" y2="146" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="184" y1="182" x2="216" y2="182" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="188" y="172" class="svg-small">child</text>
+  <path d="M285 264 C285 300 110 300 110 268" fill="none" stroke="#4f46e5" stroke-width="2.2" marker-end="url(#ah)"/>
+  <text x="150" y="320" class="svg-small">parent（shared）</text>
+
+  <text x="394" y="30" class="svg-title">p 销毁后：各自还有 1</text>
+  <rect x="390" y="46" width="350" height="280" rx="12" class="svg-box-bad"/>
+  <rect x="410" y="66" width="140" height="52" rx="7" class="svg-box-ghost"/>
+  <text x="424" y="90" class="svg-text">外部 p</text>
+  <text x="424" y="136" class="svg-small">已销毁</text>
+  <line x1="414" y1="70" x2="546" y2="114" class="svg-cross"/>
+  <line x1="546" y1="70" x2="414" y2="114" class="svg-cross"/>
+  <rect x="410" y="150" width="140" height="110" rx="7" class="svg-box-bad svg-blink"/>
+  <text x="424" y="176" class="svg-text">Parent</text>
+  <text x="424" y="202" class="svg-mono" style="fill:#b91c1c">strong = 1</text>
+  <text x="424" y="228" class="svg-small">被 child 占着</text>
+  <text x="424" y="248" class="svg-small">无法析构</text>
+  <rect x="590" y="150" width="130" height="110" rx="7" class="svg-box-bad svg-blink"/>
+  <text x="604" y="176" class="svg-text">Child</text>
+  <text x="604" y="202" class="svg-mono" style="fill:#b91c1c">strong = 1</text>
+  <text x="604" y="228" class="svg-small">被 parent 占着</text>
+  <text x="604" y="248" class="svg-small">无法析构</text>
+  <line x1="554" y1="182" x2="586" y2="182" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <path d="M655 264 C655 300 480 300 480 268" fill="none" stroke="#4f46e5" stroke-width="2.2" marker-end="url(#ah)"/>
+  <text x="500" y="288" class="svg-small">parent（shared）</text>
+  <text x="410" y="316" class="svg-bad-text">外部已不可达，计数仍不归零</text>
+
+  <rect x="20" y="352" width="720" height="70" rx="10" class="svg-box-warn"/>
+  <text x="38" y="378" class="svg-text">泄漏与“还有没有外部指针”无关：只看强计数能不能到 0。</text>
+  <text x="38" y="404" class="svg-small">环里每个节点的强计数都由环内另一个节点贡献，于是永远互相撑着。</text>
+</svg>`
+  },
+  {
+    nav: '打破环',
+    title: '7. weak_ptr 打断环：析构顺序看得见',
+    caption: '把“子指向父”改成 weak_ptr，环就断了：外部父引用消失 → Parent 强计数归零 → 父析构 → 父的 child 成员释放 → Child 强计数归零 → 子析构。选型口诀：默认 <code>unique_ptr</code>；确实共享所有权才用 <code>shared_ptr</code>；反向引用、缓存、观察者用 <code>weak_ptr</code>。',
+    code: 'struct Parent;   // 前置声明\nstruct Child {\n    std::weak_ptr<Parent> parent;   // 反向引用不拥有\n};\n// p 消失 → Parent 计数归零 → 析构 Parent\n// 父释放 child 成员 → Child 归零 → 析构 Child',
+    highlight: [2, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="用 weak_ptr 打断循环引用后，父节点先析构，子节点随后析构">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="24" y="30" class="svg-title">Child 改持 weak_ptr 后：环断开</text>
+  <rect x="60" y="58" width="640" height="150" rx="12" class="svg-box-ghost"/>
+  <rect x="84" y="88" width="150" height="96" rx="8" class="svg-box-accent"/>
+  <text x="100" y="114" class="svg-text">Parent</text>
+  <text x="100" y="140" class="svg-mono">strong = 1</text>
+  <text x="100" y="166" class="svg-small">child 成员（shared）</text>
+  <rect x="380" y="88" width="150" height="96" rx="8" class="svg-box-accent"/>
+  <text x="396" y="114" class="svg-text">Child</text>
+  <text x="396" y="140" class="svg-mono">strong = 1</text>
+  <text x="396" y="166" class="svg-small">parent 成员（weak）</text>
+  <line x1="238" y1="120" x2="376" y2="120" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="270" y="110" class="svg-small">child：拥有</text>
+  <path d="M455 184 C455 212 160 212 160 188" fill="none" stroke="#94a3b8" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ah)"/>
+  <text x="252" y="228" class="svg-small">parent：只观察，不加 strong</text>
+  <text x="560" y="120" class="svg-small">外部 p 是唯一持有者</text>
+  <text x="560" y="146" class="svg-small">Child 的 weak 不计数</text>
+
+  <text x="24" y="270" class="svg-title">析构顺序</text>
+  <rect x="30" y="286" width="130" height="80" rx="8" class="svg-box-good"/>
+  <text x="42" y="310" class="svg-small">① p 消失</text>
+  <text x="42" y="332" class="svg-small">Parent</text>
+  <text x="42" y="352" class="svg-mono" style="font-size:11px">strong → 0</text>
+
+  <rect x="176" y="286" width="130" height="80" rx="8" class="svg-box-good"/>
+  <text x="188" y="310" class="svg-small">② 析构 Parent</text>
+  <text x="188" y="332" class="svg-small">释放 child</text>
+  <text x="188" y="352" class="svg-small">成员</text>
+
+  <rect x="322" y="286" width="130" height="80" rx="8" class="svg-box-good"/>
+  <text x="334" y="310" class="svg-small">③ Child</text>
+  <text x="334" y="332" class="svg-mono" style="font-size:11px">strong → 0</text>
+  <text x="334" y="352" class="svg-small">不再被持有</text>
+
+  <rect x="468" y="286" width="130" height="80" rx="8" class="svg-box-good"/>
+  <text x="480" y="310" class="svg-small">④ 析构 Child</text>
+  <text x="480" y="332" class="svg-small">释放 parent</text>
+  <text x="480" y="352" class="svg-small">弱引用失效</text>
+
+  <rect x="614" y="286" width="120" height="80" rx="8" class="svg-box-good"/>
+  <text x="626" y="310" class="svg-small">⑤ 全部</text>
+  <text x="626" y="332" class="svg-small">释放</text>
+  <text x="626" y="352" class="svg-small">没有泄漏</text>
+
+  <line x1="162" y1="326" x2="172" y2="326" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="308" y1="326" x2="318" y2="326" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="454" y1="326" x2="464" y2="326" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="600" y1="326" x2="610" y2="326" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <text x="24" y="406" class="svg-small">选型：默认 unique_ptr；共享所有权才用 shared_ptr；反向引用用 weak_ptr。</text>
+  <text x="24" y="430" class="svg-small">如果关系本身是双向共享，先想清楚谁的生命周期更长，再决定谁持有谁观察。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

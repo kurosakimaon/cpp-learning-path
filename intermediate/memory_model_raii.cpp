@@ -500,7 +500,8 @@ int main()
          << " 值: " << G_CONST << " → 常量区（只读）" << endl;
     cout << "  字符串常量 \"hello\" 地址: " << (void*)"hello"
          << " → 常量区" << endl;
-    cout << "  函数 main 的地址: " << (void*)main
+    // 注意：标准禁止在程序内使用 main（[basic.start.main]），取它的地址是 ill-formed
+    cout << "  函数 stackDemo_basic 的地址: " << (void*)stackDemo_basic
          << " → 代码区" << endl;
 
     // 二、栈内存

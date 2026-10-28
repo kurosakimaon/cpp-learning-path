@@ -70,6 +70,8 @@ RAII 是现代 C++ 的基石。智能指针、STL 容器、锁保护……底层
 
 `unique_ptr` 简单，`shared_ptr` 要小心。重点看循环引用问题和 `weak_ptr` 的解法。自定义删除器也要了解一下。
 
+> 🎬 引用计数、控制块、循环引用绕不清？看[智能指针图解](../visuals/smart_ptr.html)：7 步画清 unique_ptr、shared_ptr 和 weak_ptr。
+
 ### 第五步：编程规范（coding_practices.cpp）
 
 规范这东西，新手觉得没用，老手觉得太重要了。为什么 Google、腾讯都有自己的编码规范？因为规范能避免很多低级错误。

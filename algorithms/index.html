@@ -9,7 +9,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #0c3483 0%, #a2b6df 50%, #6b8cce 100%);
+    background: linear-gradient(135deg, #0c3483 0%, #637089 50%, #556fa4 100%);
     min-height: 100vh;
     padding: 30px 20px;
     color: #333;
@@ -27,12 +27,12 @@
   }
   .header p {
     font-size: 16px;
-    opacity: 0.9;
+    
   }
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -125,16 +125,39 @@
     gap: 8px;
     flex-wrap: wrap;
   }
+  .card-step {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    background: #f0f2ff;
+    color: #5265bc;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 12px;
+  }
+  .list-note {
+    color: #0c3483;
+    font-size: 13px;
+    line-height: 1.8;
+    margin: -6px 0 16px;
+    padding: 10px 14px;
+    background: rgba(255,255,255,0.78);
+    border-left: 3px solid currentColor;
+    border-radius: 0 10px 10px 0;
+  }
+  .list-note a { color: inherit; font-weight: 700; text-decoration: underline; }
+  .list-note a:hover { text-decoration: underline; }
   .tag {
     padding: 3px 10px;
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
     background: #f0f2ff;
-    color: #667eea;
+    color: #5265bc;
   }
   .tag.green { background: #e8f5e9; color: #2e7d32; }
-  .tag.orange { background: #fff3e0; color: #e65100; }
+  .tag.orange { background: #fff3e0; color: #bf4300; }
   .tag.red { background: #ffebee; color: #c62828; }
 
   .feature-section {
@@ -173,7 +196,7 @@
     overflow: hidden;
   }
   .compare-table th {
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     color: white;
     padding: 12px;
     text-align: left;
@@ -213,7 +236,7 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     color: white;
     display: flex;
     align-items: center;
@@ -238,7 +261,7 @@
     flex-wrap: wrap;
   }
   .step-content .resources a {
-    color: #667eea;
+    color: #5265bc;
     font-size: 12px;
     text-decoration: none;
     padding: 2px 8px;
@@ -273,10 +296,10 @@
       最后<strong>亲手敲一遍，改一改，测一测</strong>，这样才能真正掌握。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #667eea); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #586dca); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.3)';">
         📖 学习指南
       </a>
-      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: #6d6d6d; font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
@@ -285,8 +308,14 @@
     <span class="icon">🎮</span>
     交互式可视化（推荐先玩）
   </div>
+  <p class="list-note">
+    这两张卡片对应页面下方「学习路径建议」里 <strong>先玩动画，建立直觉</strong> 那一步：别上来就啃代码，先在沙盘里点一点、看一看，
+    感受数据是怎么动的。<strong>第 1 步</strong> 排序可视化、<strong>第 2 步</strong> 数据结构可视化，两个互不依赖，先看哪个都行。
+    玩的时候顺手想一想"这一步为什么这么变"，等会儿读源码就有画面了。
+  </p>
   <div class="card-grid">
     <a href="sorting_visualizer.html" class="card green">
+      <div class="card-step">第 1 步</div>
       <div class="card-icon">📊</div>
       <div class="card-title">排序算法可视化</div>
       <div class="card-desc">
@@ -300,6 +329,7 @@
       </div>
     </a>
     <a href="data_structures_visualizer.html" class="card orange">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🌳</div>
       <div class="card-title">数据结构可视化</div>
       <div class="card-desc">
@@ -314,13 +344,94 @@
     </a>
   </div>
 
+  <!-- 分步图解入口 -->
+  <div class="section-title" id="visuals">
+    <span class="icon">🧭</span>
+    分步图解（把机制拆开看）
+  </div>
+  <p class="list-note">
+    这一组仍然属于 <strong>先玩动画，建立直觉</strong> 那一步，只是分工不同：沙盘适合自己点按钮试，图解适合看机制——每一步只加一个变化，左边画结构，右边给代码对照，
+    支持左右方向键翻页、地址栏 <code>#step-N</code> 定位和自动播放。
+    卡片已按 <a href="tutorial.md">📖 学习指南</a> 里数据结构的路线排好：<strong>数组 → 链表 → 栈/队列 → 树 → 哈希表 → 堆</strong>，
+    对应下面的 <strong>第 1 步 → 第 6 步</strong>，一张张往下看即可。
+  </p>
+  <div class="card-grid">
+    <a href="../visuals/dynamic_array.html" class="card blue">
+      <div class="card-step">第 1 步</div>
+      <div class="card-icon">📏</div>
+      <div class="card-title">动态数组：扩容为什么搬家？</div>
+      <div class="card-desc">size 与 capacity、重新分配、元素搬家、摊还 O(1)，以及迭代器什么时候失效。</div>
+      <div class="card-meta">
+        <span class="tag">7 步</span>
+        <span class="tag green">摊还分析</span>
+      </div>
+    </a>
+    <a href="../visuals/linked_list.html" class="card purple">
+      <div class="card-step">第 2 步</div>
+      <div class="card-icon">🧷</div>
+      <div class="card-title">链表：指针怎么串起节点？</div>
+      <div class="card-desc">头插、尾插、删除时找前驱、三指针反转，把每一步的 next 指针改动画出来。</div>
+      <div class="card-meta">
+        <span class="tag">7 步</span>
+        <span class="tag orange">指针操作</span>
+      </div>
+    </a>
+    <a href="../visuals/stack_queue.html" class="card green">
+      <div class="card-step">第 3 步</div>
+      <div class="card-icon">🥞</div>
+      <div class="card-title">栈与队列：LIFO 和 FIFO 怎么落地？</div>
+      <div class="card-desc">调用栈、循环队列的 head / tail / size、deque 分段存储，以及适配器怎么选。</div>
+      <div class="card-meta">
+        <span class="tag">6 步</span>
+        <span class="tag orange">循环队列</span>
+      </div>
+    </a>
+    <a href="../visuals/tree.html" class="card yellow">
+      <div class="card-step">第 4 步</div>
+      <div class="card-icon">🌳</div>
+      <div class="card-title">二叉搜索树：查找怎么减半？</div>
+      <div class="card-desc">BST 不变式、查找插入删除、删除时找后继、中序遍历、退化成链表和旋转。</div>
+      <div class="card-meta">
+        <span class="tag">7 步</span>
+        <span class="tag green">BST</span>
+      </div>
+    </a>
+    <a href="../visuals/hash_table.html" class="card orange">
+      <div class="card-step">第 5 步</div>
+      <div class="card-icon">🗃️</div>
+      <div class="card-title">哈希表：冲突了怎么办？</div>
+      <div class="card-desc">哈希函数与取模、链地址法、装填因子与 rehash、开放寻址和墓碑标记。</div>
+      <div class="card-meta">
+        <span class="tag">6 步</span>
+        <span class="tag orange">冲突处理</span>
+      </div>
+    </a>
+    <a href="../visuals/heap.html" class="card purple">
+      <div class="card-step">第 6 步</div>
+      <div class="card-icon">⛰️</div>
+      <div class="card-title">堆：最大值为什么总在顶上？</div>
+      <div class="card-desc">完全二叉树映射到数组、sift-up / sift-down、O(n) 建堆、堆排序与优先队列。</div>
+      <div class="card-meta">
+        <span class="tag">6 步</span>
+        <span class="tag green">优先队列</span>
+      </div>
+    </a>
+  </div>
+
   <!-- C++ 源码实现 -->
   <div class="section-title">
     <span class="icon">💻</span>
     C++ 源码实现（手撸一遍才是真的会）
   </div>
+  <p class="list-note">
+    动画玩出直觉之后，这两张卡片对应「学习路径建议」里的 <strong>再读代码，理解细节</strong> 和 <strong>合上书，自己写一遍</strong> 两步：
+    按 <strong>第 1 步</strong> 排序源码 → <strong>第 2 步</strong> 数据结构源码 的顺序读，对照上面的动画一行行看；
+    读完关掉参考自己重写一遍，写不出来再回去看——能独立写出来才算真的会。
+    组内每个算法/结构的先后顺序（冒泡 → 选择 → 插入 → 归并 → 快速 → 堆排序；数组 → 链表 → 栈/队列 → 树 → 哈希表 → 堆）见 <a href="tutorial.md">📖 学习指南</a>。
+  </p>
   <div class="card-grid">
     <a href="sorting_algorithms.cpp" class="card blue">
+      <div class="card-step">第 1 步</div>
       <div class="card-icon">🔢</div>
       <div class="card-title">排序算法大全</div>
       <div class="card-desc">
@@ -334,6 +445,7 @@
       </div>
     </a>
     <a href="data_structures.cpp" class="card purple">
+      <div class="card-step">第 2 步</div>
       <div class="card-icon">🏗️</div>
       <div class="card-title">数据结构实现</div>
       <div class="card-desc">
@@ -360,6 +472,7 @@
           <div class="resources">
             <a href="sorting_visualizer.html">排序可视化</a>
             <a href="data_structures_visualizer.html">数据结构可视化</a>
+            <a href="#visuals">数据结构分步图解</a>
           </div>
         </div>
       </div>
@@ -404,13 +517,13 @@
     <table class="compare-table">
       <thead>
         <tr>
-          <th>数据结构</th>
-          <th>访问</th>
-          <th>查找</th>
-          <th>插入</th>
-          <th>删除</th>
-          <th>空间</th>
-          <th>适用场景</th>
+          <th scope="col">数据结构</th>
+          <th scope="col">访问</th>
+          <th scope="col">查找</th>
+          <th scope="col">插入</th>
+          <th scope="col">删除</th>
+          <th scope="col">空间</th>
+          <th scope="col">适用场景</th>
         </tr>
       </thead>
       <tbody>
@@ -479,7 +592,7 @@
         </tr>
       </tbody>
     </table>
-    <p style="font-size:12px; color:#888; margin-top:8px;">
+    <p style="font-size:12px; color:#6d6d6d; margin-top:8px;">
       * 平均情况，最坏可能退化。* 均摊复杂度。
     </p>
   </div>
@@ -489,13 +602,13 @@
     <table class="compare-table">
       <thead>
         <tr>
-          <th>算法</th>
-          <th>最好</th>
-          <th>平均</th>
-          <th>最坏</th>
-          <th>空间</th>
-          <th>稳定</th>
-          <th>一句话总结</th>
+          <th scope="col">算法</th>
+          <th scope="col">最好</th>
+          <th scope="col">平均</th>
+          <th scope="col">最坏</th>
+          <th scope="col">空间</th>
+          <th scope="col">稳定</th>
+          <th scope="col">一句话总结</th>
         </tr>
       </thead>
       <tbody>

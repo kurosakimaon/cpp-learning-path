@@ -159,7 +159,7 @@ body {
 
 .code-label {
   margin-bottom: 6px;
-  color: #94a3b8;
+  color: #64748b;
   font-size: 11px;
   font-weight: 700;
   letter-spacing: .1em;
@@ -182,8 +182,11 @@ pre.code .ln {
   display: block;
   margin: 0 -8px;
   padding: 0 8px;
+  padding-left: calc(8px + 4ch);
   border-radius: 4px;
-  white-space: pre;
+  text-indent: -4ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }
 
 pre.code .ln.hl {
@@ -215,9 +218,9 @@ pre.code .ln.hl {
 }
 
 .btn:hover:not(:disabled) { transform: translateY(-1px); filter: brightness(1.04); }
-.btn:disabled { opacity: .38; cursor: not-allowed; }
+.btn:disabled { background: #f3f4f6; border-color: #d1d5db; color: #5b6472; cursor: not-allowed; }
 
-.btn-primary { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; }
+.btn-primary { background: linear-gradient(135deg, #4f46e5, #0a7bae); color: #fff; }
 .btn-ghost { background: #eef2ff; color: #3730a3; }
 .btn-play { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
 .btn-play[aria-pressed="true"] { background: #047857; border-color: #047857; color: #fff; }
@@ -290,7 +293,7 @@ pre.code .ln.hl {
   display: inline-block;
   min-width: 18px;
   margin-right: 6px;
-  color: #a5b4fc;
+  color: #c7d2fe;
   font-variant-numeric: tabular-nums;
 }
 
@@ -298,7 +301,7 @@ pre.code .ln.hl {
 
 .page-foot {
   margin-top: 18px;
-  color: #94a3b8;
+  color: #cbd5e1;
   font-size: 12.5px;
   line-height: 1.9;
 }
@@ -307,10 +310,31 @@ pre.code .ln.hl {
 
 /* ---------- hub ---------- */
 
+.hub-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 6px 0 14px;
+  color: #e2e8f0;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: .04em;
+}
+
+.hub-section::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(255, 255, 255, .18);
+}
+
+.hub-section:not(:first-of-type) { margin-top: 8px; }
+
 .hub-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(255px, 1fr));
   gap: 16px;
+  margin-bottom: 22px;
 }
 
 .hub-card {

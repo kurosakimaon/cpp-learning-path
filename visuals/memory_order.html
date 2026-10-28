@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>内存序：两个线程，谁先看到谁？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../concurrency/index.html">并发模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 并发编程</div>
+    <h1>🌀 内存序：两个线程，谁先看到谁？</h1>
+    <p>同一份代码在 x86 上跑一万次都对，换到 ARM 就可能崩——不是运气，而是编译器和 CPU 都能重排内存访问。这一页从重排讲到 happens-before，最后给出可以直接照抄的选择规则。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 8</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应代码：<code>concurrency/04_atomic_memory.cpp</code> ·
+    相关教程：<a href="../concurrency/tutorial.md">concurrency/tutorial.md</a> ·
+    规则来自 C++ 标准；某台机器上具体怎么重排，由编译器与 CPU 决定。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '内存重排',
+    title: '1. 代码顺序 ≠ 执行顺序',
+    caption: 'C++ 只保证单线程的 as-if 语义：编译器和 CPU 可以换顺序，只要单线程结果不变。别的线程没有这个保证，于是可能先看到 <code>ready</code>、后看到 <code>data</code>。普通变量又没有原子性，这已经是<strong>数据竞争</strong>，标准不保证任何结果。',
+    code: '// 线程 A\ndata = 42;      // 普通写\nready = true;   // 普通写\n\n// 线程 B 可能先看到 ready\n// 再读到 data == 0',
+    highlight: [0, 1, 2, 5],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="线程 A 的两条普通写可能被重排，线程 B 先看到 ready 再读到 data 为 0">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">线程 A：源码顺序 ≠ 其他线程看到的顺序</text>
+
+  <rect x="30" y="48" width="440" height="160" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="74" class="svg-small">源码顺序</text>
+  <rect x="54" y="92" width="150" height="50" rx="8" class="svg-field"/>
+  <text x="68" y="122" class="svg-mono">data = 42</text>
+  <rect x="250" y="92" width="170" height="50" rx="8" class="svg-field"/>
+  <text x="264" y="122" class="svg-mono">ready = true</text>
+  <path d="M206 117 H246" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="54" y="170" class="svg-small">单线程看：先写 data，再写 ready</text>
+
+  <rect x="30" y="232" width="440" height="150" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="258" class="svg-small">允许被执行成</text>
+  <rect x="54" y="276" width="150" height="50" rx="8" class="svg-box-warn"/>
+  <text x="68" y="306" class="svg-mono">ready = true</text>
+  <rect x="250" y="276" width="170" height="50" rx="8" class="svg-box-warn"/>
+  <text x="264" y="306" class="svg-mono">data = 42</text>
+  <path d="M206 301 H246" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="54" y="356" class="svg-small">顺序变了，但单线程结果一样 → 合法</text>
+
+  <rect x="510" y="80" width="220" height="260" rx="12" class="svg-box"/>
+  <text x="526" y="106" class="svg-title">线程 B</text>
+  <rect x="530" y="128" width="180" height="50" rx="8" class="svg-field"/>
+  <text x="544" y="158" class="svg-mono" style="font-size:11px">ready == true</text>
+  <rect x="530" y="200" width="180" height="50" rx="8" class="svg-box-bad"/>
+  <text x="544" y="230" class="svg-mono svg-bad-text" style="font-size:11px">data == 0</text>
+  <text x="530" y="280" class="svg-small">assert(data == 42) 失败</text>
+  <text x="530" y="306" class="svg-small">并可能读到撕裂/旧值</text>
+
+  <path d="M208 326 C300 328 420 168 526 155" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ahr)" class="svg-flow"/>
+  <text x="300" y="248" class="svg-bad-text" style="font-size:11px">看到 ready 之后</text>
+
+  <text x="30" y="416" class="svg-small">普通变量 + 没有同步 = 数据竞争；C++ 标准不保证程序的结果。</text>
+</svg>`
+  },
+  {
+    nav: 'happens-before',
+    title: '2. release / acquire 建立先后',
+    caption: '<code>release</code> 写与读到它的 <code>acquire</code> 读之间建立 <strong>synchronizes-with</strong>：A 在 release 之前的所有写，对 B 在 acquire 之后的所有读都可见。这就是发布数据时最常用的配对。',
+    code: 'std::atomic<bool> flag{false};\n// 线程 A\ndata = 42;\nflag.store(true, std::memory_order_release);\n// 线程 B\nif (flag.load(std::memory_order_acquire))\n    assert(data == 42);   // 一定成立',
+    highlight: [2, 3, 6],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="线程 A 的 release 写与线程 B 的 acquire 读配对，保证 data 可见">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">release 写 → acquire 读：一对操作，一条可见性保证</text>
+
+  <rect x="30" y="48" width="700" height="120" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="72" class="svg-title">线程 A（生产者）</text>
+  <rect x="190" y="84" width="160" height="48" rx="8" class="svg-field"/>
+  <text x="204" y="113" class="svg-mono">data = 42</text>
+  <rect x="420" y="84" width="270" height="48" rx="8" class="svg-box-accent"/>
+  <text x="434" y="113" class="svg-mono" style="font-size:11.5px">flag.store(true, release)</text>
+  <path d="M354 108 H416" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="30" y="244" width="700" height="120" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="268" class="svg-title">线程 B（消费者）</text>
+  <rect x="190" y="280" width="270" height="48" rx="8" class="svg-box-accent"/>
+  <text x="204" y="309" class="svg-mono" style="font-size:11.5px">flag.load(acquire) == true</text>
+  <rect x="490" y="280" width="200" height="48" rx="8" class="svg-box-good"/>
+  <text x="504" y="309" class="svg-mono" style="font-size:11.5px">assert(data == 42) ✓</text>
+  <path d="M464 304 H486" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <path d="M555 136 V274" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="568" y="202" class="svg-small">synchronizes-with</text>
+  <text x="60" y="212" class="svg-small">A 的写 happens-before B 的读</text>
+
+  <text x="30" y="398" class="svg-small">release 之前的写，对 acquire 之后的读都可见；中间隔着多少函数调用都不影响。</text>
+  <text x="30" y="422" class="svg-small">这不是“时间上离得近”，而是这两个操作配对建立的约定。</text>
+</svg>`
+  },
+  {
+    nav: 'relaxed',
+    title: '3. relaxed：只保证原子，不保证先后',
+    caption: '<code>relaxed</code> 只保证这次访问是原子的、不会撕裂，不建立任何跨线程顺序。做统计计数器很好用；用它发布“数据准备好了”就会翻车。',
+    code: 'a.store(1, std::memory_order_relaxed);\nb.store(1, std::memory_order_relaxed);\n\n// 别的线程可以先看到 b == 1\n// 再看到 a == 0\n\n// 合法用途：统计计数\nn.fetch_add(1, std::memory_order_relaxed);',
+    highlight: [0, 1, 3, 4, 7],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="两个 relaxed 写可以被其他线程以相反顺序观察到">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">relaxed：每条访问都是原子的，但彼此没有顺序</text>
+
+  <rect x="30" y="50" width="310" height="190" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="76" class="svg-title">线程 A</text>
+  <rect x="50" y="92" width="270" height="48" rx="8" class="svg-field"/>
+  <text x="64" y="121" class="svg-mono" style="font-size:11.5px">a.store(1, relaxed)</text>
+  <rect x="50" y="156" width="270" height="48" rx="8" class="svg-field"/>
+  <text x="64" y="185" class="svg-mono" style="font-size:11.5px">b.store(1, relaxed)</text>
+  <path d="M185 140 V152" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="420" y="50" width="310" height="190" rx="12" class="svg-box-ghost"/>
+  <text x="436" y="76" class="svg-title">另一个线程可以这样看到</text>
+  <rect x="440" y="92" width="270" height="48" rx="8" class="svg-box-bad"/>
+  <text x="454" y="121" class="svg-mono svg-bad-text" style="font-size:11.5px">b == 1</text>
+  <rect x="440" y="156" width="270" height="48" rx="8" class="svg-box-bad"/>
+  <text x="454" y="185" class="svg-mono svg-bad-text" style="font-size:11.5px">a == 0</text>
+  <text x="440" y="226" class="svg-small">顺序反了，但完全合法</text>
+
+  <path d="M344 145 H416" fill="none" stroke="#ef4444" stroke-width="2" stroke-dasharray="6 5" marker-end="url(#ahr)" class="svg-flow"/>
+  <text x="348" y="136" class="svg-bad-text" style="font-size:11px">允许乱序</text>
+
+  <rect x="30" y="282" width="700" height="98" rx="12" class="svg-box-good"/>
+  <text x="46" y="308" class="svg-title">合法的 relaxed 用途：计数 / 统计</text>
+  <text x="46" y="334" class="svg-small">fetch_add(1, relaxed) 只要最终总数对，不关心它和其他变量的先后。</text>
+  <text x="46" y="358" class="svg-small">性能最好；但不要拿它发布对象，也不要用它保护不变量。</text>
+</svg>`
+  },
+  {
+    nav: '发布订阅',
+    title: '4. 发布对象：先写好，再发布指针',
+    caption: '先把对象完整写好，再用 <code>release</code> 发布指针；消费者 <code>acquire</code> 读到指针后，对象的每个字段都可见。指针本身是原子的，不代表它指向的对象已经写好——把 store 换成 relaxed，消费者可能拿到一个半成品。',
+    code: 'struct Config { int a, b; };\nConfig cfg{1, 2};\nstd::atomic<Config*> slot{nullptr};\n// 生产者：发布指针\nslot.store(&cfg, std::memory_order_release);\n// 消费者：取到完整对象\nauto* p = slot.load(std::memory_order_acquire);\nif (p) use(p->a, p->b);  // 完整对象',
+    highlight: [1, 4, 6],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="生产者先初始化对象再 release 发布指针，消费者 acquire 后读到完整对象">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">发布-订阅：对象写完整，指针才公布</text>
+
+  <rect x="30" y="48" width="700" height="150" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="72" class="svg-title">线程 A · 生产者</text>
+  <rect x="150" y="84" width="250" height="100" rx="8" class="svg-field"/>
+  <text x="164" y="108" class="svg-text">Config cfg</text>
+  <text x="164" y="132" class="svg-mono">a = 1, b = 2</text>
+  <text x="164" y="158" class="svg-small">两个字段先写好</text>
+  <rect x="460" y="104" width="230" height="56" rx="8" class="svg-box-accent"/>
+  <text x="474" y="138" class="svg-mono" style="font-size:11.5px">slot.store(&cfg, release)</text>
+  <path d="M404 132 H456" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <path d="M575 164 V282" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="588" y="226" class="svg-small">release / acquire</text>
+
+  <rect x="30" y="266" width="700" height="140" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="290" class="svg-title">线程 B · 消费者</text>
+  <rect x="150" y="302" width="230" height="56" rx="8" class="svg-box-accent"/>
+  <text x="164" y="336" class="svg-mono" style="font-size:11.5px">slot.load(acquire)</text>
+  <rect x="460" y="296" width="230" height="70" rx="8" class="svg-box-good"/>
+  <text x="474" y="322" class="svg-mono" style="font-size:11.5px">use(p->a, p->b)</text>
+  <text x="474" y="348" class="svg-small">读到 a = 1, b = 2</text>
+  <path d="M384 326 H456" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+
+  <text x="30" y="426" class="svg-small">指针原子，不等于对象就绪：可见性由 release / acquire 这一对负责。</text>
+</svg>`
+  },
+  {
+    nav: 'seq_cst',
+    title: '5. seq_cst：所有线程同意的总顺序',
+    caption: '<code>seq_cst</code> 在 acquire/release 之上再加一条：所有 seq_cst 操作存在一个<strong>所有线程都同意</strong>的总顺序。它不规定 x 和 y 谁先，但规定大家看到的是同一条。默认内存序就是它；拿不准时用它最省心。',
+    code: 'x.store(1);   // 默认 seq_cst\ny.store(1);\n\n// 所有线程看到同一条总顺序\n// 不会出现两个线程的观察\n// 互相矛盾',
+    highlight: [0, 1, 3],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="seq_cst 下所有线程同意同一条总顺序，不会出现互相矛盾的观察">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">seq_cst：所有线程同意同一条总顺序</text>
+  <text x="80" y="62" class="svg-small">一种可能的全局顺序（谁先不确定，但大家看到的是同一条）</text>
+  <line x1="80" y1="116" x2="700" y2="116" class="svg-arrow" marker-end="url(#ah)"/>
+  <circle cx="180" cy="116" r="11" fill="#6366f1"/>
+  <text x="176" y="120" style="fill:#fff;font-size:10px">1</text>
+  <text x="152" y="94" class="svg-mono">x = 1</text>
+  <circle cx="330" cy="116" r="11" fill="#6366f1"/>
+  <text x="326" y="120" style="fill:#fff;font-size:10px">2</text>
+  <text x="302" y="94" class="svg-mono">y = 1</text>
+  <circle cx="480" cy="116" r="11" fill="#6366f1"/>
+  <text x="476" y="120" style="fill:#fff;font-size:10px">3</text>
+  <text x="452" y="94" class="svg-mono">读 x</text>
+  <circle cx="620" cy="116" r="11" fill="#6366f1"/>
+  <text x="616" y="120" style="fill:#fff;font-size:10px">4</text>
+  <text x="592" y="94" class="svg-mono">读 y</text>
+
+  <rect x="60" y="164" width="300" height="100" rx="12" class="svg-box-good"/>
+  <text x="76" y="190" class="svg-title">线程 1</text>
+  <text x="76" y="218" class="svg-small">看到 x 在 y 之前</text>
+  <text x="76" y="242" class="svg-small">同意这条总顺序</text>
+
+  <rect x="400" y="164" width="300" height="100" rx="12" class="svg-box-good"/>
+  <text x="416" y="190" class="svg-title">线程 2</text>
+  <text x="416" y="218" class="svg-small">也看到 x 在 y 之前</text>
+  <text x="416" y="242" class="svg-small">不能给出相反的说法</text>
+
+  <rect x="60" y="290" width="640" height="80" rx="12" class="svg-box-bad"/>
+  <text x="76" y="318" class="svg-title">seq_cst 不允许</text>
+  <text x="76" y="344" class="svg-small">线程 1 说 x 先、线程 2 说 y 先；两个线程看到的总顺序必须一致。</text>
+
+  <text x="30" y="410" class="svg-small">默认就是 seq_cst；代价最高，但拿不准时它最安全。</text>
+</svg>`
+  },
+  {
+    nav: 'x86 与 ARM',
+    title: '6. x86 上“碰巧能跑”，ARM 上就翻车',
+    caption: 'x86-64 是 TSO：只允许 Store 后面的 Load 提前，其余顺序都保留，所以很多错误在开发机上“碰巧能跑”。ARM/POWER 是弱内存模型，四种重排都可能。别拿 x86 的运气当正确性证明。',
+    code: '// x86-64：只重排 Store → Load\n// ARM/POWER：四种重排都可能\n// 开发机跑通 ≠ 代码正确\nstd::atomic<bool> ready{false};',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="x86 只允许 Store 后接 Load 重排，ARM 四种重排都可能">
+  <text x="30" y="30" class="svg-title">同一份 relaxed 代码，在不同 CPU 上表现不同</text>
+
+  <rect x="30" y="48" width="330" height="300" rx="12" class="svg-box-ghost"/>
+  <text x="46" y="74" class="svg-title">x86-64（TSO，较强）</text>
+  <text x="50" y="112" class="svg-text">Load → Load</text>
+  <text x="326" y="112" class="svg-good-text">✓ 不乱</text>
+  <text x="50" y="152" class="svg-text">Load → Store</text>
+  <text x="326" y="152" class="svg-good-text">✓ 不乱</text>
+  <text x="50" y="192" class="svg-text">Store → Store</text>
+  <text x="326" y="192" class="svg-good-text">✓ 不乱</text>
+  <text x="50" y="232" class="svg-text">Store → Load</text>
+  <text x="326" y="232" class="svg-bad-text">✗ 可重排</text>
+  <text x="50" y="278" class="svg-small">Store 先进 store buffer，</text>
+  <text x="50" y="300" class="svg-small">后面的 Load 可能绕过它。</text>
+
+  <rect x="420" y="48" width="310" height="300" rx="12" class="svg-box-warn"/>
+  <text x="436" y="74" class="svg-title">ARM / POWER（弱模型）</text>
+  <text x="440" y="112" class="svg-text">Load → Load</text>
+  <text x="626" y="112" class="svg-bad-text">✗ 可能</text>
+  <text x="440" y="152" class="svg-text">Load → Store</text>
+  <text x="626" y="152" class="svg-bad-text">✗ 可能</text>
+  <text x="440" y="192" class="svg-text">Store → Store</text>
+  <text x="626" y="192" class="svg-bad-text">✗ 可能</text>
+  <text x="440" y="232" class="svg-text">Store → Load</text>
+  <text x="626" y="232" class="svg-bad-text">✗ 可能</text>
+  <text x="440" y="278" class="svg-small">靠 acquire/release 或显式屏障</text>
+  <text x="440" y="300" class="svg-small">约束顺序，不能靠“看起来对”。</text>
+
+  <text x="30" y="384" class="svg-small">data = 42; ready = true; 在 x86 上常看起来正确，在 ARM 上可能先看到 ready。</text>
+  <text x="30" y="408" class="svg-small">把代码拿到 ARM 上跑，或者直接用正确的同步原语。</text>
+</svg>`
+  },
+  {
+    nav: 'volatile 与锁',
+    title: '7. volatile 不是同步，多变量用锁',
+    caption: '<code>volatile</code> 常被误当成同步原语：它只告诉编译器“别把这个访问优化掉”，既不保证原子，也不建立 happens-before。单个计数用 atomic；多个变量要保持一致，就用 mutex 把整段临界区包起来。',
+    code: 'volatile bool stop = false;  // 不是线程同步\nstd::atomic<bool> stop2{false};\n\nstd::mutex m;                // 多变量不变量用锁\nstd::lock_guard<std::mutex> lk(m);\n++data; ++size;              // 别人看不到中间态',
+    highlight: [0, 1, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="volatile、atomic、mutex 三种工具各自适用的场景">
+  <text x="30" y="30" class="svg-title">volatile、atomic、mutex：各管一件事</text>
+
+  <rect x="30" y="50" width="220" height="290" rx="12" class="svg-box-bad"/>
+  <text x="46" y="80" class="svg-title">volatile</text>
+  <text x="46" y="116" class="svg-small">只管：别优化掉访问</text>
+  <text x="46" y="146" class="svg-small">不保证：原子性</text>
+  <text x="46" y="176" class="svg-small">不建立：happens-before</text>
+  <text x="46" y="206" class="svg-small">适合：MMIO、信号标志</text>
+  <text x="46" y="236" class="svg-small">不适合：线程同步</text>
+  <text x="46" y="288" class="svg-small">信号处理中配 sig_atomic_t</text>
+
+  <rect x="270" y="50" width="220" height="290" rx="12" class="svg-box-accent"/>
+  <text x="286" y="80" class="svg-title">std::atomic</text>
+  <text x="286" y="116" class="svg-small">单个变量的原子访问</text>
+  <text x="286" y="146" class="svg-small">可选 relaxed /</text>
+  <text x="286" y="176" class="svg-small">release / acquire</text>
+  <text x="286" y="206" class="svg-small">适合：计数器、标志</text>
+  <text x="286" y="236" class="svg-small">不负责：多变量一致</text>
+  <text x="286" y="288" class="svg-small">发布数据时配 release/acquire</text>
+
+  <rect x="510" y="50" width="220" height="290" rx="12" class="svg-box-good"/>
+  <text x="526" y="80" class="svg-title">std::mutex</text>
+  <text x="526" y="116" class="svg-small">临界区互斥</text>
+  <text x="526" y="146" class="svg-small">lock / unlock 隐含同步</text>
+  <text x="526" y="176" class="svg-small">适合：多个变量</text>
+  <text x="526" y="206" class="svg-small">保护不变量</text>
+  <text x="526" y="236" class="svg-small">可能阻塞，有开销</text>
+  <text x="526" y="288" class="svg-small">拿不准时优先用锁</text>
+
+  <rect x="30" y="364" width="700" height="64" rx="10" class="svg-box-warn"/>
+  <text x="46" y="390" class="svg-small">data 和 size 必须一起变：各自 atomic 也不能保证同时被看到。</text>
+  <text x="46" y="414" class="svg-small">把整段更新放进同一把锁的临界区，读者就不会看到中间态。</text>
+</svg>`
+  },
+  {
+    nav: '选择规则',
+    title: '8. 怎么选：按场景直接查表',
+    caption: '选择顺序：先问有没有共享；多个变量有约束就一律用锁；单变量再决定 relaxed 还是 acquire/release；拿不准就用默认 <code>seq_cst</code>。<code>volatile</code> 不在这张表里，因为它不是同步工具。',
+    code: '// 默认：seq_cst，最省心\nstd::atomic<int> n{0};\nn.fetch_add(1, std::memory_order_relaxed);\n// 计数累加：relaxed 就够\n\n// 发布对象：release / acquire\n// 只初始化一次：call_once 或静态局部',
+    highlight: [3, 4, 5, 6],
+    stage: `
+<svg viewBox="0 0 760 460" role="img" aria-label="按场景选择 mutex、atomic relaxed、release acquire、静态局部变量或 seq_cst">
+  <text x="30" y="30" class="svg-title">怎么选：按场景查表</text>
+  <rect x="30" y="48" width="700" height="36" rx="8" class="svg-box-accent"/>
+  <text x="46" y="71" class="svg-text" style="font-weight:700">场景</text>
+  <text x="300" y="71" class="svg-text" style="font-weight:700">选择</text>
+  <text x="530" y="71" class="svg-text" style="font-weight:700">理由</text>
+
+  <rect x="30" y="88" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="115" class="svg-text">多个变量要一起变</text>
+  <text x="300" y="115" class="svg-mono" style="font-size:11.5px">std::mutex</text>
+  <text x="530" y="115" class="svg-small">保护不变量，进出有同步</text>
+
+  <rect x="30" y="136" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="163" class="svg-text">单个计数器 / 统计</text>
+  <text x="300" y="163" class="svg-mono" style="font-size:11.5px">atomic + relaxed</text>
+  <text x="530" y="163" class="svg-small">只要原子性，不要顺序</text>
+
+  <rect x="30" y="184" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="211" class="svg-text">发布初始化好的对象</text>
+  <text x="300" y="211" class="svg-mono" style="font-size:11.5px">atomic + release/acquire</text>
+  <text x="530" y="211" class="svg-small">防止看到半成品</text>
+
+  <rect x="30" y="232" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="259" class="svg-text">只初始化一次</text>
+  <text x="300" y="259" class="svg-mono" style="font-size:11.5px">静态局部 / call_once</text>
+  <text x="530" y="259" class="svg-small">标准保证线程安全</text>
+
+  <rect x="30" y="280" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="307" class="svg-text">需要全局顺序 / 拿不准</text>
+  <text x="300" y="307" class="svg-mono" style="font-size:11.5px">seq_cst（默认）</text>
+  <text x="530" y="307" class="svg-small">最省心，代价可接受</text>
+
+  <rect x="30" y="328" width="700" height="42" rx="6" class="svg-field"/>
+  <text x="46" y="355" class="svg-text">硬件寄存器 / 信号处理</text>
+  <text x="300" y="355" class="svg-mono" style="font-size:11.5px">volatile</text>
+  <text x="530" y="355" class="svg-small">只防优化，不做同步</text>
+
+  <text x="30" y="404" class="svg-small">先问“有没有共享”，再问“几个变量”；多变量不变量一律用锁。</text>
+  <text x="30" y="428" class="svg-small">单变量再考虑内存序：默认 seq_cst，性能敏感处才降到 relaxed 或 acquire/release。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

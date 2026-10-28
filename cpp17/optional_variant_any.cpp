@@ -22,6 +22,7 @@
 #include <functional>
 #include <memory>
 #include <type_traits>
+#include <stdexcept>
 #include <algorithm>
 #include <cmath>
 #include <map>

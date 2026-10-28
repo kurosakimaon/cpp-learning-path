@@ -16,7 +16,7 @@
 
   <header class="page-head">
     <div class="kicker">图解专区 · 进程与 IPC</div>
-    <h1>📡 进程间通信：两个进程怎么交换数据？</h1>
+    <h1>🔀 进程间通信：两个进程怎么交换数据？</h1>
     <p>从地址空间隔离讲到共享内存、进程间锁、消息队列和选型。共享内存不是“把变量传过去”，而是让两个进程映射同一块物理内存。</p>
   </header>
 
@@ -105,8 +105,8 @@ window.STEPS = [
     nav: '共享内存',
     title: '2. 共享内存：先建对象，再各映射一次',
     caption: 'POSIX 共享内存的典型流程是：<code>shm_open</code> 创建或打开一个带名字的共享内存对象，<code>ftruncate</code> 设定大小，<code>mmap</code> 把它映射进自己的地址空间。另一个进程用同一个名字打开并映射，两个指针就指向同一份内存了。',
-    code: 'int fd = shm_open("/demo", O_CREAT | O_RDWR, 0600);\nftruncate(fd, 4096);\nvoid* p = mmap(nullptr, 4096, PROT_READ | PROT_WRITE,\n               MAP_SHARED, fd, 0);',
-    highlight: [0, 1, 2, 3],
+    code: 'int fd = shm_open("/demo", O_CREAT | O_RDWR, 0600);\nftruncate(fd, 4096);\nauto prot = PROT_READ | PROT_WRITE;\nvoid* p = mmap(nullptr, 4096, prot,\n               MAP_SHARED, fd, 0);',
+    highlight: [0, 1, 2, 3, 4],
     stage: `
 <svg viewBox="0 0 760 430" role="img" aria-label="shm_open、ftruncate、mmap 三个步骤建立共享内存并映射进两个进程">
   <defs>
@@ -207,12 +207,12 @@ window.STEPS = [
   },
   {
     nav: '消息队列',
-    title: '4. 消息队列：内核帮你排队，但会拷贝',
-    caption: '消息队列由内核维护，发送方和接收方不需要映射同一块内存。每条消息有明确边界，不会被拆成字节流；代价是 <code>send</code> / <code>receive</code> 会拷贝数据。队列有容量和单条消息大小限制：<code>receive</code> 会阻塞到有消息，不想阻塞就用 <code>try_receive</code> 立即返回。',
+    title: '4. 消息队列：帮你排队，但每次收发都要拷贝',
+    caption: '消息队列把数据切成一条条有边界的消息，排队和同步都交给库或系统，代价是收发各拷贝一次。<code>boost::interprocess::message_queue</code> 的队列结构就建在一段共享内存上（两端仍然映射同一段内存，只是不用你自己管理）；POSIX / System V 的消息队列才是真正的内核对象。队列有容量和单条消息大小限制：<code>receive</code> 会阻塞到有消息，不想阻塞就用 <code>try_receive</code> 立即返回。',
     code: 'bip::message_queue mq(bip::create_only, "mq",\n                      10, sizeof(Msg));\nmq.send(&msg, sizeof(msg), 0);   // 0 = 优先级\nsize_t recvd; unsigned int prio;\nmq.receive(&msg, sizeof(msg), recvd, prio);',
     highlight: [0, 1, 2, 4],
     stage: `
-<svg viewBox="0 0 760 420" role="img" aria-label="发送进程把消息拷贝进内核消息队列，接收进程按消息边界取出">
+<svg viewBox="0 0 760 420" role="img" aria-label="发送进程把消息写入建在共享内存上的消息队列，接收进程按消息边界取出">
   <defs>
     <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
   </defs>
@@ -223,7 +223,7 @@ window.STEPS = [
   <text x="46" y="222" class="svg-small">数据被拷贝进队列</text>
 
   <rect x="240" y="86" width="300" height="200" rx="14" class="svg-box-warn"/>
-  <text x="258" y="112" class="svg-title">内核消息队列 mq</text>
+  <text x="258" y="112" class="svg-title">消息队列 mq（建在共享内存上）</text>
   <text x="258" y="134" class="svg-small">最多 10 条 · 每条 ≤ sizeof(Msg)</text>
 
   <g class="svg-float">
@@ -276,7 +276,7 @@ window.STEPS = [
 
   <rect x="30" y="164" width="700" height="52" rx="8" class="svg-box"/>
   <text x="52" y="196" class="svg-text">消息队列</text>
-  <text x="240" y="196" class="svg-text">内核拷贝</text>
+  <text x="240" y="196" class="svg-text">每次收发都拷贝</text>
   <text x="400" y="196" class="svg-text">中</text>
   <text x="540" y="196" class="svg-text">结构化小消息</text>
 

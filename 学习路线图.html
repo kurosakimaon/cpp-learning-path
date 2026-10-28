@@ -14,7 +14,7 @@
     --surface-2: #334155;
     --ink: #f1f5f9;
     --ink-muted: #94a3b8;
-    --ink-dim: #64748b;
+    --ink-dim: #8fa0b8;
     --rule: #334155;
     --accent: #38bdf8;
     --accent-2: #818cf8;
@@ -46,6 +46,9 @@
     line-height: 1.7;
     font-size: 15px;
   }
+
+  /* 深色底上，没显式配色的链接不能沿用浏览器默认蓝（几乎看不清） */
+  a { color: var(--accent); }
 
   .container {
     max-width: 1100px;
@@ -171,12 +174,12 @@
     color: #fff;
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
   }
-  .stage.s1 .stage-badge { background: #0ea5e9; }
-  .stage.s2 .stage-badge { background: #6366f1; }
-  .stage.s3 .stage-badge { background: #22c55e; }
-  .stage.s4 .stage-badge { background: #f59e0b; }
-  .stage.s5 .stage-badge { background: #ef4444; }
-  .stage.s6 .stage-badge { background: #ec4899; }
+  .stage.s1 .stage-badge { background: #0a7bae; }
+  .stage.s2 .stage-badge { background: #6063ea; }
+  .stage.s3 .stage-badge { background: #17853f; }
+  .stage.s4 .stage-badge { background: #a06707; }
+  .stage.s5 .stage-badge { background: #d33c3c; }
+  .stage.s6 .stage-badge { background: #c93d82; }
 
   .stage-title {
     font-size: 1.3rem;
@@ -303,16 +306,16 @@
     margin-top: 16px;
   }
   .book-card {
-    background: white;
+    background: var(--surface);
     border-radius: 10px;
     padding: 16px 18px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
     border-left: 4px solid var(--accent);
     transition: transform 0.2s, box-shadow 0.2s;
   }
   .book-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
   }
   .book-level {
     display: inline-block;
@@ -320,8 +323,8 @@
     font-weight: 700;
     padding: 2px 10px;
     border-radius: 20px;
-    background: #e8f5e9;
-    color: #2e7d32;
+    background: rgba(74,222,128,0.16);
+    color: var(--success);
     margin-bottom: 8px;
   }
   .book-title {
@@ -337,21 +340,27 @@
   }
   .book-desc {
     font-size: 13px;
-    color: #555;
+    color: #cbd5e1;
     line-height: 1.6;
   }
   .resource-tip {
     margin-top: 20px;
-    background: #fff8e1;
-    border-left: 4px solid #ffa000;
+    background: rgba(251,191,36,0.10);
+    border-left: 4px solid var(--warning);
     padding: 14px 20px;
     border-radius: 0 8px 8px 0;
   }
-  .resource-tip strong { color: #e65100; display: block; margin-bottom: 8px; }
-  .resource-tip ul { padding-left: 22px; color: #e65100; line-height: 2; font-size: 14px; }
-  .resource-tip li strong { color: #e65100; display: inline; }
+  .resource-tip strong { color: var(--warning); display: block; margin-bottom: 8px; }
+  .resource-tip ul { padding-left: 22px; color: var(--ink-muted); line-height: 2; font-size: 14px; }
+  .resource-tip li strong { color: var(--warning); display: inline; }
 
   /* ====== 文件索引表 ====== */
+  .table-scroll {
+    overflow-x: auto;
+    margin: 16px 0;
+    -webkit-overflow-scrolling: touch;
+  }
+  .table-scroll table { margin: 0; }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -423,9 +432,9 @@
   <p class="subtitle">从零基础到资深开发工程师 · 六大阶段 · 扎实筑基 · 深入浅出</p>
   <div class="meta">
     <div class="meta-item"><strong>6</strong> 个阶段</div>
-    <div class="meta-item"><strong>55</strong> 个代码 Demo<br><span style="font-size:12px;opacity:0.7">含Boost共68个</span></div>
+    <div class="meta-item"><strong>55</strong> 个代码 Demo<br><span style="font-size:12px;color:#a8b3c4">含Boost共68个</span></div>
     <div class="meta-item"><strong>11</strong> 个构建示例</div>
-    <div class="meta-item"><strong>9</strong> 个可视化页面<br><span style="font-size:12px;opacity:0.7">7 个分步图解 + 2 个算法演示</span></div>
+    <div class="meta-item"><strong>18</strong> 个可视化页面<br><span style="font-size:12px;color:#a8b3c4">16 个分步图解 + 2 个算法演示</span></div>
   </div>
 </div>
 
@@ -541,6 +550,8 @@
       C++11/14/17 带来了革命性的变化。移动语义、右值引用、auto、
       constexpr、variant、optional、并行算法……
       同时深入<strong>多线程与并发</strong>，这是高级工程师的分水岭。
+      走法是：先在版本演进里建立"哪个版本加了什么、为什么加"的地图，
+      再进现代 C++ 特性模块逐个把写法和坑吃透。
     </div>
     <div class="stage-topics">
       <span class="topic-tag">C++11 核心特性</span>
@@ -557,7 +568,7 @@
       <span class="topic-tag">异步编程</span>
     </div>
     <div class="stage-files">
-      📁 对应代码：<code>cpp17/</code> + <code>cpp_evolution/</code> + <code>concurrency/</code> 目录
+      📁 对应代码（按顺序学）：<code>cpp_evolution/</code> 先建版本脉络 → <code>cpp17/</code> 再逐个特性深潜 → <code>concurrency/</code> 多线程与并发
     </div>
   </div>
 
@@ -587,7 +598,7 @@
       <span class="topic-tag">项目结构设计</span>
     </div>
     <div class="stage-files">
-      📁 对应代码：<code>patterns/</code> + <code>debugging/</code> + <code>testing/</code> + <code>build_systems/</code> 目录
+      📁 对应代码（按顺序学）：<code>build_systems/</code> 先把项目构建起来（Makefile 五讲 → CMake 六讲，配 <code>cmake_guide.html</code> 速查） → <code>patterns/</code> 设计模式 → <code>testing/</code> 单元测试 → <code>debugging/</code> 排错手法
     </div>
   </div>
 
@@ -600,8 +611,8 @@
     </div>
     <div class="stage-duration">⏱️ 建议用时：持续学习</div>
     <div class="stage-desc">
-      学无止境。Boost 库是 C++ 的"准标准库"，`boost/` 目录用 13 个示例覆盖日志、配置、网络、序列化、多索引、Spirit 解析器等常用组件；
-      进程间通信（Boost.Interprocess）在 `concurrency/` 中演示。同时关注模板元编程、
+      学无止境。Boost 库是 C++ 的"准标准库"，<code>boost/</code> 目录用 13 个示例覆盖日志、配置、网络、序列化、多索引、Spirit 解析器等常用组件；
+      进程间通信（Boost.Interprocess）在 <code>concurrency/</code> 中演示。同时关注模板元编程、
       性能调优、架构设计，在实战中不断精进。
     </div>
     <div class="stage-topics">
@@ -631,63 +642,127 @@
 <section>
 <h2>🎬 图解专区</h2>
 <p style="color: var(--ink-muted); margin-bottom: 8px;">
-  有些机制只看文字容易似懂非懂：所有权怎么就转移了？对象到底住在哪？虚函数调用怎么找到正确实现？运行时又去哪找动态库？两个线程凭什么会互相卡死？一个线程又怎么扛住上万连接？
-  下面七组分步图解把一次操作拆成若干帧，左边画内存或流程，右边给代码对照，可以逐步翻页，也可以点「自动播放」让它自己走。
+  有些机制只看文字容易似懂非懂：链表的指针到底怎么改？vector 扩容时元素搬到哪？树查找凭什么减半？哈希冲突怎么处理？堆为什么只维护父子关系？所有权怎么就转移了？引用计数什么时候归零？throw 之后栈帧怎么一层层收尾？两个线程谁先看到谁？虚函数调用怎么找到正确实现？运行时又去哪找动态库？两个线程凭什么会互相卡死？一个线程又怎么扛住上万连接？
+  下面十六组分步图解把一次操作拆成若干帧，左边画内存或流程，右边给代码对照，可以逐步翻页，也可以点「自动播放」让它自己走。
 </p>
 
 <div class="skills-grid">
+  <a class="skill-card" href="visuals/linked_list.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🧷</div>
+    <div class="skill-title">链表：指针怎么把节点串起来？</div>
+    <div class="skill-desc">节点与 head、头插尾插、删除时找前驱、三指针反转，以及链表为什么缓存不友好。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/dynamic_array.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">📏</div>
+    <div class="skill-title">动态数组：push_back 为什么会搬家？</div>
+    <div class="skill-desc">size 与 capacity、扩容时搬家、摊还 O(1)、迭代器失效，以及 reserve 和 resize 的区别。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/stack_queue.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🥞</div>
+    <div class="skill-title">栈与队列：后进先出和先进先出怎么实现？</div>
+    <div class="skill-desc">调用栈、队列的 head/tail、循环队列取模、deque 分段存储，以及适配器怎么选。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/tree.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🌳</div>
+    <div class="skill-title">二叉搜索树：查找为什么能减半？</div>
+    <div class="skill-desc">BST 不变式、查找插入删除（后继节点）、中序遍历、退化成链表和旋转。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/hash_table.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🗃️</div>
+    <div class="skill-title">哈希表：平均 O(1) 是怎么做到的？</div>
+    <div class="skill-desc">哈希函数与取模、链地址法、装填因子、rehash，以及开放寻址和墓碑标记。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/heap.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">⛰️</div>
+    <div class="skill-title">堆与优先队列：最大值怎么总在顶上？</div>
+    <div class="skill-desc">数组表示完全二叉树、sift-up / sift-down、O(n) 建堆、堆排序和 priority_queue。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
+  </a>
+
   <a class="skill-card" href="visuals/move_semantics.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🧩</div>
     <div class="skill-title">移动语义：所有权怎么转移？</div>
     <div class="skill-desc">拷贝、std::move、移动构造与移动赋值，以及 noexcept 为什么会影响 vector 扩容。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">现代 C++ · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">现代 C++ · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/memory_model.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🧠</div>
     <div class="skill-title">栈、堆与 RAII：谁负责释放？</div>
     <div class="skill-desc">栈帧与堆对象、内存泄漏、悬空指针、异常展开，最后落到 unique_ptr 和 shared_ptr。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/smart_ptr.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🔑</div>
+    <div class="skill-title">智能指针：谁拥有这个对象？</div>
+    <div class="skill-desc">unique_ptr 独占与移动、shared_ptr 的控制块和引用计数、make_shared、weak_ptr 与循环引用。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/exceptions.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">💥</div>
+    <div class="skill-title">异常与栈展开：throw 之后谁负责收尾？</div>
+    <div class="skill-desc">throw 跳转、栈展开析构、catch 匹配与切片、rethrow、noexcept，以及强异常安全的写法。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">异常处理 · 8 步</div>
   </a>
 
   <a class="skill-card" href="visuals/vtable.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🎭</div>
     <div class="skill-title">虚函数表：p-&gt;speak() 调用了谁？</div>
     <div class="skill-desc">静态绑定、vptr / vtable、动态派发、override 签名检查、对象切片与虚析构。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">面向对象 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">面向对象 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/linking.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🔗</div>
     <div class="skill-title">静态库与动态库：程序怎么找到它？</div>
     <div class="skill-desc">编译与链接、.a 与 .so、-L 与运行期搜索、rpath / $ORIGIN，以及排查工具。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">构建系统 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">构建系统 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/concurrency.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🧵</div>
     <div class="skill-title">并发时序：counter++ 为什么丢更新？</div>
     <div class="skill-desc">线程共享内存、竞态窗口、互斥锁、死锁、条件变量、假唤醒与线程池，按时间线演示。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">并发编程 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">并发编程 · 7 步</div>
+  </a>
+
+  <a class="skill-card" href="visuals/memory_order.html" style="display: block; text-decoration: none; color: inherit;">
+    <div class="skill-icon">🌀</div>
+    <div class="skill-title">内存序：两个线程，谁先看到谁？</div>
+    <div class="skill-desc">内存重排、happens-before、relaxed、发布订阅、seq_cst，以及 x86 与 ARM 的差异。</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">并发编程 · 8 步</div>
   </a>
 
   <a class="skill-card" href="visuals/ipc.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🔀</div>
     <div class="skill-title">进程间通信：两个进程怎么共享数据？</div>
     <div class="skill-desc">地址空间隔离、共享内存映射、跨进程锁、消息队列，以及选型和生命周期管理。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">系统编程 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">系统编程 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/asio.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🔌</div>
     <div class="skill-title">Asio 事件循环：一个线程怎么扛住一万连接？</div>
     <div class="skill-desc">io_context 任务队列、同步与异步、完成回调、异步调用链、单线程并发和 strand 串行化。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: var(--accent-2); font-size: 0.78rem; font-weight: 600;">网络编程 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">网络编程 · 6 步</div>
   </a>
 </div>
 
 <p style="margin-top: 18px; color: var(--ink-dim); font-size: 0.88rem;">
-  全部页面都可离线打开，支持左右方向键翻页、地址栏 <code>#step-N</code> 直接定位，右上角「自动播放」可连续演示；系统开启“减少动态效果”时会自动停用动画。
+  全部页面都可离线打开，支持左右方向键翻页、地址栏 <code>#step-N</code> 直接定位，图解下方控制条里的「自动播放」可连续演示；系统开启“减少动态效果”时会自动停用动画。
+  数据结构六页讲机制，<a href="algorithms/data_structures_visualizer.html">交互沙盘</a>负责动手操作。
   也可以从<a href="visuals/index.html">图解专区首页</a>统一进入。
 </p>
 </section>
@@ -770,14 +845,15 @@
   按学习顺序排列。学完一个阶段再进入下一个阶段。
 </p>
 
+<div class="table-scroll">
 <table>
   <thead>
     <tr>
-      <th>阶段</th>
-      <th>目录</th>
-      <th>文件</th>
-      <th>难度</th>
-      <th>核心内容</th>
+      <th scope="col">阶段</th>
+      <th scope="col">目录</th>
+      <th scope="col">文件</th>
+      <th scope="col">难度</th>
+      <th scope="col">核心内容</th>
     </tr>
   </thead>
   <tbody>
@@ -869,14 +945,14 @@
       <td>8种排序算法 + 交互式动画 + 性能对比</td>
     </tr>
     <tr>
-      <td><a href="algorithms/data_structures_visualizer.html" style="color: var(--accent);">🎮 数据结构可视化</a><br><a href="algorithms/data_structures.cpp" style="color: var(--ink);"><code>data_structures.cpp</code></a></td>
+      <td><a href="algorithms/data_structures_visualizer.html" style="color: var(--accent);">🎮 数据结构可视化</a><br><a href="algorithms/index.html#visuals" style="color: var(--accent);">🧭 数据结构分步图解</a><br><a href="algorithms/data_structures.cpp" style="color: var(--ink);"><code>data_structures.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>7种经典数据结构 + 交互式动画 + 从零实现</td>
     </tr>
 
     <tr>
       <td rowspan="9">内功期</td>
-      <td rowspan="8"><a href="cpp17/index.html" style="color: var(--accent);"><code>cpp17/</code></a></td>
+      <td rowspan="8"><a href="cpp17/index.html" style="color: var(--accent);"><code>cpp17/</code></a><br><span style="font-size:0.78rem;color:var(--ink-dim);">按首页 ①→⑧ 顺序学<br>（先移动语义，最后并行算法）</span></td>
       <td><a href="cpp17/type_deduction.cpp" style="color: var(--ink);"><code>type_deduction.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">中高级</span></td>
       <td>auto/decltype/CTAD/推导指引</td>
@@ -918,7 +994,7 @@
     </tr>
     <tr>
       <td><a href="cpp_evolution/index.html" style="color: var(--accent);"><code>cpp_evolution/</code></a></td>
-      <td colspan="2"><a href="cpp_evolution/cpp11_core_features.cpp" style="color: var(--ink);">cpp11核心</a> · <a href="cpp_evolution/cpp14_features.cpp" style="color: var(--ink);">cpp14特性</a> · <a href="cpp_evolution/evolution_comparison.cpp" style="color: var(--ink);">演进对比</a> · <a href="cpp_evolution/cpp20_overview.cpp" style="color: var(--ink);">C++20 概览</a></td>
+      <td colspan="2">按顺序：<a href="cpp_evolution/evolution_comparison.cpp" style="color: var(--ink);">①演进对比</a> · <a href="cpp_evolution/cpp11_core_features.cpp" style="color: var(--ink);">②cpp11核心</a> · <a href="cpp_evolution/cpp14_features.cpp" style="color: var(--ink);">③cpp14特性</a> · <a href="cpp_evolution/cpp20_overview.cpp" style="color: var(--ink);">④C++20 概览</a></td>
       <td>C++11→14→17→20 版本演进与写法对比（C++20 示例需 C++20 编译器）</td>
     </tr>
     <tr>
@@ -1057,8 +1133,8 @@
     </tr>
 
     <tr>
-      <td rowspan="2">构建系统</td>
-      <td rowspan="2"><a href="build_systems/index.html" style="color: var(--accent);"><code>build_systems/</code></a></td>
+      <td rowspan="3">构建系统</td>
+      <td rowspan="3"><a href="build_systems/index.html" style="color: var(--accent);"><code>build_systems/</code></a></td>
       <td><strong>Makefile</strong>：<a href="build_systems/makefile_01_basic/index.html" style="color: var(--ink);">01基础</a> · <a href="build_systems/makefile_02_variables/index.html" style="color: var(--ink);">02变量</a> · <a href="build_systems/makefile_03_patterns/index.html" style="color: var(--ink);">03模式</a> · <a href="build_systems/makefile_04_project/index.html" style="color: var(--ink);">04项目</a> · <a href="build_systems/makefile_05_library/index.html" style="color: var(--ink);">05库</a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>5个渐进式 Makefile 学习示例（静态库/动态库/链接）</td>
@@ -1067,6 +1143,11 @@
       <td><strong>CMake</strong>：<a href="build_systems/cmake_01_basic/index.html" style="color: var(--ink);">01入门</a> · <a href="build_systems/cmake_02_multi_file/index.html" style="color: var(--ink);">02多文件</a> · <a href="build_systems/cmake_03_library/index.html" style="color: var(--ink);">03库</a> · <a href="build_systems/cmake_04_options/index.html" style="color: var(--ink);">04选项</a> · <a href="build_systems/cmake_05_modern/index.html" style="color: var(--ink);">05现代</a> · <a href="build_systems/cmake_06_full_project/index.html" style="color: var(--ink);">06完整项目</a></td>
       <td><span class="level-badge lv-expert">高级</span></td>
       <td>6个渐进式 CMake 学习示例</td>
+    </tr>
+    <tr>
+      <td><strong>速查</strong>：<a href="build_systems/cmake_guide.html" style="color: var(--ink);"><code>cmake_guide.html</code></a></td>
+      <td><span class="level-badge lv-beginner">必备</span></td>
+      <td>命令速查 + 每一讲该看到的输出 + 12 种常见报错对照；第一遍通读，之后当字典查</td>
     </tr>
 
     <tr>
@@ -1149,14 +1230,16 @@
     </tr>
   </tbody>
 </table>
+</div>
+<div class="table-scroll">
 <table style="margin-top: 8px;">
   <thead>
     <tr>
-      <th style="width: 14%;">阶段</th>
-      <th style="width: 14%;">目录</th>
-      <th style="width: 40%;">文件</th>
-      <th style="width: 10%;">难度</th>
-      <th>说明</th>
+      <th scope="col" style="width: 14%;">阶段</th>
+      <th scope="col" style="width: 14%;">目录</th>
+      <th scope="col" style="width: 40%;">文件</th>
+      <th scope="col" style="width: 10%;">难度</th>
+      <th scope="col">说明</th>
     </tr>
   </thead>
   <tbody>
@@ -1169,6 +1252,7 @@
     </tr>
   </tbody>
 </table>
+</div>
 </section>
 
 <!-- ============================================================ -->

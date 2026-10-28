@@ -822,7 +822,7 @@ public:
     //  打印看看分布情况
     void printStats() const {
         cout << "哈希表状态：元素" << count << "个，桶" << table.size() << "个" << endl;
-        int maxBucketSize = 0;
+        size_t maxBucketSize = 0;
         int usedBuckets = 0;
         for (auto& bucket : table) {
             if (!bucket.empty()) usedBuckets++;

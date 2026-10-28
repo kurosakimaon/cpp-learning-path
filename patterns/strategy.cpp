@@ -47,6 +47,7 @@
 #include <cmath>
 #include <chrono>
 #include <cassert>
+#include <cctype>
 #include <sstream>
 
 // ============================================================
@@ -352,7 +353,7 @@ public:
                 indentLevel = std::max(0, indentLevel - 1);
             }
             oss << indentStrategy_->getIndent(indentLevel)
-                << line
+                << trimmed
                 << newlineStrategy_->getNewline();
             if (!trimmed.empty() && trimmed.back() == '{') {
                 indentLevel++;

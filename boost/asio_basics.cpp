@@ -636,7 +636,8 @@ int main() {
     std::cout << "\n--- Boost.Asio 核心要点总结 ---" << std::endl;
     std::cout << "  1. io_context 是事件循环核心，run() 驱动所有异步操作" << std::endl;
     std::cout << "  2. 同步 API 简单但阻塞；异步 API 高效但需要理解回调链" << std::endl;
-    std::cout << "  3. Strand 提供了无锁的串行化机制，是多线程安全的关键" << std::endl;
+    std::cout << "  3. Strand 保证同一 strand 上的 handler 不并发执行（内部用互斥量+就绪队列，"
+                 "并非无锁），绕过 strand 访问共享数据仍要自己加锁" << std::endl;
     std::cout << "  4. 定时器支持同步/异步、取消、周期性触发" << std::endl;
     std::cout << "  5. error_code 优于异常，尤其在异步场景下" << std::endl;
     std::cout << "  6. work_guard 防止 io_context 提前退出" << std::endl;

@@ -23,7 +23,7 @@
 
   <header class="page-head">
     <div class="kicker">图解专区 · 并发编程</div>
-    <h1>⚡ 并发与线程：为什么结果时对时错？</h1>
+    <h1>🧵 并发与线程：为什么结果时对时错？</h1>
     <p>竞态、死锁、条件变量这些问题都和时间顺序有关，所以这一页用会动的时间线和流程来画。点「自动播放」让页面自己往下走，也可以左右方向键翻页。</p>
   </header>
 
@@ -200,7 +200,7 @@ window.STEPS = [
   <text x="390" y="144" class="svg-small">② 进入</text>
 
   <path d="M220 292 H252 V122 H274" class="svg-arrow-bad svg-flow" marker-end="url(#ahr)"/>
-  <text x="258" y="238" class="svg-bad-text">③ 等 T1 解锁</text>
+  <text x="280" y="336" text-anchor="middle" class="svg-bad-text">③ 等 T1 解锁</text>
 
   <text x="40" y="378" class="svg-small">同一把锁保护 counter 的所有访问；临界区里只放真正需要保护的代码。</text>
 </svg>`

@@ -17,11 +17,6 @@ else()
     add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
-# 注：不要全局 include_directories(${CMAKE_SOURCE_DIR}/common)。
-# 那个目录里也有一个 Utils.h，会抢在 projects/todo_cli/include/Utils.h
-# 前面被找到，导致 todo_cli 编译失败。需要公共头的目标应各自用
-# target_include_directories 精确添加。
-
 # ============================================================================
 # 查找 Boost 库（可选，找不到则跳过Boost相关demo）
 # ============================================================================

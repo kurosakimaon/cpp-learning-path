@@ -143,11 +143,13 @@
 
     if (playing && !fromAuto) schedulePlay();
 
-    if (updateHash !== false) {
+    // 越界的 #step-99 会被夹紧，这里把地址栏也一起改回真实步骤，避免留下假链接
+    var canonical = '#step-' + (current + 1);
+    if (updateHash !== false || location.hash !== canonical) {
       try {
-        history.replaceState(null, '', '#step-' + (current + 1));
+        history.replaceState(null, '', canonical);
       } catch (e) {
-        /* file:// 下个别浏览器可能限制 history，忽略即可 */
+        /* 个别浏览器可能限制 history，忽略即可 */
       }
     }
   }

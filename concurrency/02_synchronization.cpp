@@ -235,16 +235,22 @@ string sharedData = "初始内容";  // 共享数据
 // 读操作：用 shared_lock（共享锁）
 void reader(int id) {
     shared_lock<shared_mutex> lock(shMtx);  // 共享锁，多个读者可以同时持有
-    safePrint("  读者" + to_string(id) + " 读到：" + sharedData);
+    safePrint("  读者" + to_string(id) + " 进入读区");
+    string snapshot = sharedData;
+    // 故意在临界区里多待一会儿，让多个读者的“进入/离开”真正重叠，输出才看得出并发读
+    this_thread::sleep_for(chrono::milliseconds(15));
+    safePrint("  读者" + to_string(id) + " 读到：" + snapshot + "，离开");
     // 读完自动释放共享锁
 }
 
 // 写操作：用 unique_lock 或 lock_guard（独占锁）
 void writer(int id, const string& newContent) {
     unique_lock<shared_mutex> lock(shMtx);  // 独占锁，写的时候别人都不能进来
-    safePrint("  写者" + to_string(id) + " 修改内容为：" + newContent);
+    safePrint("  写者" + to_string(id) + " 独占开始");
     sharedData = newContent;
+    safePrint("  写者" + to_string(id) + " 修改内容为：" + newContent);
     this_thread::sleep_for(chrono::milliseconds(20));  // 假装写得慢
+    safePrint("  写者" + to_string(id) + " 独占结束");
     // 写完自动释放独占锁
 }
 
@@ -459,7 +465,8 @@ void demo7_shared_mutex() {
 
     for (auto& t : threads) t.join();
 
-    cout << "\n观察输出你会发现：读者可以一起读，写者必须独占。" << endl;
+    cout << "\n观察输出你会发现：多个“读者进入”会先于各自的“离开”成批出现（读读不互斥），"
+         << "而“写者独占开始/结束”之间不会插进任何读者（读写、写写互斥）。" << endl;
 }
 
 // 示例8：条件变量（生产者消费者模型）

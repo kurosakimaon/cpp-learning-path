@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>哈希表：O(1) 查找、冲突与扩容 - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../algorithms/index.html">算法模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 数据结构</div>
+    <h1>🗃️ 哈希表：O(1) 查找、冲突与扩容</h1>
+    <p>哈希表用“哈希函数 + 数组”把 key 映射到桶，平均 O(1) 找到。但冲突不可避免、扩容会重排所有元素、最坏情况会退化成 O(n)。这一页把哈希、链地址、装填因子和 rehash 画清楚。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 6</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应源码：<a href="../algorithms/data_structures.cpp">algorithms/data_structures.cpp</a> ·
+    交互沙盘：<a href="../algorithms/data_structures_visualizer.html">数据结构可视化</a> ·
+    相关教程：<a href="../algorithms/tutorial.md">algorithms/tutorial.md</a> ·
+    桶数量、冲突解决方式和扩容策略由标准库实现决定，图中数值仅为示意。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '哈希到下标',
+    title: '1. 哈希函数把 key 压成一个整数',
+    caption: '哈希表底层是一个数组（桶数组）。先用哈希函数把 key 算成一个整数，再对桶数量取模，得到下标。同一个 key 必须每次都算出同一个结果，否则查不回来。<code>std::hash</code> 只保证“同输入同输出”，不保证防碰撞或安全。',
+    code: 'std::size_t h = std::hash<std::string>{}("apple");\nstd::size_t idx = h % buckets.size();  // 例如 3\n// 同一个 key、同一组桶，必须得到同一个 idx',
+    highlight: [0, 1, 2],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="key 经过哈希函数和取模落到桶数组的某个下标">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">key → hash → 取模 → 桶下标</text>
+
+  <rect x="26" y="92" width="116" height="58" rx="8" class="svg-box"/>
+  <text x="84" y="118" text-anchor="middle" class="svg-small">key</text>
+  <text x="84" y="138" text-anchor="middle" class="svg-mono">"apple"</text>
+
+  <rect x="190" y="92" width="176" height="58" rx="8" class="svg-box-accent"/>
+  <text x="278" y="118" text-anchor="middle" class="svg-text">哈希函数</text>
+  <text x="278" y="138" text-anchor="middle" class="svg-small">std::hash&lt;std::string&gt;</text>
+
+  <rect x="414" y="92" width="150" height="58" rx="8" class="svg-box"/>
+  <text x="489" y="118" text-anchor="middle" class="svg-small">哈希值（示意）</text>
+  <text x="489" y="138" text-anchor="middle" class="svg-mono" style="font-size:11px">0x9e37…</text>
+
+  <rect x="612" y="92" width="112" height="58" rx="8" class="svg-box-good"/>
+  <text x="668" y="118" text-anchor="middle" class="svg-small">% 8</text>
+  <text x="668" y="138" text-anchor="middle" class="svg-mono">3</text>
+
+  <line x1="142" y1="121" x2="186" y2="121" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="366" y1="121" x2="410" y2="121" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="564" y1="121" x2="608" y2="121" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <text x="30" y="206" class="svg-text">桶数组（8 个桶）</text>
+  <g>
+    <rect x="62" y="222" width="62" height="62" rx="7" class="svg-box"/>
+    <rect x="124" y="222" width="62" height="62" rx="7" class="svg-box"/>
+    <rect x="186" y="222" width="62" height="62" rx="7" class="svg-box"/>
+    <rect x="248" y="222" width="62" height="62" rx="7" class="svg-box-accent svg-pulse"/>
+    <rect x="310" y="222" width="62" height="62" rx="7" class="svg-box"/>
+    <rect x="372" y="222" width="62" height="62" rx="7" class="svg-box"/>
+    <rect x="434" y="222" width="62" height="62" rx="7" class="svg-box"/>
+    <rect x="496" y="222" width="62" height="62" rx="7" class="svg-box"/>
+    <text x="93" y="260" text-anchor="middle" class="svg-small">0</text>
+    <text x="155" y="260" text-anchor="middle" class="svg-small">1</text>
+    <text x="217" y="260" text-anchor="middle" class="svg-small">2</text>
+    <text x="279" y="260" text-anchor="middle" class="svg-mono" style="font-weight:700">3</text>
+    <text x="341" y="260" text-anchor="middle" class="svg-small">4</text>
+    <text x="403" y="260" text-anchor="middle" class="svg-small">5</text>
+    <text x="465" y="260" text-anchor="middle" class="svg-small">6</text>
+    <text x="527" y="260" text-anchor="middle" class="svg-small">7</text>
+  </g>
+
+  <path d="M668 150 C668 300 420 320 314 286" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="530" y="306" class="svg-good-text">落到 3 号桶</text>
+
+  <rect x="30" y="330" width="700" height="70" rx="10" class="svg-box-ghost"/>
+  <text x="48" y="356" class="svg-text">哈希函数负责“打散”，取模负责“压进数组范围”。</text>
+  <text x="48" y="380" class="svg-small">不同 key 可能算出同一个下标，这就是冲突；桶数量变化后，同一个 key 的桶也可能变。</text>
+</svg>`
+  },
+  {
+    nav: '插入与查找',
+    title: '2. 插入/查找：先定位桶，再比 key',
+    caption: '插入和查找走同一套流程：算下标 → 找到桶 → 沿桶里的链比较 key。找到了就更新/返回；没找到就在链尾插入。平均链长等于装填因子，所以哈希分布好时是 O(1)。注意：<strong>哈希值相同不代表 key 相等，最后一定要比较 key</strong>。',
+    code: 'std::unordered_map<std::string, int> m;\nm["apple"] = 10;                 // 插入或更新\nm["grape"] = 20;\n\nauto it = m.find("apple");       // 定位桶后比 key\nif (it != m.end()) use(it->second);',
+    highlight: [1, 2, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="哈希表按桶下标查找，沿链比较 key">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">find("apple")：桶 3 → 链上逐个比较 key</text>
+
+  <g>
+    <rect x="40" y="58" width="54" height="34" rx="6" class="svg-box"/>
+    <text x="67" y="80" text-anchor="middle" class="svg-small">0</text>
+    <rect x="40" y="98" width="54" height="34" rx="6" class="svg-box"/>
+    <text x="67" y="120" text-anchor="middle" class="svg-small">1</text>
+    <rect x="40" y="138" width="54" height="34" rx="6" class="svg-box"/>
+    <text x="67" y="160" text-anchor="middle" class="svg-small">2</text>
+    <rect x="40" y="178" width="54" height="34" rx="6" class="svg-box-accent svg-pulse"/>
+    <text x="67" y="200" text-anchor="middle" class="svg-mono" style="font-weight:700">3</text>
+    <rect x="40" y="218" width="54" height="34" rx="6" class="svg-box"/>
+    <text x="67" y="240" text-anchor="middle" class="svg-small">4</text>
+    <rect x="40" y="258" width="54" height="34" rx="6" class="svg-box"/>
+    <text x="67" y="280" text-anchor="middle" class="svg-small">5</text>
+    <rect x="40" y="298" width="54" height="34" rx="6" class="svg-box"/>
+    <text x="67" y="320" text-anchor="middle" class="svg-small">6</text>
+    <rect x="40" y="338" width="54" height="34" rx="6" class="svg-box"/>
+    <text x="67" y="360" text-anchor="middle" class="svg-small">7</text>
+  </g>
+
+  <rect x="134" y="178" width="160" height="34" rx="6" class="svg-box-good"/>
+  <text x="214" y="200" text-anchor="middle" class="svg-mono" style="font-size:11px">"apple" → 10</text>
+  <line x1="94" y1="195" x2="130" y2="195" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <rect x="334" y="178" width="160" height="34" rx="6" class="svg-box"/>
+  <text x="414" y="200" text-anchor="middle" class="svg-mono" style="font-size:11px">"grape" → 20</text>
+  <line x1="294" y1="195" x2="330" y2="195" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="514" y="200" class="svg-mono" style="font-size:12px">→ nullptr</text>
+
+  <rect x="134" y="298" width="160" height="34" rx="6" class="svg-box"/>
+  <text x="214" y="320" text-anchor="middle" class="svg-mono" style="font-size:11px">"kiwi" → 30</text>
+  <line x1="94" y1="315" x2="130" y2="315" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="470" y="58" width="260" height="88" rx="10" class="svg-box-ghost"/>
+  <text x="488" y="84" class="svg-text">查找过程</text>
+  <text x="488" y="108" class="svg-small">1. hash("apple") % 8 = 3</text>
+  <text x="488" y="130" class="svg-small">2. 沿 3 号桶链表比较 key</text>
+
+  <text x="30" y="404" class="svg-small">平均链长 = size / bucket_count = 装填因子；分布均匀时接近常数。</text>
+  <text x="30" y="426" class="svg-small">哈希值只用来定位，key 相等才是真的相等。</text>
+</svg>`
+  },
+  {
+    nav: '冲突',
+    title: '3. 冲突：不同 key 落到同一个桶',
+    caption: '桶数量有限，key 无限，冲突必然发生。链地址法把同一个桶的元素串成链表：查找时先定位桶，再沿链比较 key。冲突多，链就长，查找退化；最坏情况所有 key 都进同一个桶，变成 O(n)。好的哈希函数和合理的桶数量同样重要。',
+    code: '// 哈希值不同，也可能 % 8 相同\nh("apple") % 8 = 3;\nh("grape") % 8 = 3;\n\n// 链地址法：桶里存链表/节点链\n// 查找：定位桶 → 沿链比较 key → 命中或走到 nullptr',
+    highlight: [1, 2, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="两个不同 key 经过哈希后落到同一个桶，形成冲突链">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">两个 key，同一个桶：冲突不可避免</text>
+
+  <rect x="40" y="72" width="112" height="46" rx="7" class="svg-box"/>
+  <text x="96" y="100" text-anchor="middle" class="svg-mono">"apple"</text>
+  <rect x="40" y="134" width="112" height="46" rx="7" class="svg-box"/>
+  <text x="96" y="162" text-anchor="middle" class="svg-mono">"grape"</text>
+
+  <rect x="196" y="72" width="150" height="46" rx="7" class="svg-box-accent"/>
+  <text x="271" y="100" text-anchor="middle" class="svg-small">hash → % 8</text>
+  <rect x="196" y="134" width="150" height="46" rx="7" class="svg-box-accent"/>
+  <text x="271" y="162" text-anchor="middle" class="svg-small">hash → % 8</text>
+
+  <line x1="152" y1="95" x2="192" y2="95" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="152" y1="157" x2="192" y2="157" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <text x="368" y="101" class="svg-mono">= 3</text>
+  <text x="368" y="163" class="svg-mono">= 3</text>
+
+  <text x="40" y="224" class="svg-text">桶数组</text>
+  <g>
+    <rect x="60" y="240" width="60" height="46" rx="6" class="svg-box"/>
+    <rect x="124" y="240" width="60" height="46" rx="6" class="svg-box"/>
+    <rect x="188" y="240" width="60" height="46" rx="6" class="svg-box"/>
+    <rect x="252" y="240" width="60" height="46" rx="6" class="svg-box-accent svg-pulse"/>
+    <rect x="316" y="240" width="60" height="46" rx="6" class="svg-box"/>
+    <rect x="380" y="240" width="60" height="46" rx="6" class="svg-box"/>
+    <rect x="444" y="240" width="60" height="46" rx="6" class="svg-box"/>
+    <rect x="508" y="240" width="60" height="46" rx="6" class="svg-box"/>
+    <text x="90" y="269" text-anchor="middle" class="svg-small">0</text>
+    <text x="154" y="269" text-anchor="middle" class="svg-small">1</text>
+    <text x="218" y="269" text-anchor="middle" class="svg-small">2</text>
+    <text x="282" y="269" text-anchor="middle" class="svg-mono" style="font-weight:700">3</text>
+    <text x="346" y="269" text-anchor="middle" class="svg-small">4</text>
+    <text x="410" y="269" text-anchor="middle" class="svg-small">5</text>
+    <text x="474" y="269" text-anchor="middle" class="svg-small">6</text>
+    <text x="538" y="269" text-anchor="middle" class="svg-small">7</text>
+  </g>
+
+  <path d="M420 106 C420 180 282 180 282 236" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <path d="M420 168 C400 220 282 220 282 236" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+
+  <line x1="282" y1="286" x2="282" y2="306" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <rect x="252" y="310" width="190" height="36" rx="6" class="svg-box"/>
+  <text x="347" y="334" text-anchor="middle" class="svg-mono" style="font-size:11px">"apple" → 10</text>
+  <line x1="347" y1="346" x2="347" y2="358" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="252" y="362" width="190" height="36" rx="6" class="svg-box"/>
+  <text x="347" y="386" text-anchor="middle" class="svg-mono" style="font-size:11px">"grape" → 20</text>
+  <line x1="347" y1="398" x2="347" y2="410" class="svg-arrow" marker-end="url(#ah)"/>
+  <rect x="252" y="414" width="190" height="30" rx="6" class="svg-box-bad"/>
+  <text x="347" y="434" text-anchor="middle" class="svg-mono" style="font-size:11px">"melon" → 30</text>
+
+  <text x="470" y="330" class="svg-text">3 号桶里的链</text>
+  <text x="470" y="356" class="svg-small">先比较 key，再决定是否命中</text>
+  <text x="470" y="382" class="svg-small">链越长，查找越慢</text>
+  <text x="470" y="408" class="svg-bad-text">全部挤进一个桶 → O(n)</text>
+</svg>`
+  },
+  {
+    nav: '装填因子 / rehash',
+    title: '4. 装填因子到 1.0，再插一个就 rehash',
+    caption: '装填因子 = 元素数 / 桶数。默认 <code>max_load_factor</code> 通常是 1.0；当插入会让 <code>size + 1</code> 超过 <code>桶数 × max_load_factor</code> 时，哈希表会增加桶数并<strong>重新计算所有元素的下标</strong>，这叫 rehash。rehash 之后迭代器全部失效，但指向元素的引用/指针仍然有效（链地址法不搬节点）。',
+    code: 'std::unordered_map<K, V> m;\nm.max_load_factor(1.0);   // 默认通常就是 1.0\nm.reserve(1000);          // 预留桶，减少 rehash\n// rehash 会重排元素：迭代器失效，引用/指针仍有效',
+    highlight: [1, 2, 3],
+    ms: 9000,
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="装填因子超过阈值后哈希表扩容并重新分配元素">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">插入第 9 个元素：装填因子到 1.0，触发扩容</text>
+
+  <text x="40" y="66" class="svg-text">扩容前：8 个桶，8 个元素（1.0）</text>
+  <text x="40" y="88" class="svg-small">点 = 一个元素</text>
+  <g>
+    <rect x="60" y="98" width="56" height="50" rx="6" class="svg-box"/>
+    <rect x="124" y="98" width="56" height="50" rx="6" class="svg-box"/>
+    <rect x="188" y="98" width="56" height="50" rx="6" class="svg-box"/>
+    <rect x="252" y="98" width="56" height="50" rx="6" class="svg-box"/>
+    <rect x="316" y="98" width="56" height="50" rx="6" class="svg-box"/>
+    <rect x="380" y="98" width="56" height="50" rx="6" class="svg-box"/>
+    <rect x="444" y="98" width="56" height="50" rx="6" class="svg-box"/>
+    <rect x="508" y="98" width="56" height="50" rx="6" class="svg-box-warn"/>
+    <circle cx="88" cy="118" r="6" fill="#4f46e5"/>
+    <circle cx="152" cy="118" r="6" fill="#4f46e5"/>
+    <circle cx="216" cy="118" r="6" fill="#4f46e5"/>
+    <circle cx="280" cy="118" r="6" fill="#4f46e5"/>
+    <circle cx="344" cy="118" r="6" fill="#4f46e5"/>
+    <circle cx="408" cy="118" r="6" fill="#4f46e5"/>
+    <circle cx="472" cy="118" r="6" fill="#4f46e5"/>
+    <circle cx="536" cy="118" r="6" fill="#4f46e5"/>
+    <text x="88" y="140" text-anchor="middle" class="svg-small">0</text>
+    <text x="152" y="140" text-anchor="middle" class="svg-small">1</text>
+    <text x="216" y="140" text-anchor="middle" class="svg-small">2</text>
+    <text x="280" y="140" text-anchor="middle" class="svg-small">3</text>
+    <text x="344" y="140" text-anchor="middle" class="svg-small">4</text>
+    <text x="408" y="140" text-anchor="middle" class="svg-small">5</text>
+    <text x="472" y="140" text-anchor="middle" class="svg-small">6</text>
+    <text x="536" y="140" text-anchor="middle" class="svg-small">7</text>
+  </g>
+  <text x="592" y="120" class="svg-small">8 / 8 = 1.0</text>
+
+  <path d="M320 152 C320 190 320 196 320 218" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="334" y="190" class="svg-good-text">插入第 9 个 → 超出阈值，rehash</text>
+
+  <text x="40" y="234" class="svg-text">扩容后：16 个桶，9 个元素（≈0.56）</text>
+  <g>
+    <rect x="30" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="74" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="118" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="162" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="206" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="250" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="294" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="338" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="382" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="426" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="470" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="514" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="558" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="602" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="646" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <rect x="690" y="252" width="40" height="42" rx="5" class="svg-box"/>
+    <circle cx="50" cy="270" r="5" fill="#059669"/>
+    <circle cx="94" cy="270" r="5" fill="#059669"/>
+    <circle cx="182" cy="270" r="5" fill="#059669"/>
+    <circle cx="270" cy="270" r="5" fill="#059669"/>
+    <circle cx="358" cy="270" r="5" fill="#059669"/>
+    <circle cx="446" cy="270" r="5" fill="#059669"/>
+    <circle cx="534" cy="270" r="5" fill="#059669"/>
+    <circle cx="622" cy="270" r="5" fill="#059669"/>
+    <circle cx="710" cy="270" r="5" fill="#059669"/>
+    <text x="50" y="288" text-anchor="middle" class="svg-small">0</text>
+    <text x="94" y="288" text-anchor="middle" class="svg-small">1</text>
+    <text x="138" y="288" text-anchor="middle" class="svg-small">2</text>
+    <text x="182" y="288" text-anchor="middle" class="svg-small">3</text>
+    <text x="226" y="288" text-anchor="middle" class="svg-small">4</text>
+    <text x="270" y="288" text-anchor="middle" class="svg-small">5</text>
+    <text x="314" y="288" text-anchor="middle" class="svg-small">6</text>
+    <text x="358" y="288" text-anchor="middle" class="svg-small">7</text>
+    <text x="402" y="288" text-anchor="middle" class="svg-small">8</text>
+    <text x="446" y="288" text-anchor="middle" class="svg-small">9</text>
+    <text x="490" y="288" text-anchor="middle" class="svg-small">10</text>
+    <text x="534" y="288" text-anchor="middle" class="svg-small">11</text>
+    <text x="578" y="288" text-anchor="middle" class="svg-small">12</text>
+    <text x="622" y="288" text-anchor="middle" class="svg-small">13</text>
+    <text x="666" y="288" text-anchor="middle" class="svg-small">14</text>
+    <text x="710" y="288" text-anchor="middle" class="svg-small">15</text>
+  </g>
+  <text x="470" y="326" class="svg-small">9 / 16 ≈ 0.56，链表重新变短</text>
+
+  <path d="M564 148 C650 190 710 220 710 248" class="svg-arrow-bad" marker-end="url(#ah)"/>
+  <text x="590" y="208" class="svg-small">所有元素重新计算下标</text>
+
+  <rect x="30" y="356" width="700" height="80" rx="10" class="svg-box-ghost"/>
+  <text x="48" y="382" class="svg-text">rehash 的代价：O(n) 重新分布；但和 vector 扩容一样，摊还到每次插入是 O(1)。</text>
+  <text x="48" y="406" class="svg-small">迭代器全部失效；引用和指针仍指向原来的元素（链地址法不移动节点）。</text>
+  <text x="48" y="426" class="svg-small">知道规模时先 reserve()，能避免多次 rehash。</text>
+</svg>`
+  },
+  {
+    nav: '链地址 vs 开放寻址',
+    title: '5. 两种冲突解决思路',
+    caption: '链地址法：每个桶挂一条链，冲突元素串起来。开放寻址：冲突时按规则找下一个空槽（如线性探测），删元素要用墓碑标记，否则会截断查找路径。标准库不规定 <code>unordered_map</code> 用哪种；常见实现用链地址法。',
+    code: '// 链地址：桶 → 节点链，冲突时挂到链上\n// 开放寻址：冲突时探测下一个槽\n//   idx = (idx + 1) % n;  // 线性探测\n// 删除不能直接置空，要留 tombstone\n// 具体策略由标准库实现决定',
+    highlight: [0, 1, 2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="链地址法和开放寻址法解决冲突的对比">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">冲突之后：挂链，还是继续找空位？</text>
+
+  <rect x="20" y="56" width="350" height="300" rx="12" class="svg-box-accent"/>
+  <text x="40" y="84" class="svg-text" style="font-weight:700">链地址法（chaining）</text>
+
+  <g>
+    <rect x="50" y="104" width="54" height="38" rx="6" class="svg-box"/>
+    <rect x="50" y="150" width="54" height="38" rx="6" class="svg-box-accent"/>
+    <rect x="50" y="196" width="54" height="38" rx="6" class="svg-box"/>
+    <rect x="50" y="242" width="54" height="38" rx="6" class="svg-box"/>
+    <text x="77" y="128" text-anchor="middle" class="svg-small">1</text>
+    <text x="77" y="174" text-anchor="middle" class="svg-small">2</text>
+    <text x="77" y="220" text-anchor="middle" class="svg-small">3</text>
+    <text x="77" y="266" text-anchor="middle" class="svg-small">4</text>
+  </g>
+  <line x1="104" y1="169" x2="132" y2="169" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <line x1="104" y1="215" x2="132" y2="215" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <rect x="134" y="150" width="86" height="38" rx="6" class="svg-box-good"/>
+  <text x="177" y="174" text-anchor="middle" class="svg-mono" style="font-size:11px">"apple"</text>
+  <rect x="232" y="150" width="86" height="38" rx="6" class="svg-box"/>
+  <text x="275" y="174" text-anchor="middle" class="svg-mono" style="font-size:11px">"grape"</text>
+  <line x1="220" y1="169" x2="228" y2="169" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <rect x="134" y="196" width="86" height="38" rx="6" class="svg-box-good"/>
+  <text x="177" y="220" text-anchor="middle" class="svg-mono" style="font-size:11px">"melon"</text>
+
+  <text x="40" y="310" class="svg-small">冲突元素挂在桶外，桶只存链头</text>
+  <text x="40" y="334" class="svg-small">链长受装填因子影响；节点分散，缓存不友好</text>
+
+  <rect x="390" y="56" width="350" height="300" rx="12" class="svg-box-good"/>
+  <text x="410" y="84" class="svg-text" style="font-weight:700">开放寻址（线性探测）</text>
+
+  <g>
+    <rect x="420" y="110" width="42" height="46" rx="5" class="svg-box"/>
+    <rect x="466" y="110" width="42" height="46" rx="5" class="svg-box"/>
+    <rect x="512" y="110" width="42" height="46" rx="5" class="svg-box-accent svg-pulse"/>
+    <rect x="558" y="110" width="42" height="46" rx="5" class="svg-box-good"/>
+    <rect x="604" y="110" width="42" height="46" rx="5" class="svg-box-good"/>
+    <rect x="650" y="110" width="42" height="46" rx="5" class="svg-box-bad"/>
+    <rect x="696" y="110" width="30" height="46" rx="5" class="svg-box-ghost"/>
+    <text x="441" y="139" text-anchor="middle" class="svg-small">h</text>
+    <text x="487" y="139" text-anchor="middle" class="svg-small">占</text>
+    <text x="533" y="139" text-anchor="middle" class="svg-small">占</text>
+    <text x="579" y="139" text-anchor="middle" class="svg-mono" style="font-size:11px">A</text>
+    <text x="625" y="139" text-anchor="middle" class="svg-mono" style="font-size:11px">B</text>
+    <text x="671" y="139" text-anchor="middle" class="svg-small">墓碑</text>
+  </g>
+
+  <path d="M441 166 C470 212 530 212 560 166" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <path d="M560 166 C590 220 640 220 670 166" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="420" y="252" class="svg-small">目标桶被占 → 顺延找下一个空槽</text>
+  <text x="420" y="278" class="svg-small">容易形成连续占用区（聚集），查找变慢</text>
+  <text x="420" y="304" class="svg-small">删除留墓碑；墓碑太多也要 rehash</text>
+  <text x="420" y="330" class="svg-small">优点：数据集中，缓存友好</text>
+
+  <text x="30" y="394" class="svg-text">std::unordered_map 的冲突解决方式由实现决定，标准只规定接口和复杂度要求。</text>
+  <text x="30" y="420" class="svg-small">不管哪种方案，最坏情况都可能退化成 O(n)；平均情况依赖哈希质量与装填因子。</text>
+</svg>`
+  },
+  {
+    nav: '常见坑',
+    title: '6. 哈希表的坑：key、顺序、最坏情况',
+    caption: '自定义类型要提供哈希函数和相等比较；key 放进容器后不要再改；遍历顺序不保证；对性能敏感时提前 <code>reserve</code>；如果哈希被恶意构造，最坏会退化。需要有序遍历就用 <code>std::map</code>，别指望 <code>unordered_map</code> 的顺序。',
+    code: 'struct Key { int x, y; };\nusing H = std::hash<int>;\nstruct Hash { size_t operator()(Key k) const {\n    return H{}(k.x) ^ (H{}(k.y) << 1); } };\nstruct Eq {                            // 相等\n    bool operator()(Key a, Key b) const {\n        return a.x == b.x && a.y == b.y; }\n};   // unordered_map<Key, int, Hash, Eq>',
+    highlight: [2, 3, 5, 7],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="哈希表常见坑：自定义 key、修改 key、遍历顺序、最坏情况">
+  <text x="30" y="32" class="svg-title">用 unordered_map 前先想清楚这五件事</text>
+
+  <rect x="24" y="54" width="712" height="42" rx="8" class="svg-box-accent"/>
+  <text x="42" y="81" class="svg-text" style="font-weight:700">坑</text>
+  <text x="270" y="81" class="svg-text" style="font-weight:700">后果</text>
+  <text x="540" y="81" class="svg-text" style="font-weight:700">做法</text>
+
+  <rect x="24" y="96" width="712" height="58" rx="8" class="svg-field"/>
+  <text x="42" y="121" class="svg-text">自定义 key 没有 hash / ==</text>
+  <text x="270" y="121" class="svg-small">编译失败或找不到元素</text>
+  <text x="540" y="121" class="svg-small">提供 Hash 与 Eq，或特化 std::hash</text>
+  <text x="42" y="143" class="svg-small">标准库不知道你的类型怎么算哈希</text>
+
+  <rect x="24" y="154" width="712" height="58" rx="8" class="svg-field"/>
+  <text x="42" y="179" class="svg-text">把 key 改了</text>
+  <text x="270" y="179" class="svg-small">元素“消失”，再也查不到</text>
+  <text x="540" y="179" class="svg-small">key 视为不可变；要改就删了重插</text>
+  <text x="42" y="201" class="svg-small">桶位置是按旧 key 算出来的</text>
+
+  <rect x="24" y="212" width="712" height="58" rx="8" class="svg-field"/>
+  <text x="42" y="237" class="svg-text">依赖遍历顺序</text>
+  <text x="270" y="237" class="svg-small">换实现 / rehash 后顺序就变</text>
+  <text x="540" y="237" class="svg-small">要顺序用 std::map / std::set</text>
+  <text x="42" y="259" class="svg-small">unordered 只保证查找，不保证次序</text>
+
+  <rect x="24" y="270" width="712" height="58" rx="8" class="svg-field"/>
+  <text x="42" y="295" class="svg-text">频繁 rehash</text>
+  <text x="270" y="295" class="svg-small">插入抖动、迭代器失效</text>
+  <text x="540" y="295" class="svg-small">规模已知就 reserve</text>
+  <text x="42" y="317" class="svg-small">rehash 要重新分布所有元素</text>
+
+  <rect x="24" y="328" width="712" height="58" rx="8" class="svg-field"/>
+  <text x="42" y="353" class="svg-text">恶意构造的 key</text>
+  <text x="270" y="353" class="svg-small">大量冲突 → 最坏 O(n)</text>
+  <text x="540" y="353" class="svg-small">换随机化哈希 / 限制输入规模</text>
+  <text x="42" y="375" class="svg-small">哈希不是加密，别把安全寄托在它上面</text>
+
+  <rect x="24" y="396" width="712" height="36" rx="8" class="svg-box-good"/>
+  <text x="42" y="420" class="svg-text">平均 O(1) 是期望，不是保证；最坏 O(n) 必须心里有数。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

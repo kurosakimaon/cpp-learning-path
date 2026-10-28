@@ -137,7 +137,7 @@ void vectorDemo_capacity()
     vector<int> vec;
     size_t prevCap = 0;
 
-    cout << "  观察扩容过程（每次翻倍）：" << endl;
+    cout << "  观察扩容过程（libstdc++ 每次翻倍，MSVC 约 1.5 倍）：" << endl;
     cout << "  ";
     for (int i = 0; i < 100; ++i)
     {
@@ -229,7 +229,7 @@ void vectorDemo_iteratorInvalidation()
 
     cout << "\n  迭代器失效总结：" << endl;
     cout << "    - insert/push_back/emplace_back：如果触发扩容，全部失效" << endl;
-    cout << "      没扩容的话，插入点之后的迭代器失效" << endl;
+    cout << "      没扩容的话，插入点及其之后的迭代器（含 end()）全部失效" << endl;
     cout << "    - erase：被删除元素及其之后的迭代器失效" << endl;
     cout << "    - pop_back：尾迭代器和最后一个元素的迭代器失效" << endl;
 }

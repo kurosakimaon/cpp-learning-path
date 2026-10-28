@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>堆与优先队列：数组里长出来的树 - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../algorithms/index.html">算法模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 数据结构</div>
+    <h1>⛰️ 堆与优先队列：数组里长出来的树</h1>
+    <p>堆不是“完全有序”的树，它只保证父节点不小于孩子。也正因为要求少，插入和删除堆顶只要 O(log n)，读取最大值更是 O(1)；完全二叉树还能直接塞进数组，不需要指针。这一页看 sift-up、sift-down、建堆和堆排序。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 6</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应源码：<a href="../algorithms/data_structures.cpp">algorithms/data_structures.cpp</a> ·
+    交互沙盘：<a href="../algorithms/data_structures_visualizer.html">数据结构可视化</a> ·
+    相关教程：<a href="../algorithms/tutorial.md">algorithms/tutorial.md</a> ·
+    <code>std::priority_queue</code> 默认是<strong>大顶堆</strong>，底层容器默认 <code>std::vector</code>。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '数组 ↔ 完全二叉树',
+    title: '1. 完全二叉树不用指针，直接塞进数组',
+    caption: '完全二叉树除最后一层外都填满，最后一层靠左连续。因此按层序从 0 开始编号，就能用一个数组表示整棵树：下标 i 的父节点是 <code>(i-1)/2</code>，左孩子是 <code>2i+1</code>，右孩子是 <code>2i+2</code>。不需要 next 指针，也不会多占内存。',
+    code: '// 0 开始编号\nint parent(int i) { return (i - 1) / 2; }\nint left(int i)   { return 2 * i + 1; }\nint right(int i)  { return 2 * i + 2; }\n// 数组：90, 70, 80, 40, 60, 50, 30',
+    highlight: [1, 2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="完全二叉树按层序编号后映射到数组，父节点和孩子的下标可以互相计算">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">树和数组是同一组数据的两种画法</text>
+
+  <line x1="380" y1="78" x2="260" y2="168" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="380" y1="78" x2="500" y2="168" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="260" y1="168" x2="190" y2="258" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="260" y1="168" x2="330" y2="258" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="500" y1="168" x2="430" y2="258" class="svg-arrow" style="stroke:#f59e0b"/>
+  <line x1="500" y1="168" x2="570" y2="258" class="svg-arrow" style="stroke:#f59e0b"/>
+
+  <circle cx="380" cy="78" r="25" class="svg-box-good"/>
+  <text x="380" y="84" text-anchor="middle" class="svg-mono">90</text>
+  <circle cx="260" cy="168" r="24" class="svg-box"/>
+  <text x="260" y="174" text-anchor="middle" class="svg-mono">70</text>
+  <circle cx="500" cy="168" r="24" class="svg-box-accent svg-pulse"/>
+  <text x="500" y="174" text-anchor="middle" class="svg-mono" style="font-weight:700">80</text>
+  <circle cx="190" cy="258" r="23" class="svg-box"/>
+  <text x="190" y="264" text-anchor="middle" class="svg-mono">40</text>
+  <circle cx="330" cy="258" r="23" class="svg-box"/>
+  <text x="330" y="264" text-anchor="middle" class="svg-mono">60</text>
+  <circle cx="430" cy="258" r="23" class="svg-box-warn"/>
+  <text x="430" y="264" text-anchor="middle" class="svg-mono">50</text>
+  <circle cx="570" cy="258" r="23" class="svg-box-warn"/>
+  <text x="570" y="264" text-anchor="middle" class="svg-mono">30</text>
+
+  <text x="356" y="50" class="svg-small">i = 0</text>
+  <text x="236" y="140" class="svg-small">i = 1</text>
+  <text x="524" y="140" class="svg-small">i = 2</text>
+  <text x="166" y="230" class="svg-small">i = 3</text>
+  <text x="306" y="230" class="svg-small">i = 4</text>
+  <text x="406" y="230" class="svg-small">i = 5</text>
+  <text x="546" y="230" class="svg-small">i = 6</text>
+
+  <g>
+    <rect x="110" y="310" width="72" height="50" rx="6" class="svg-box"/>
+    <rect x="182" y="310" width="72" height="50" rx="6" class="svg-box"/>
+    <rect x="254" y="310" width="72" height="50" rx="6" class="svg-box"/>
+    <rect x="326" y="310" width="72" height="50" rx="6" class="svg-box-good"/>
+    <rect x="398" y="310" width="72" height="50" rx="6" class="svg-box"/>
+    <rect x="470" y="310" width="72" height="50" rx="6" class="svg-box"/>
+    <rect x="542" y="310" width="72" height="50" rx="6" class="svg-box"/>
+    <text x="146" y="340" text-anchor="middle" class="svg-mono">90</text>
+    <text x="218" y="340" text-anchor="middle" class="svg-mono">70</text>
+    <text x="290" y="340" text-anchor="middle" class="svg-mono">80</text>
+    <text x="362" y="340" text-anchor="middle" class="svg-mono">40</text>
+    <text x="434" y="340" text-anchor="middle" class="svg-mono">60</text>
+    <text x="506" y="340" text-anchor="middle" class="svg-mono">50</text>
+    <text x="578" y="340" text-anchor="middle" class="svg-mono">30</text>
+    <text x="146" y="380" text-anchor="middle" class="svg-small">0</text>
+    <text x="218" y="380" text-anchor="middle" class="svg-small">1</text>
+    <text x="290" y="380" text-anchor="middle" class="svg-small">2</text>
+    <text x="362" y="380" text-anchor="middle" class="svg-small">3</text>
+    <text x="434" y="380" text-anchor="middle" class="svg-small">4</text>
+    <text x="506" y="380" text-anchor="middle" class="svg-small">5</text>
+    <text x="578" y="380" text-anchor="middle" class="svg-small">6</text>
+  </g>
+
+  <text x="30" y="416" class="svg-text">以 i = 2（值 80）为例：parent = (2-1)/2 = 0，left = 5，right = 6。</text>
+  <text x="30" y="440" class="svg-small">下标 0 的父节点仍按 (0-1)/2 算会得到 0；代码里要额外判断 i &gt; 0。</text>
+</svg>`
+  },
+  {
+    nav: '大顶堆性质',
+    title: '2. 堆只保证父节点 ≥ 孩子，不保证整体有序',
+    caption: '大顶堆的规则是：每个父节点都 ≥ 它的孩子。于是根一定是最大值，但左右孩子之间没有大小要求，整棵树也不是排序结果。正因为要求比 BST 少，堆的维护成本才低：插入和删除堆顶是 O(log n)，读取堆顶只要 O(1)。',
+    code: 'std::priority_queue<int> pq;  // 默认大顶堆\npq.push(3);\npq.push(9);\npq.push(5);\nint mx = pq.top();  // 9，O(1)\npq.pop();           // 移除 9，O(log n)',
+    highlight: [0, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="大顶堆只保证每个父节点大于等于孩子，兄弟之间没有顺序要求">
+  <text x="30" y="32" class="svg-title">每个父节点都不小于孩子，但兄弟之间随便</text>
+
+  <line x1="380" y1="86" x2="250" y2="180" class="svg-arrow" style="stroke:#059669;stroke-width:2.4"/>
+  <line x1="380" y1="86" x2="510" y2="180" class="svg-arrow" style="stroke:#059669;stroke-width:2.4"/>
+  <line x1="250" y1="180" x2="170" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
+  <line x1="250" y1="180" x2="330" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
+  <line x1="510" y1="180" x2="430" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
+  <line x1="510" y1="180" x2="590" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
+
+  <circle cx="380" cy="86" r="27" class="svg-box-good"/>
+  <text x="380" y="92" text-anchor="middle" class="svg-mono" style="font-weight:700">90</text>
+  <circle cx="250" cy="180" r="25" class="svg-box-good"/>
+  <text x="250" y="186" text-anchor="middle" class="svg-mono">70</text>
+  <circle cx="510" cy="180" r="25" class="svg-box-good"/>
+  <text x="510" y="186" text-anchor="middle" class="svg-mono">80</text>
+  <circle cx="170" cy="274" r="23" class="svg-box"/>
+  <text x="170" y="280" text-anchor="middle" class="svg-mono">40</text>
+  <circle cx="330" cy="274" r="23" class="svg-box"/>
+  <text x="330" y="280" text-anchor="middle" class="svg-mono">60</text>
+  <circle cx="430" cy="274" r="23" class="svg-box"/>
+  <text x="430" y="280" text-anchor="middle" class="svg-mono">50</text>
+  <circle cx="590" cy="274" r="23" class="svg-box"/>
+  <text x="590" y="280" text-anchor="middle" class="svg-mono">30</text>
+
+  <text x="382" y="150" class="svg-small">90 ≥ 70, 80</text>
+  <text x="150" y="222" class="svg-small">70 ≥ 40, 60</text>
+  <text x="532" y="222" class="svg-small">80 ≥ 50, 30</text>
+
+  <rect x="30" y="318" width="700" height="52" rx="10" class="svg-box-good"/>
+  <text x="48" y="342" class="svg-text">根 = 最大值；但 70 在左、80 在右，兄弟之间没有顺序要求。</text>
+  <text x="48" y="362" class="svg-small">所以堆不是“排好序的树”，不能中序遍历得到升序。</text>
+
+  <text x="30" y="398" class="svg-text">max-heap：父 ≥ 子；min-heap：父 ≤ 子。</text>
+  <text x="30" y="424" class="svg-small">C++ 的 priority_queue 默认是 max-heap；要最小堆就换比较器 greater&lt;int&gt;。</text>
+</svg>`
+  },
+  {
+    nav: '插入 sift-up',
+    title: '3. 插入：先放末尾，再一路往上冒',
+    caption: '插入时先把新元素放到数组末尾（保持完全二叉树形状），然后不断和父节点比较：比父大就交换，直到不比父大或到根。最多走一条从叶到根的路径，长度是树高，所以是 O(log n)。',
+    code: 'void push(int x) {\n    a.push_back(x);\n    size_t i = a.size() - 1;\n    while (i > 0 && a[i] > a[(i - 1) / 2]) {\n        std::swap(a[i], a[(i - 1) / 2]);\n        i = (i - 1) / 2;\n    }\n}',
+    highlight: [1, 2, 3, 4, 5],
+    ms: 9000,
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="堆插入新元素 85 后一路上浮到正确位置">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">插入 85：追加到末尾，然后和父节点比</text>
+
+  <line x1="380" y1="72" x2="250" y2="158" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="380" y1="72" x2="510" y2="158" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="250" y1="158" x2="170" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="250" y1="158" x2="330" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="510" y1="158" x2="430" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="510" y1="158" x2="590" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="170" y1="244" x2="130" y2="330" class="svg-arrow" style="stroke:#cbd5e1"/>
+
+  <circle cx="380" cy="72" r="25" class="svg-box-good"/>
+  <text x="380" y="78" text-anchor="middle" class="svg-mono">90</text>
+  <circle cx="250" cy="158" r="24" class="svg-box-accent"/>
+  <text x="250" y="164" text-anchor="middle" class="svg-mono">70</text>
+  <circle cx="510" cy="158" r="24" class="svg-box"/>
+  <text x="510" y="164" text-anchor="middle" class="svg-mono">80</text>
+  <circle cx="170" cy="244" r="22" class="svg-box-accent"/>
+  <text x="170" y="250" text-anchor="middle" class="svg-mono">40</text>
+  <circle cx="330" cy="244" r="22" class="svg-box"/>
+  <text x="330" y="250" text-anchor="middle" class="svg-mono">60</text>
+  <circle cx="430" cy="244" r="22" class="svg-box"/>
+  <text x="430" y="250" text-anchor="middle" class="svg-mono">50</text>
+  <circle cx="590" cy="244" r="22" class="svg-box"/>
+  <text x="590" y="250" text-anchor="middle" class="svg-mono">30</text>
+  <circle cx="130" cy="330" r="24" class="svg-box-accent svg-pulse"/>
+  <text x="130" y="336" text-anchor="middle" class="svg-mono" style="font-weight:700">85</text>
+
+  <path d="M146 310 C170 288 190 282 208 262" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="150" y="300" class="svg-small">85 &gt; 40</text>
+  <path d="M232 230 C226 208 224 190 220 170" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="230" y="214" class="svg-small">85 &gt; 70</text>
+  <path d="M250 134 C280 110 320 100 354 92" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+  <text x="286" y="106" class="svg-bad-text">85 &lt; 90，停</text>
+
+  <rect x="30" y="372" width="700" height="60" rx="10" class="svg-box-ghost"/>
+  <text x="48" y="396" class="svg-text">新元素先放末尾（保持完全树形状），再沿着到根的路径上浮。</text>
+  <text x="48" y="418" class="svg-small">最多比较树高次：O(log n)。这个操作叫 sift-up / bubble-up。</text>
+</svg>`
+  },
+  {
+    nav: '取堆顶 sift-down',
+    title: '4. 取堆顶：把末尾换上来，再往下沉',
+    caption: '取最大值只要 <code>top()</code>，O(1)。但删掉根会破坏结构：先把最后一个元素换到根，再 <code>pop_back()</code>，然后让根和<strong>较大的那个孩子</strong>交换，一路下沉，直到不小于孩子或到叶子。仍然是 O(log n)。',
+    code: 'size_t i = 0, n = a.size();\nwhile (true) {\n    size_t l = 2*i+1, r = l+1, big = i;\n    if (l < n && a[l] > a[big]) big = l;\n    if (r < n && a[r] > a[big]) big = r;\n    if (big == i) break;\n    std::swap(a[i], a[big]); i = big;\n}',
+    highlight: [0, 1, 2, 3, 4, 5],
+    ms: 9000,
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="取走堆顶后把末尾元素换到根，再和较大的孩子交换下沉">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">取出 90：末尾的 40 顶上来，再选较大的孩子下沉</text>
+
+  <text x="30" y="58" class="svg-small">操作前（大顶堆，8 个元素）</text>
+  <text x="590" y="58" class="svg-bad-text">top() 返回 90</text>
+  <g>
+    <rect x="30" y="68" width="80" height="44" rx="6" class="svg-box-bad"/>
+    <rect x="116" y="68" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="202" y="68" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="288" y="68" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="374" y="68" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="460" y="68" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="546" y="68" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="632" y="68" width="80" height="44" rx="6" class="svg-box-accent"/>
+    <text x="70" y="96" text-anchor="middle" class="svg-mono" style="font-weight:700">90</text>
+    <text x="156" y="96" text-anchor="middle" class="svg-mono">85</text>
+    <text x="242" y="96" text-anchor="middle" class="svg-mono">80</text>
+    <text x="328" y="96" text-anchor="middle" class="svg-mono">70</text>
+    <text x="414" y="96" text-anchor="middle" class="svg-mono">60</text>
+    <text x="500" y="96" text-anchor="middle" class="svg-mono">50</text>
+    <text x="586" y="96" text-anchor="middle" class="svg-mono">30</text>
+    <text x="672" y="96" text-anchor="middle" class="svg-mono">40</text>
+    <text x="70" y="126" text-anchor="middle" class="svg-small">0</text>
+    <text x="156" y="126" text-anchor="middle" class="svg-small">1</text>
+    <text x="242" y="126" text-anchor="middle" class="svg-small">2</text>
+    <text x="328" y="126" text-anchor="middle" class="svg-small">3</text>
+    <text x="414" y="126" text-anchor="middle" class="svg-small">4</text>
+    <text x="500" y="126" text-anchor="middle" class="svg-small">5</text>
+    <text x="586" y="126" text-anchor="middle" class="svg-small">6</text>
+    <text x="672" y="126" text-anchor="middle" class="svg-small">7</text>
+  </g>
+
+  <path d="M672 114 C640 144 120 144 82 170" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+
+  <text x="30" y="184" class="svg-small">① 末尾 40 换到根 + pop_back()（7 个元素）：堆性质被破坏</text>
+  <g>
+    <rect x="30" y="194" width="80" height="44" rx="6" class="svg-box-accent svg-pulse"/>
+    <rect x="116" y="194" width="80" height="44" rx="6" class="svg-box-accent"/>
+    <rect x="202" y="194" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="288" y="194" width="80" height="44" rx="6" class="svg-box-accent"/>
+    <rect x="374" y="194" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="460" y="194" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="546" y="194" width="80" height="44" rx="6" class="svg-box"/>
+    <text x="70" y="222" text-anchor="middle" class="svg-mono" style="font-weight:700">40</text>
+    <text x="156" y="222" text-anchor="middle" class="svg-mono">85</text>
+    <text x="242" y="222" text-anchor="middle" class="svg-mono">80</text>
+    <text x="328" y="222" text-anchor="middle" class="svg-mono">70</text>
+    <text x="414" y="222" text-anchor="middle" class="svg-mono">60</text>
+    <text x="500" y="222" text-anchor="middle" class="svg-mono">50</text>
+    <text x="586" y="222" text-anchor="middle" class="svg-mono">30</text>
+  </g>
+
+  <text x="30" y="262" class="svg-small">下沉：40 与较大的孩子 85 交换（下标 0 → 1），再与 70 交换（下标 1 → 3）</text>
+
+  <text x="30" y="288" class="svg-small">② 下沉后：40 停在下标 3，堆性质恢复</text>
+  <g>
+    <rect x="30" y="298" width="80" height="44" rx="6" class="svg-box-good"/>
+    <rect x="116" y="298" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="202" y="298" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="288" y="298" width="80" height="44" rx="6" class="svg-box-accent"/>
+    <rect x="374" y="298" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="460" y="298" width="80" height="44" rx="6" class="svg-box"/>
+    <rect x="546" y="298" width="80" height="44" rx="6" class="svg-box"/>
+    <text x="70" y="326" text-anchor="middle" class="svg-mono" style="font-weight:700">85</text>
+    <text x="156" y="326" text-anchor="middle" class="svg-mono">70</text>
+    <text x="242" y="326" text-anchor="middle" class="svg-mono">80</text>
+    <text x="328" y="326" text-anchor="middle" class="svg-mono" style="font-weight:700">40</text>
+    <text x="414" y="326" text-anchor="middle" class="svg-mono">60</text>
+    <text x="500" y="326" text-anchor="middle" class="svg-mono">50</text>
+    <text x="586" y="326" text-anchor="middle" class="svg-mono">30</text>
+  </g>
+
+  <rect x="30" y="362" width="700" height="56" rx="9" class="svg-box-good"/>
+  <text x="48" y="386" class="svg-text">每次和较大的孩子交换，才能保证换上去的父节点仍然 ≥ 两个孩子。</text>
+  <text x="48" y="408" class="svg-small">若和较小的孩子交换，另一个孩子就会比新父节点大，堆性质立刻被破坏。</text>
+</svg>`
+  },
+  {
+    nav: '建堆 O(n)',
+    title: '5. 建堆：从最后一个非叶子往前下沉',
+    caption: '把无序数组变成堆，不需要一个个插入（那是 O(n log n)）。从最后一个非叶子节点开始，倒着对每个节点做 sift-down 即可。约一半节点是叶子，根本不用动；越往上节点越少，总工作量可以证明是 O(n)。',
+    code: 'void buildHeap(std::vector<int>& a) {\n    for (int i = a.size() / 2 - 1; i >= 0; --i)\n        siftDown(a, i);\n}\n// 叶子不用下沉：约 n/2 个节点零成本\n// 等价于 std::make_heap(a.begin(), a.end());',
+    highlight: [1, 2, 3, 4],
+    ms: 9000,
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="建堆从最后一个非叶子节点开始自底向上做 sift-down，总代价 O(n)">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">无序数组 → 大顶堆：自底向上 sift-down</text>
+
+  <text x="30" y="66" class="svg-small">初始数组（处理顺序：2 → 1 → 0）</text>
+  <g>
+    <rect x="30" y="80" width="64" height="48" rx="6" class="svg-box-warn"/>
+    <rect x="98" y="80" width="64" height="48" rx="6" class="svg-box-warn"/>
+    <rect x="166" y="80" width="64" height="48" rx="6" class="svg-box-warn"/>
+    <rect x="234" y="80" width="64" height="48" rx="6" class="svg-box"/>
+    <rect x="302" y="80" width="64" height="48" rx="6" class="svg-box"/>
+    <rect x="370" y="80" width="64" height="48" rx="6" class="svg-box"/>
+    <rect x="438" y="80" width="64" height="48" rx="6" class="svg-box"/>
+    <text x="62" y="110" text-anchor="middle" class="svg-mono">30</text>
+    <text x="130" y="110" text-anchor="middle" class="svg-mono">40</text>
+    <text x="198" y="110" text-anchor="middle" class="svg-mono">80</text>
+    <text x="266" y="110" text-anchor="middle" class="svg-mono">70</text>
+    <text x="334" y="110" text-anchor="middle" class="svg-mono">60</text>
+    <text x="402" y="110" text-anchor="middle" class="svg-mono">50</text>
+    <text x="470" y="110" text-anchor="middle" class="svg-mono">90</text>
+    <text x="62" y="146" text-anchor="middle" class="svg-small">0</text>
+    <text x="130" y="146" text-anchor="middle" class="svg-small">1</text>
+    <text x="198" y="146" text-anchor="middle" class="svg-small">2</text>
+    <text x="266" y="146" text-anchor="middle" class="svg-small">3</text>
+    <text x="334" y="146" text-anchor="middle" class="svg-small">4</text>
+    <text x="402" y="146" text-anchor="middle" class="svg-small">5</text>
+    <text x="470" y="146" text-anchor="middle" class="svg-small">6</text>
+  </g>
+
+  <text x="30" y="194" class="svg-text">① i=2：80 与较大的孩子 90 交换</text>
+  <text x="30" y="220" class="svg-text">② i=1：40 与较大的孩子 70 交换</text>
+  <text x="30" y="246" class="svg-text">③ i=0：30 与 90 交换后，继续下沉到 80 的位置</text>
+
+  <text x="560" y="100" class="svg-small">约一半是叶子：</text>
+  <text x="560" y="122" class="svg-small">不用下沉</text>
+
+  <text x="30" y="286" class="svg-small">最终堆（数组）</text>
+  <g>
+    <rect x="30" y="300" width="64" height="48" rx="6" class="svg-box-good"/>
+    <rect x="98" y="300" width="64" height="48" rx="6" class="svg-box-good"/>
+    <rect x="166" y="300" width="64" height="48" rx="6" class="svg-box-good"/>
+    <rect x="234" y="300" width="64" height="48" rx="6" class="svg-box"/>
+    <rect x="302" y="300" width="64" height="48" rx="6" class="svg-box"/>
+    <rect x="370" y="300" width="64" height="48" rx="6" class="svg-box"/>
+    <rect x="438" y="300" width="64" height="48" rx="6" class="svg-box"/>
+    <text x="62" y="330" text-anchor="middle" class="svg-mono">90</text>
+    <text x="130" y="330" text-anchor="middle" class="svg-mono">70</text>
+    <text x="198" y="330" text-anchor="middle" class="svg-mono">80</text>
+    <text x="266" y="330" text-anchor="middle" class="svg-mono">40</text>
+    <text x="334" y="330" text-anchor="middle" class="svg-mono">60</text>
+    <text x="402" y="330" text-anchor="middle" class="svg-mono">50</text>
+    <text x="470" y="330" text-anchor="middle" class="svg-mono">30</text>
+  </g>
+
+  <rect x="30" y="372" width="700" height="62" rx="10" class="svg-box-ghost"/>
+  <text x="48" y="396" class="svg-text">代价不是 n × log n：越靠下的节点越多，但它们要下沉的距离越短。</text>
+  <text x="48" y="420" class="svg-small">求和后是 O(n)；如果逐个 push 建堆，才是 O(n log n)。</text>
+</svg>`
+  },
+  {
+    nav: '堆排序 / priority_queue',
+    title: '6. 堆排序：每轮把最大值放到末尾',
+    caption: '堆排序先建大顶堆，然后反复把堆顶和末尾交换、缩小堆、对根做 sift-down。每轮确定一个最大值，已排序区从右往左扩大。整体 O(n log n)、原地、不稳定。日常更常用 <code>std::priority_queue</code>：<code>top()</code> O(1)，<code>push/pop</code> O(log n)。',
+    code: 'std::make_heap(v.begin(), v.end());   // O(n)\nstd::sort_heap(v.begin(), v.end());   // O(n log n)\n\nstd::priority_queue<int> pq;          // 大顶堆\npq.push(3); pq.push(9);\nint mx = pq.top();                 // 9，之后 pop()\n\n// 最小堆：第三个模板参数 std::greater<int>',
+    highlight: [0, 1, 3, 5],
+    stage: `
+<svg viewBox="0 0 760 450" role="img" aria-label="堆排序每轮把堆顶最大值交换到末尾，已排序区从右向左扩大">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">大顶堆 → 升序数组：最大值一个个归位</text>
+
+  <text x="30" y="66" class="svg-small">初始大顶堆</text>
+  <g>
+    <rect x="30" y="80" width="66" height="50" rx="6" class="svg-box-accent svg-pulse"/>
+    <rect x="100" y="80" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="170" y="80" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="240" y="80" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="310" y="80" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="380" y="80" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="450" y="80" width="66" height="50" rx="6" class="svg-box"/>
+    <text x="63" y="111" text-anchor="middle" class="svg-mono">90</text>
+    <text x="133" y="111" text-anchor="middle" class="svg-mono">70</text>
+    <text x="203" y="111" text-anchor="middle" class="svg-mono">80</text>
+    <text x="273" y="111" text-anchor="middle" class="svg-mono">40</text>
+    <text x="343" y="111" text-anchor="middle" class="svg-mono">60</text>
+    <text x="413" y="111" text-anchor="middle" class="svg-mono">50</text>
+    <text x="483" y="111" text-anchor="middle" class="svg-mono">30</text>
+  </g>
+
+  <path d="M63 136 C200 160 430 176 483 224" class="svg-arrow" style="stroke:#dc2626" marker-end="url(#ah)"/>
+  <text x="140" y="174" class="svg-small">90 与末尾 30 交换，堆大小减一</text>
+
+  <text x="30" y="216" class="svg-small">第 1 轮之后（根 sift-down 后）</text>
+  <g>
+    <rect x="30" y="230" width="66" height="50" rx="6" class="svg-box-accent"/>
+    <rect x="100" y="230" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="170" y="230" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="240" y="230" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="310" y="230" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="380" y="230" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="450" y="230" width="66" height="50" rx="6" class="svg-box-good"/>
+    <text x="63" y="261" text-anchor="middle" class="svg-mono">80</text>
+    <text x="133" y="261" text-anchor="middle" class="svg-mono">70</text>
+    <text x="203" y="261" text-anchor="middle" class="svg-mono">50</text>
+    <text x="273" y="261" text-anchor="middle" class="svg-mono">40</text>
+    <text x="343" y="261" text-anchor="middle" class="svg-mono">60</text>
+    <text x="413" y="261" text-anchor="middle" class="svg-mono">30</text>
+    <text x="483" y="261" text-anchor="middle" class="svg-mono" style="font-weight:700">90</text>
+  </g>
+  <text x="530" y="261" class="svg-good-text">已排序</text>
+
+  <text x="30" y="310" class="svg-small">第 2 轮之后（根 sift-down 后）</text>
+  <g>
+    <rect x="30" y="324" width="66" height="50" rx="6" class="svg-box-accent"/>
+    <rect x="100" y="324" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="170" y="324" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="240" y="324" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="310" y="324" width="66" height="50" rx="6" class="svg-box"/>
+    <rect x="380" y="324" width="66" height="50" rx="6" class="svg-box-good"/>
+    <rect x="450" y="324" width="66" height="50" rx="6" class="svg-box-good"/>
+    <text x="63" y="355" text-anchor="middle" class="svg-mono">70</text>
+    <text x="133" y="355" text-anchor="middle" class="svg-mono">60</text>
+    <text x="203" y="355" text-anchor="middle" class="svg-mono">50</text>
+    <text x="273" y="355" text-anchor="middle" class="svg-mono">40</text>
+    <text x="343" y="355" text-anchor="middle" class="svg-mono">30</text>
+    <text x="413" y="355" text-anchor="middle" class="svg-mono" style="font-weight:700">80</text>
+    <text x="483" y="355" text-anchor="middle" class="svg-mono" style="font-weight:700">90</text>
+  </g>
+  <text x="530" y="355" class="svg-good-text">已排序区扩大</text>
+
+  <rect x="30" y="394" width="700" height="48" rx="9" class="svg-box-good"/>
+  <text x="48" y="422" class="svg-text">每轮：堆顶 ↔ 末尾，堆大小减一，根 sift-down。共 n 轮，每轮 O(log n)。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

@@ -354,7 +354,7 @@ void priority_demo() {
         std::cout << "  [组5] 在组0之后" << std::endl;
     });
     ordered_signal.connect(0, []() {
-        std::cout << "  [组0-A] 最先调用" << std::endl;
+        std::cout << "  [组0-A] 组0 里的第二个（C 用 at_front 插到了它前面）" << std::endl;
     });
     ordered_signal.connect(0, []() {
         std::cout << "  [组0-B] 同组按连接顺序" << std::endl;

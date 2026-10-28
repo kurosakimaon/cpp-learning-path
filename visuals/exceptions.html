@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>异常与栈展开：throw 之后谁负责收尾？ - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../exceptions/index.html">异常模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 异常处理</div>
+    <h1>💥 异常与栈展开：throw 之后谁负责收尾？</h1>
+    <p>异常最容易让人误解的地方，是“跳转”之后发生的事：剩下的代码不执行了，但局部对象必须被销毁。这一页沿着调用栈逐帧看 throw、栈展开、catch 匹配、rethrow 和 noexcept，最后落到异常安全。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 8</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应源码：<a href="../exceptions/exception_basics.cpp">exceptions/exception_basics.cpp</a> ·
+    相关教程：<a href="../exceptions/tutorial.md">exceptions/tutorial.md</a> ·
+    展开顺序与析构细节由实现和调用栈决定，这里画的是标准要求的行为。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: 'throw 跳转',
+    title: '1. throw 不是 return：它直接跳出调用链',
+    caption: '普通函数返回，是把值交回调用者，然后继续往下执行。throw 不一样：当前函数剩下的语句、调用链上所有还没执行完的函数<strong>都不会继续</strong>，控制流直接去找匹配的 catch。局部变量怎么办？交给下一步的栈展开。',
+    code: 'void bar() {\n    throw std::runtime_error("boom");  // ① 抛出\n    log("不会执行");                   // ② 跳过\n}\nvoid foo() { bar(); log("也不会执行"); }',
+    highlight: [1, 2, 4],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="bar 抛出异常后，跳过 foo 的剩余语句，控制流直接进入 catch">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">调用栈</text>
+
+  <rect x="30" y="50" width="330" height="86" rx="9" class="svg-box"/>
+  <text x="46" y="76" class="svg-text">main()</text>
+  <text x="46" y="102" class="svg-mono" style="font-size:11px">try { foo(); }</text>
+  <text x="46" y="124" class="svg-small">最外层</text>
+
+  <rect x="30" y="152" width="330" height="96" rx="9" class="svg-box-warn"/>
+  <text x="46" y="178" class="svg-text">foo()</text>
+  <text x="46" y="202" class="svg-mono" style="font-size:11px">bar();</text>
+  <text x="46" y="226" class="svg-mono" style="font-size:11px;fill:#b91c1c;text-decoration:line-through">log("也不会执行");</text>
+
+  <rect x="30" y="264" width="330" height="96" rx="9" class="svg-box-bad"/>
+  <text x="46" y="290" class="svg-text">bar()</text>
+  <text x="46" y="314" class="svg-mono" style="font-size:11px;fill:#b91c1c">throw runtime_error("boom")</text>
+  <text x="46" y="338" class="svg-small">这条语句执行后，函数不会正常返回</text>
+
+  <rect x="470" y="160" width="260" height="120" rx="10" class="svg-box-good"/>
+  <text x="488" y="188" class="svg-text">匹配的 catch</text>
+  <text x="488" y="214" class="svg-mono" style="font-size:11px">catch (const std::exception&amp; e)</text>
+  <text x="488" y="242" class="svg-small">控制流直接到这里</text>
+  <text x="488" y="264" class="svg-small">foo 的剩余语句不会执行</text>
+
+  <path d="M360 312 C400 312 420 280 466 258" class="svg-arrow-bad svg-flow" marker-end="url(#ahr)"/>
+  <text x="372" y="300" class="svg-bad-text">throw</text>
+  <path d="M360 208 C400 208 420 224 466 230" class="svg-arrow-bad" stroke-dasharray="5 4" marker-end="url(#ahr)"/>
+
+  <rect x="30" y="384" width="700" height="40" rx="8" class="svg-box-ghost"/>
+  <text x="46" y="409" class="svg-small">异常沿着调用链向上找处理器；找不到就调用 std::terminate。</text>
+</svg>`
+  },
+  {
+    nav: '栈展开',
+    title: '2. 栈展开：每层局部对象都析构',
+    caption: '离开每一层栈帧时，该层<strong>已经构造完成</strong>的局部对象按构造的逆序析构。这就是 RAII 在异常路径上仍然有效的原因：锁、文件、内存都会自动释放。如果析构函数在展开过程中又抛异常，程序会直接 <code>std::terminate</code>——析构函数默认是 noexcept 的。',
+    code: 'void foo() {\n    File f("a.txt");        // 先构造\n    std::lock_guard lk(m);  // 后构造\n    bar();                  // 抛异常\n}   // 逆序析构：lk 先，f 后\n// 析构抛异常 → std::terminate',
+    highlight: [1, 2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="栈展开时 foo 帧里的 lock_guard 和 File 按构造逆序析构">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">throw 触发逐层退出</text>
+
+  <rect x="30" y="48" width="320" height="66" rx="9" class="svg-box"/>
+  <text x="46" y="74" class="svg-text">main()</text>
+  <text x="46" y="98" class="svg-mono" style="font-size:11px">try { foo(); }</text>
+
+  <rect x="30" y="130" width="320" height="150" rx="9" class="svg-box-warn"/>
+  <text x="46" y="156" class="svg-text">foo() 帧</text>
+  <rect x="48" y="170" width="284" height="42" rx="6" class="svg-field"/>
+  <text x="60" y="196" class="svg-mono" style="font-size:11px">f   (File)      ① 构造</text>
+  <rect x="48" y="222" width="284" height="42" rx="6" class="svg-field"/>
+  <text x="60" y="248" class="svg-mono" style="font-size:11px">lk  (lock_guard) ② 构造</text>
+  <text x="46" y="272" class="svg-small">异常离开时：先 lk，后 f</text>
+
+  <rect x="30" y="300" width="320" height="70" rx="9" class="svg-box-bad"/>
+  <text x="46" y="326" class="svg-text">bar()</text>
+  <text x="46" y="350" class="svg-mono" style="font-size:11px;fill:#b91c1c">throw</text>
+
+  <rect x="410" y="120" width="320" height="190" rx="10" class="svg-box-good"/>
+  <text x="428" y="148" class="svg-title">展开时执行的析构</text>
+  <rect x="428" y="164" width="284" height="50" rx="6" class="svg-box-good svg-pulse"/>
+  <text x="442" y="194" class="svg-mono">① lk.~lock_guard()  // 解锁</text>
+  <rect x="428" y="226" width="284" height="50" rx="6" class="svg-box-good"/>
+  <text x="442" y="256" class="svg-mono">② f.~File()         // 关文件</text>
+  <text x="428" y="296" class="svg-small">构造顺序 f → lk，析构顺序 lk → f</text>
+
+  <path d="M352 248 C380 248 386 208 424 196" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M352 192 C380 192 386 236 424 248" class="svg-arrow" style="stroke:#059669;stroke-dasharray:5 4" marker-end="url(#ahg)"/>
+
+  <text x="30" y="400" class="svg-small">每个函数帧都会走一遍；栈展开保证 RAII 对象在异常路径上也会被释放。</text>
+  <text x="30" y="424" class="svg-small">析构函数默认 noexcept；展开中再抛异常，程序会 terminate。</text>
+</svg>`
+  },
+  {
+    nav: 'catch 匹配',
+    title: '3. catch 按顺序匹配；按值捕获会切片',
+    caption: '处理器按<strong>书写顺序</strong>逐个尝试，第一个能匹配的胜出；所以派生类的 catch 必须写在基类前面，否则永远轮不到它。按值捕获 <code>catch (Base e)</code> 会发生<strong>对象切片</strong>：只复制基类子对象，派生部分丢失；用 <code>const Base&amp;</code> 既保留动态类型，又避免拷贝。',
+    code: 'try { throw Derived{}; }\ncatch (const Derived& e) { /* 先匹配派生 */ }\ncatch (const Base& e)    { /* 再匹配基类 */ }\n// catch (Base e) 会切片，派生部分丢失\n// catch (...) 放最后兜底',
+    highlight: [1, 2, 3],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="异常对象按 catch 书写顺序匹配，按值捕获会发生对象切片">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">异常对象：Derived</text>
+  <rect x="30" y="70" width="220" height="90" rx="9" class="svg-box-bad"/>
+  <text x="46" y="98" class="svg-text">Derived 异常对象</text>
+  <text x="46" y="124" class="svg-mono" style="font-size:11px">Derived 部分</text>
+  <text x="46" y="146" class="svg-mono" style="font-size:11px">+ Base 子对象</text>
+
+  <rect x="330" y="58" width="400" height="66" rx="8" class="svg-box-good"/>
+  <text x="346" y="84" class="svg-mono" style="font-size:11px">catch (const Derived&amp; e)</text>
+  <text x="346" y="108" class="svg-small">第一个匹配：保留完整动态类型</text>
+
+  <rect x="330" y="142" width="400" height="66" rx="8" class="svg-box-accent"/>
+  <text x="346" y="168" class="svg-mono" style="font-size:11px">catch (const Base&amp; e)</text>
+  <text x="346" y="192" class="svg-small">能接住派生对象；引用不会切片</text>
+
+  <rect x="330" y="226" width="400" height="66" rx="8" class="svg-box-bad"/>
+  <text x="346" y="252" class="svg-mono" style="font-size:11px;fill:#b91c1c">catch (Base e)   // 按值</text>
+  <text x="346" y="276" class="svg-small">切片：只剩 Base 部分，派生数据丢失</text>
+
+  <line x1="254" y1="102" x2="326" y2="91" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="258" y="86" class="svg-small">① 先试</text>
+  <line x1="254" y1="126" x2="326" y2="172" class="svg-arrow" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+  <text x="258" y="158" class="svg-small">② 若派生不在前面</text>
+  <line x1="254" y1="84" x2="326" y2="256" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+  <text x="258" y="242" class="svg-bad-text">按值 = 切片</text>
+
+  <rect x="30" y="330" width="700" height="80" rx="10" class="svg-box-warn"/>
+  <text x="46" y="358" class="svg-text">顺序很重要：基类处理器写在前面，派生处理器就永远轮不到。</text>
+  <text x="46" y="384" class="svg-small">catch (...) 放在最后；它能接住任何异常，但拿不到类型信息。</text>
+
+  <text x="30" y="430" class="svg-small">捕获引用时，异常对象仍归运行时所有；不要保存指向它的引用。</text>
+</svg>`
+  },
+  {
+    nav: 'rethrow',
+    title: '4. rethrow：同一个异常继续往上走',
+    caption: '在 catch 里执行 <code>throw;</code> 会重新抛出<strong>同一个异常对象</strong>，不会复制，然后继续沿调用栈找外层处理器。异常对象要等到最后一个处理它的 catch 结束才销毁。不要写 <code>throw e;</code>——那会复制并可能切片。',
+    code: 'try {\n    work();\n} catch (const std::exception& e) {\n    log(e.what());\n    throw;              // 原样继续抛\n}',
+    highlight: [4],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="内层 catch 记录后 rethrow，同一个异常对象继续交给外层 catch">
+  <defs>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <rect x="30" y="48" width="700" height="340" rx="12" class="svg-box-ghost"/>
+  <text x="48" y="76" class="svg-small">外层</text>
+
+  <rect x="60" y="92" width="250" height="100" rx="9" class="svg-box-bad"/>
+  <text x="76" y="118" class="svg-text">work()</text>
+  <text x="76" y="142" class="svg-mono" style="font-size:11px">throw runtime_error(...)</text>
+  <text x="76" y="166" class="svg-small">异常对象在这里创建</text>
+
+  <rect x="370" y="92" width="320" height="100" rx="9" class="svg-box-accent"/>
+  <text x="386" y="118" class="svg-text">内层 catch</text>
+  <text x="386" y="142" class="svg-mono" style="font-size:11px">log(e.what());</text>
+  <text x="386" y="166" class="svg-mono" style="font-size:11px;fill:#4338ca">throw;   // 不复制</text>
+
+  <rect x="370" y="258" width="320" height="100" rx="9" class="svg-box-good"/>
+  <text x="386" y="284" class="svg-text">外层 catch</text>
+  <text x="386" y="308" class="svg-small">继续处理同一个异常</text>
+  <text x="386" y="332" class="svg-small">内层 catch 已经退出</text>
+
+  <line x1="314" y1="142" x2="366" y2="142" class="svg-arrow-bad svg-flow" marker-end="url(#ahr)"/>
+  <text x="318" y="130" class="svg-bad-text">catch</text>
+  <path d="M530 196 V254" class="svg-arrow-bad svg-flow" marker-end="url(#ahr)"/>
+  <text x="544" y="230" class="svg-bad-text">throw; 继续向上</text>
+
+  <rect x="60" y="258" width="250" height="100" rx="9" class="svg-box-warn"/>
+  <text x="76" y="284" class="svg-text">同一个异常对象</text>
+  <text x="76" y="308" class="svg-small">地址不变，没有新对象</text>
+  <text x="76" y="332" class="svg-small">最后一个 handler 结束后销毁</text>
+  <line x1="314" y1="308" x2="366" y2="308" class="svg-arrow" stroke-dasharray="5 4" marker-end="url(#ah)"/>
+  <text x="320" y="298" class="svg-small">仍是它</text>
+
+  <text x="30" y="418" class="svg-small">throw; 只能在 catch 或 catch 调用的函数里使用；throw e; 会复制并可能切片。</text>
+</svg>`
+  },
+  {
+    nav: 'noexcept',
+    title: '5. noexcept：异常逃出去就 terminate',
+    caption: '<code>noexcept</code> 是接口承诺：异常一旦从 noexcept 函数里逃出去，标准库会调用 <code>std::terminate</code>，不保证栈展开。析构函数默认就是 noexcept，所以析构里不要抛异常。移动构造标上 noexcept，标准库才敢在扩容时放心使用它。',
+    code: 'void f() noexcept { may_throw(); }\n// 异常逃出 noexcept → std::terminate\nstruct T {\n    ~T() noexcept;              // 析构默认不抛\n    // noexcept(false) 才允许抛\n};',
+    highlight: [0, 3],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="普通函数抛异常会栈展开到 catch，noexcept 函数抛异常直接 terminate">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">普通函数：异常可以向上传播</text>
+  <rect x="30" y="48" width="700" height="120" rx="10" class="svg-box-good"/>
+  <rect x="48" y="78" width="180" height="60" rx="7" class="svg-box"/>
+  <text x="62" y="104" class="svg-text">普通函数</text>
+  <text x="62" y="126" class="svg-small">throw 发生</text>
+  <rect x="272" y="78" width="180" height="60" rx="7" class="svg-box"/>
+  <text x="286" y="104" class="svg-text">栈展开</text>
+  <text x="286" y="126" class="svg-small">析构局部对象</text>
+  <rect x="496" y="78" width="200" height="60" rx="7" class="svg-box-good"/>
+  <text x="510" y="104" class="svg-text">catch 接手</text>
+  <text x="510" y="126" class="svg-small">继续正常执行</text>
+  <line x1="232" y1="108" x2="268" y2="108" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="456" y1="108" x2="492" y2="108" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <text x="30" y="204" class="svg-title">noexcept 函数：异常 = std::terminate</text>
+  <rect x="30" y="222" width="700" height="120" rx="10" class="svg-box-bad"/>
+  <rect x="48" y="252" width="180" height="60" rx="7" class="svg-box-bad"/>
+  <text x="62" y="278" class="svg-text">noexcept 函数</text>
+  <text x="62" y="300" class="svg-small">throw 发生</text>
+  <rect x="272" y="252" width="180" height="60" rx="7" class="svg-box-warn"/>
+  <text x="286" y="278" class="svg-text">不保证展开</text>
+  <text x="286" y="300" class="svg-small">实现可以直接终止</text>
+  <rect x="496" y="252" width="200" height="60" rx="7" class="svg-box-bad svg-blink"/>
+  <text x="510" y="278" class="svg-bad-text">std::terminate</text>
+  <text x="510" y="300" class="svg-small">程序结束</text>
+  <line x1="232" y1="282" x2="268" y2="282" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+  <line x1="456" y1="282" x2="492" y2="282" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+
+  <text x="30" y="380" class="svg-small">析构函数默认 noexcept；vector 扩容时也会看移动构造是否 noexcept。</text>
+  <text x="30" y="404" class="svg-small">不确定就别乱标 noexcept：承诺了又抛，后果比不标更严重。</text>
+</svg>`
+  },
+  {
+    nav: 'move_if_noexcept',
+    title: '6. vector 扩容为什么偏爱拷贝？',
+    caption: '扩容要保证<strong>强异常安全</strong>：把元素搬到新 buffer 时，如果移动构造可能抛，搬到一半失败就回不去，旧数据已经被改坏。所以标准库用 <code>move_if_noexcept</code>：移动构造是 noexcept（或没有拷贝构造）才移动，否则退回拷贝。给移动构造加 noexcept，不只是好看。',
+    code: 'struct T {\n    T(T&&) noexcept;       // 扩容时移动\n    // T(T&&);             // 可能抛 → 扩容改拷贝\n};\nstd::vector<T> v; v.reserve(10);  // 提前留空间',
+    highlight: [1, 2, 4],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="vector 扩容时根据移动构造是否 noexcept 选择移动或拷贝">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+    <marker id="ahw" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">旧 buffer → 新 buffer</text>
+  <rect x="30" y="70" width="220" height="220" rx="10" class="svg-box-warn"/>
+  <text x="46" y="96" class="svg-text">旧 buffer（容量 4）</text>
+  <rect x="46" y="112" width="188" height="36" rx="5" class="svg-field"/><text x="60" y="136" class="svg-mono">T1</text>
+  <rect x="46" y="154" width="188" height="36" rx="5" class="svg-field"/><text x="60" y="178" class="svg-mono">T2</text>
+  <rect x="46" y="196" width="188" height="36" rx="5" class="svg-field"/><text x="60" y="220" class="svg-mono">T3</text>
+  <rect x="46" y="238" width="188" height="36" rx="5" class="svg-field"/><text x="60" y="262" class="svg-mono">T4</text>
+
+  <rect x="490" y="70" width="240" height="220" rx="10" class="svg-box-good"/>
+  <text x="506" y="96" class="svg-text">新 buffer（容量 8）</text>
+  <rect x="506" y="112" width="208" height="36" rx="5" class="svg-field"/><text x="520" y="136" class="svg-mono">T1</text>
+  <rect x="506" y="154" width="208" height="36" rx="5" class="svg-field"/><text x="520" y="178" class="svg-mono">T2</text>
+  <rect x="506" y="196" width="208" height="36" rx="5" class="svg-field"/><text x="520" y="220" class="svg-mono">T3</text>
+  <rect x="506" y="238" width="208" height="36" rx="5" class="svg-field"/><text x="520" y="262" class="svg-mono">T4</text>
+
+  <rect x="286" y="112" width="170" height="96" rx="9" class="svg-box-accent"/>
+  <text x="300" y="138" class="svg-text" style="font-weight:700">移动构造</text>
+  <text x="300" y="162" class="svg-mono" style="font-size:11px">noexcept?</text>
+  <text x="300" y="188" class="svg-small">看这个条件决定</text>
+
+  <path d="M458 142 C470 120 480 118 486 124" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="458" y="112" class="svg-good-text">是：移动</text>
+  <path d="M458 182 C470 208 480 214 486 226" class="svg-arrow" style="stroke:#d97706" marker-end="url(#ahw)"/>
+  <text x="458" y="206" class="svg-small" style="fill:#b45309">否：拷贝</text>
+
+  <text x="30" y="332" class="svg-small">移动是“把旧元素掏空”，中途抛异常没法回滚；拷贝失败时旧元素还在。</text>
+  <text x="30" y="356" class="svg-small">所以 move_if_noexcept 的规则是：移动构造 noexcept（或没有拷贝）才移动。</text>
+
+  <rect x="30" y="378" width="700" height="38" rx="8" class="svg-box-good"/>
+  <text x="46" y="403" class="svg-small">能 reserve 就 reserve：提前留够容量，根本不需要搬家，也就没有这个问题。</text>
+</svg>`
+  },
+  {
+    nav: '强异常安全',
+    title: '7. 强异常安全：失败就当作没发生',
+    caption: '异常安全有三个级别：<strong>不抛保证</strong>（nothrow，绝不会失败）、<strong>强保证</strong>（失败后对象状态不变，像没调用过）、<strong>基本保证</strong>（不泄漏，但状态可能改变）。copy-and-swap 是强保证的常用写法：先完整复制到临时对象，成功后再 swap；swap 不抛，所以失败时原对象毫发无损。',
+    code: 'Widget& operator=(const Widget& other) {\n    Widget tmp(other);   // 可能抛，原对象没动\n    swap(tmp);           // noexcept：一次切换\n    return *this;\n}',
+    highlight: [1, 2],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="copy-and-swap 在复制失败时保持原对象不变，复制成功后一次交换">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">复制失败：原对象没动</text>
+  <rect x="30" y="48" width="700" height="150" rx="10" class="svg-box-bad"/>
+  <rect x="50" y="82" width="180" height="80" rx="8" class="svg-box"/>
+  <text x="66" y="110" class="svg-text">原对象 *this</text>
+  <text x="66" y="136" class="svg-small">状态保持不变</text>
+  <rect x="300" y="82" width="180" height="80" rx="8" class="svg-box-warn"/>
+  <text x="316" y="110" class="svg-text">tmp(other)</text>
+  <text x="316" y="136" class="svg-small">复制构造可能抛</text>
+  <line x1="234" y1="122" x2="296" y2="122" class="svg-arrow" marker-end="url(#ah)"/>
+  <text x="242" y="110" class="svg-small">复制</text>
+  <rect x="540" y="82" width="170" height="80" rx="8" class="svg-box-bad"/>
+  <text x="556" y="110" class="svg-bad-text">抛异常</text>
+  <text x="556" y="136" class="svg-small">还没 swap，直接退出</text>
+  <line x1="484" y1="122" x2="536" y2="122" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+
+  <text x="30" y="238" class="svg-title">复制成功：swap 一次切换</text>
+  <rect x="30" y="256" width="700" height="150" rx="10" class="svg-box-good"/>
+  <rect x="50" y="290" width="180" height="80" rx="8" class="svg-box-good"/>
+  <text x="66" y="318" class="svg-text">原对象 *this</text>
+  <text x="66" y="344" class="svg-small">现在持有新值</text>
+  <rect x="300" y="290" width="180" height="80" rx="8" class="svg-box-ghost"/>
+  <text x="316" y="318" class="svg-text">tmp</text>
+  <text x="316" y="344" class="svg-small">析构时释放旧资源</text>
+  <path d="M234 312 C266 286 266 372 234 348" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="242" y="382" class="svg-small">swap：不抛，交换内部资源</text>
+  <text x="540" y="318" class="svg-small">旧资源随着 tmp 一起销毁</text>
+  <text x="540" y="344" class="svg-small">没有中间状态暴露</text>
+
+  <text x="30" y="430" class="svg-small">三级保证：不抛 / 强 / 基本。能提供强保证的操作，通常都靠“先做副本，再一次提交”。</text>
+</svg>`
+  },
+  {
+    nav: '构造失败',
+    title: '8. 构造函数抛异常：成员会析构，对象不会',
+    caption: '构造函数没有执行完，对象的析构函数<strong>不会</strong>被调用；但已经构造完成的成员和基类会按逆序析构。所以在构造函数体里先 <code>new</code> 裸资源、后面再抛，就会泄漏。把资源放进成员（RAII）才能保证构造失败时也有人收尾。',
+    code: 'struct X {\n    File f;                  // 成员：会析构\n    int* raw = nullptr;      // 裸指针：不自动清理\n    X() {\n        raw = new int[10];\n        throw std::runtime_error("fail");\n    }\n};',
+    highlight: [1, 2, 4, 5],
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="构造函数抛异常时已构造成员会析构，构造函数体里申请的裸资源会泄漏">
+  <defs>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="30" class="svg-title">X 对象构造到一半，抛异常</text>
+  <rect x="40" y="60" width="290" height="270" rx="12" class="svg-box-ghost"/>
+  <text x="56" y="88" class="svg-small">X 对象（未构造完成）</text>
+  <rect x="60" y="104" width="250" height="70" rx="8" class="svg-box-good"/>
+  <text x="76" y="130" class="svg-text">成员 f (File)</text>
+  <text x="76" y="154" class="svg-small">已经构造完成</text>
+  <rect x="60" y="196" width="250" height="70" rx="8" class="svg-box-bad"/>
+  <text x="76" y="222" class="svg-text">raw = new int[10]</text>
+  <text x="76" y="246" class="svg-small">裸指针，没有拥有者</text>
+  <rect x="60" y="286" width="250" height="30" rx="6" class="svg-box-warn"/>
+  <text x="74" y="307" class="svg-small">构造函数体随后 throw</text>
+
+  <rect x="410" y="104" width="310" height="70" rx="8" class="svg-box-good"/>
+  <text x="426" y="132" class="svg-good-text">~File() 会执行</text>
+  <text x="426" y="156" class="svg-small">已构造成员按逆序析构</text>
+  <path d="M314 139 C350 134 374 134 406 136" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+
+  <rect x="410" y="196" width="310" height="70" rx="8" class="svg-box-bad"/>
+  <text x="426" y="224" class="svg-bad-text">raw 不会被释放</text>
+  <text x="426" y="248" class="svg-small">没有析构函数替它 delete</text>
+  <path d="M314 231 C350 232 374 232 406 231" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+
+  <rect x="410" y="286" width="310" height="70" rx="8" class="svg-box-warn"/>
+  <text x="426" y="312" class="svg-text">X::~X() 不会执行</text>
+  <text x="426" y="336" class="svg-small">对象从未完整构造</text>
+
+  <text x="30" y="380" class="svg-small">构造失败的清理责任：已构造成员自动析构；构造函数体里的裸资源要自己兜住。</text>
+  <text x="30" y="404" class="svg-small">把资源放进成员（File、unique_ptr）是唯一省心的办法：成员析构就是兜底。</text>
+  <text x="30" y="428" class="svg-small">如果构造函数体里必须手动申请，就用 try/catch 或局部 RAII 临时对象先接管。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

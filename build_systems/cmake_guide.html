@@ -1,0 +1,671 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CMake 实操速查 · 命令与每步预期输出 - 构建系统</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+    background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+    min-height: 100vh;
+    padding: 30px 20px;
+    color: #333;
+  }
+  .container { max-width: 1200px; margin: 0 auto; }
+
+  .back-btn {
+    display: inline-block;
+    padding: 8px 16px;
+    background: rgba(15, 23, 42, 0.55);
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    font-size: 13px;
+    transition: background 0.2s;
+  }
+  .back-btn:hover { background: rgba(255,255,255,0.25); }
+
+  .header { text-align: center; color: white; margin-bottom: 24px; }
+  .header h1 { font-size: 34px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4); }
+  .header p { font-size: 15px;  }
+
+  .toc {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 16px 22px;
+    margin-bottom: 22px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .toc a {
+    padding: 6px 14px;
+    background: #e8eaf6;
+    color: #1a237e;
+    text-decoration: none;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .toc a:hover { background: #c5cae9; }
+
+  .section {
+    background: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 26px 30px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .section h2 {
+    color: #1a237e;
+    font-size: 22px;
+    margin-bottom: 14px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e8eaf6;
+  }
+  .section h3 { color: #283593; font-size: 17px; margin: 20px 0 10px; }
+  .section h4 { color: #333; font-size: 15px; margin: 14px 0 6px; }
+  .section p { color: #555; line-height: 1.85; font-size: 14px; margin-bottom: 10px; }
+  .section ul, .section ol { padding-left: 22px; color: #555; line-height: 1.9; font-size: 14px; margin-bottom: 12px; }
+  .section strong { color: #1a237e; }
+  .section a { color: #3949ab; }
+
+  .tbl-wrap { overflow-x: auto; margin: 12px 0 18px; }
+  table { width: 100%; border-collapse: collapse; margin: 0; font-size: 13px; }
+  th, td { border: 1px solid #c5cae9; padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: #e8eaf6; color: #1a237e; font-weight: 700; }
+  td code, th code, p code, li code {
+    background: #eceff1;
+    color: #263238;
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12.5px;
+  }
+
+  pre {
+    background: #1e293b;
+    color: #e2e8f0;
+    padding: 14px 16px;
+    border-radius: 10px;
+    overflow-x: auto;
+    font-family: "SF Mono", Consolas, monospace;
+    font-size: 12.5px;
+    line-height: 1.7;
+    margin: 10px 0 16px;
+  }
+  pre .cmt { color: #94a3b8; }
+  pre .ok  { color: #86efac; }
+  pre .var { color: #fbbf24; }
+
+  .callout {
+    border-left: 4px solid #ef6c00;
+    background: #fff3e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13.5px;
+    color: #bf4300;
+    line-height: 1.8;
+  }
+  .callout strong { color: #bf360c; }
+  .tip {
+    border-left: 4px solid #2e7d32;
+    background: #e8f5e9;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin: 14px 0;
+    font-size: 13.5px;
+    color: #1b5e20;
+    line-height: 1.8;
+  }
+
+  .demo {
+    border: 1px solid #c5cae9;
+    border-radius: 12px;
+    padding: 18px 20px;
+    margin: 18px 0;
+    background: #fafafa;
+  }
+  .demo-title { font-size: 17px; font-weight: 700; color: #1a237e; margin-bottom: 4px; }
+  .demo-sub { font-size: 13px; color: #666; margin-bottom: 12px; }
+  .demo-links { margin-top: 10px; font-size: 13px; }
+  .demo-links a {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 4px 12px;
+    background: #e8eaf6;
+    color: #1a237e;
+    border-radius: 14px;
+    text-decoration: none;
+  }
+  .demo-links a:hover { background: #c5cae9; }
+
+  .master-section {
+    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    border-radius: 16px;
+    padding: 26px 30px;
+    margin-bottom: 22px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+  }
+  .master-section h2 { color: #333; font-size: 22px; margin-bottom: 14px; }
+  .master-section p { color: #555; line-height: 1.85; font-size: 14px; margin-bottom: 10px; }
+  .master-section ul { padding-left: 22px; color: #555; line-height: 1.95; font-size: 14px; }
+  .master-section li strong { color: #1a237e; }
+
+  @media (max-width: 600px) {
+    body { padding: 20px 12px; }
+    .header h1 { font-size: 24px; }
+    .section, .master-section { padding: 18px; }
+    table { font-size: 12px; }
+    th, td { padding: 6px; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <a href="index.html" class="back-btn">← 返回构建系统模块</a>
+
+  <div class="header">
+    <h1>🧭 CMake 实操速查</h1>
+    <p>命令怎么敲 · 每一步该看到什么输出 · 报错了去哪里查</p>
+  </div>
+
+  <div class="toc">
+    <a href="#how">怎么用这页</a>
+    <a href="#three">三步固定动作</a>
+    <a href="#cmds">命令速查</a>
+    <a href="#demos">六个示例逐条对照</a>
+    <a href="#visibility">PRIVATE / PUBLIC / INTERFACE</a>
+    <a href="#errors">报错对照表</a>
+    <a href="#check">自查清单</a>
+  </div>
+
+  <div class="section" id="how">
+    <h2>〇、怎么用这一页</h2>
+    <p>
+      这页不是 CMake 语法课——语法在 <code>cmake_01</code>～<code>cmake_06</code> 六个示例的
+      <code>tutorial.md</code> 里逐个讲。这页只解决三件事：
+    </p>
+    <ol>
+      <li><strong>命令怎么敲</strong>：把散在各教程里的命令收成一张表；</li>
+      <li><strong>每步该看到什么</strong>：配置输出哪几行、构建输出哪几行、产物落在哪个目录；</li>
+      <li><strong>报错了怎么查</strong>：按报错原文定位原因，不用猜。</li>
+    </ol>
+    <p>用法：先照 <a href="#three">三步固定动作</a> 把 <code>cmake_01_basic</code> 跑通，
+      之后每学一个示例，就到 <a href="#demos">六个示例逐条对照</a> 找到它那一节，
+      对着「该看到的输出」核一遍。对不上，就去 <a href="#errors">报错对照表</a>。</p>
+    <div class="callout">
+      <strong>关于本页的"预期输出"有多可信：</strong>
+      本页输出的<strong>项目相关内容</strong>（<code>-- 构建类型：Debug</code>、<code>[100%] Built target hello</code>、
+      测试名 <code>CalculatorTest</code> 等）是从本仓库各 <code>CMakeLists.txt</code> 里实际写的
+      <code>message()</code>、<code>add_executable()</code>、<code>add_test()</code> 抄出来的，不会变。
+      而<strong>与机器相关的行</strong>（编译器版本号、生成器名、绝对路径、百分比分档）
+      按 MinGW/Makefiles + CMake 3.15+ 的通用格式给出，你的机器上措辞可能略有差异。
+      这台开发机目前没装 CMake，所以本页尚未在本机实跑对照过——装好后第一件事就是回来核这几行。
+    </div>
+  </div>
+
+  <div class="section" id="three">
+    <h2>一、三步固定动作</h2>
+    <p>CMake 干的事永远只有三件，任何项目都是这三步：</p>
+    <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th scope="col">步骤</th><th scope="col">命令</th><th scope="col">干什么</th><th scope="col">产物</th></tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>① 配置<br>configure</td>
+          <td><code>cmake -S . -B build</code></td>
+          <td>读 <code>CMakeLists.txt</code>，找编译器，生成构建系统</td>
+          <td><code>build/CMakeCache.txt</code>、<code>build/Makefile</code> 或 <code>build/*.vcxproj</code></td>
+        </tr>
+        <tr>
+          <td>② 构建<br>build</td>
+          <td><code>cmake --build build</code></td>
+          <td>调用底层生成器真正编译链接</td>
+          <td>可执行文件、<code>.a</code>/<code>.lib</code>/<code>.dll</code></td>
+        </tr>
+        <tr>
+          <td>③ 运行/安装</td>
+          <td><code>./build/hello</code><br><code>cmake --install build</code></td>
+          <td>跑起来看结果；或按 <code>install()</code> 规则拷到 <code>CMAKE_INSTALL_PREFIX</code></td>
+          <td>安装目录下的 <code>bin/</code>、<code>lib/</code>、<code>include/</code></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="tip">
+      <strong>为什么永远用 <code>-B build</code>（out-of-source）：</strong>
+      构建产物全在 <code>build/</code> 里，想重来就整个删掉，源码目录一个脏文件都不留。
+      老教程里 <code>mkdir build &amp;&amp; cd build &amp;&amp; cmake ..</code> 是同一个意思，
+      <code>-S . -B build</code> 是新版写法，不用 <code>cd</code>。
+    </div>
+    <p>删掉重来（改了 <code>CMakeLists.txt</code> 后行为诡异时用）：</p>
+    <pre><span class="cmt"># 方式一：整个目录推倒重来，最干净</span>
+cmake -S . -B build --fresh
+
+<span class="cmt"># 方式二：手动删（Windows PowerShell）</span>
+Remove-Item -Recurse -Force build
+<span class="cmt"># 手动删（Git Bash / Linux）</span>
+rm -rf build</pre>
+    <p>配置只需一次，之后改代码只跑第 ② 步就行——CMake 会在构建时自动检测
+      <code>CMakeLists.txt</code> 是否变化并重新配置。</p>
+  </div>
+
+  <div class="section" id="cmds">
+    <h2>二、命令速查</h2>
+
+    <h3>配置阶段</h3>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th scope="col">命令</th><th scope="col">作用</th></tr></thead>
+      <tbody>
+        <tr><td><code>cmake -S . -B build</code></td><td>用默认生成器配置到 <code>build/</code></td></tr>
+        <tr><td><code>cmake -S . -B build -G "MinGW Makefiles"</code></td><td>指定生成器（Windows 上想用 make 就这个）</td></tr>
+        <tr><td><code>cmake -S . -B build -G Ninja</code></td><td>用 Ninja（快，需另装 ninja）</td></tr>
+        <tr><td><code>cmake -S . -B build -G "Visual Studio 17 2022"</code></td><td>生成 VS 解决方案（多配置生成器）</td></tr>
+        <tr><td><code>cmake --list-presets</code> / <code>--preset 名字</code></td><td>列出并使用 <code>CMakePresets.json</code> 里配好的组合</td></tr>
+        <tr><td><code>cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug</code></td><td>传变量：<code>-D名=值</code>，等价于在 CMakeLists 里 set 缓存变量</td></tr>
+        <tr><td><code>cmake -S . -B build -DCMAKE_INSTALL_PREFIX=../out</code></td><td>指定安装前缀，<code>install()</code> 的目标目录都相对它</td></tr>
+        <tr><td><code>cmake -S . -B build --fresh</code></td><td>忽略旧缓存，干净重配</td></tr>
+        <tr><td><code>cmake --build build --target help</code></td><td>列出生成器里所有可构建目标（Makefile 生成器下有效）</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>构建阶段</h3>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th scope="col">命令</th><th scope="col">作用</th></tr></thead>
+      <tbody>
+        <tr><td><code>cmake --build build</code></td><td>构建全部默认目标（生成器无关，永远能用）</td></tr>
+        <tr><td><code>cmake --build build --target hello</code></td><td>只构建某个目标</td></tr>
+        <tr><td><code>cmake --build build --config Release</code></td><td>多配置生成器（VS/Xcode）选配置；单配置生成器用 <code>-DCMAKE_BUILD_TYPE</code></td></tr>
+        <tr><td><code>cmake --build build -j 8</code></td><td>并行 8 个任务（CMake 3.12+）</td></tr>
+        <tr><td><code>cmake --build build -- VERBOSE=1</code></td><td>打印每条真实调用的编译命令（Makefile 生成器）；VS 下用 <code>-- /v:detailed</code></td></tr>
+        <tr><td><code>cmake --build build --clean-first</code></td><td>先清理再构建</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h3>装 / 测 / 查</h3>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th scope="col">命令</th><th scope="col">作用</th></tr></thead>
+      <tbody>
+        <tr><td><code>cmake --install build</code></td><td>执行安装（CMake 3.15+；旧版用 <code>cmake --build build --target install</code>）</td></tr>
+        <tr><td><code>cmake --install build --prefix ../out</code></td><td>临时改安装目录</td></tr>
+        <tr><td><code>ctest --test-dir build</code></td><td>跑测试（CMake 3.20+；旧版先 <code>cd build</code> 再 <code>ctest</code>）</td></tr>
+        <tr><td><code>ctest -N</code> / <code>-V</code> / <code>--output-on-failure</code> / <code>-R 正则</code> / <code>-j4</code></td><td>只列出 / 详细 / 失败才输出 / 按名字筛 / 并行</td></tr>
+        <tr><td><code>cmake -LH</code>（在 build 目录里）</td><td>列出缓存变量及其 help 字符串——查"<code>-D</code> 到底生效没有"最好用</td></tr>
+        <tr><td><code>ccmake -S . -B build</code></td><td>ncurses 图形界面改缓存（Windows 需装 <code>cmake-curses-gui</code>）</td></tr>
+        <tr><td><code>cmake --graphviz=deps.dot -S . -B build</code></td><td>导出目标依赖图，配合 Graphviz 看链接关系</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <div class="callout">
+      <strong>两个最容易记混的点：</strong>
+      ① <code>--config</code> 只对 VS/Xcode 这类<strong>多配置生成器</strong>有意义；
+      Makefile/Ninja 是<strong>单配置</strong>，配置时在 <code>configure</code> 阶段用 <code>-DCMAKE_BUILD_TYPE=</code> 定死。
+      ② <code>-D</code> 传的是<strong>缓存变量</strong>，写错名字不报错、只是没效果——所以传完用 <code>cmake -LH</code> 确认。
+    </div>
+  </div>
+
+  <div class="section" id="demos">
+    <h2>三、六个示例逐条对照</h2>
+    <p>每个示例给四件事：目录里有什么、敲什么命令、该看到什么、这一步要练会什么。</p>
+
+    <div class="demo">
+      <div class="demo-title">cmake_01_basic · 第一个项目</div>
+      <div class="demo-sub">一个文件：<code>add_executable(hello main.cpp)</code>，工程 <code>HelloCMake</code>，最低版本 3.10</div>
+      <pre><span class="cmt"># 在 build_systems/cmake_01_basic/ 下</span>
+cmake -S . -B build
+cmake --build build
+./build/hello            <span class="cmt"># Windows 下是 build\hello.exe 或 ./build/hello.exe</span></pre>
+      <h4>该看到的配置输出</h4>
+      <pre>-- The CXX compiler identification is GNU <span class="var">15.2.0</span>
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: <span class="var">C:/msys64/ucrt64/bin/c++.exe</span> - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: <span class="var">.../cmake_01_basic/build</span></pre>
+      <h4>该看到的构建输出</h4>
+      <pre>[ <span class="var">50%</span>] Building CXX object CMakeFiles/hello.dir/main.cpp<span class="var">.obj</span>
+[100%] Linking CXX executable hello<span class="var">.exe</span>
+[100%] <span class="ok">Built target hello</span></pre>
+      <p>产物：<code>build/hello.exe</code>（Linux 下是 <code>build/hello</code>）。</p>
+      <div class="tip"><strong>练会：</strong>看到 <code>Built target hello</code> 才算成功；
+        <code>Check for working CXX compiler ... - skipped</code> 里的 <code>skipped</code> 是正常字样，不是失败。</div>
+      <div class="demo-links"><a href="cmake_01_basic/index.html">示例首页</a><a href="cmake_01_basic/tutorial.md">教程</a><a href="cmake_01_basic/CMakeLists.txt">CMakeLists.txt</a></div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-title">cmake_02_multi_file · 多个源文件</div>
+      <div class="demo-sub"><code>main.cpp</code> + <code>utils.cpp/.h</code> + <code>math.cpp/.h</code>，目标 <code>demo</code>；用变量 <code>SOURCES</code> 收拢源文件列表</div>
+      <pre>cmake -S . -B build
+cmake --build build
+./build/demo</pre>
+      <h4>该看到什么</h4>
+      <pre>[  <span class="var">25%</span>] Building CXX object CMakeFiles/demo.dir/main.cpp.obj
+[  <span class="var">50%</span>] Building CXX object CMakeFiles/demo.dir/utils.cpp.obj
+[  <span class="var">75%</span>] Building CXX object CMakeFiles/demo.dir/math.cpp.obj
+[100%] Linking CXX executable demo.exe
+[100%] <span class="ok">Built target demo</span></pre>
+      <p><strong>三个 <code>Building CXX object</code> 行</strong>就是这一课的全部重点：每个 <code>.cpp</code> 是一个独立的翻译单元，
+        最后一步才链接成一个可执行文件。</p>
+      <div class="callout">
+        这一课最常见的错是<strong>漏写源文件</strong>：<code>add_executable(demo main.cpp)</code> 而没写 <code>utils.cpp</code>，
+        配置阶段一切正常，<strong>链接</strong>阶段才报 <code>undefined reference to ...</code>。见报错对照表第 4 条。
+      </div>
+      <div class="demo-links"><a href="cmake_02_multi_file/index.html">示例首页</a><a href="cmake_02_multi_file/tutorial.md">教程</a><a href="cmake_02_multi_file/CMakeLists.txt">CMakeLists.txt</a></div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-title">cmake_03_library · 静态库 + 子目录</div>
+      <div class="demo-sub"><code>add_subdirectory(mathlib)</code> + <code>add_subdirectory(app)</code>；<code>mathlib</code> 是 STATIC 库，app 目标 <code>math_app</code></div>
+      <pre>cmake -S . -B build
+cmake --build build
+./build/app/math_app</pre>
+      <h4>该看到什么</h4>
+      <pre>[ 25%] Building CXX object mathlib/CMakeFiles/mathlib.dir/math_functions.cpp.obj
+[ 50%] Linking CXX static library libmathlib.a        <span class="cmt"># Windows 下是 mathlib.lib</span>
+[ 50%] Built target mathlib
+[ 75%] Building CXX object app/CMakeFiles/math_app.dir/main.cpp.obj
+[100%] Linking CXX executable math_app.exe
+[100%] Built target math_app</pre>
+      <p><strong>先建库、后建可执行文件</strong>——顺序由依赖关系自动推出，不用你写。
+        产物分两处：<code>build/mathlib/libmathlib.a</code> 和 <code>build/app/math_app.exe</code>。</p>
+      <div class="tip"><strong>练会：</strong>为什么 <code>app/CMakeLists.txt</code> 里只要
+        <code>target_link_libraries(math_app PRIVATE mathlib)</code> 一行，就能既链接又拿到头文件路径——
+        因为 <code>mathlib</code> 的 <code>target_include_directories</code> 用的是 <code>PUBLIC</code>。见下一节。</div>
+      <div class="demo-links"><a href="cmake_03_library/index.html">示例首页</a><a href="cmake_03_library/tutorial.md">教程</a><a href="cmake_03_library/CMakeLists.txt">根 CMakeLists</a><a href="cmake_03_library/mathlib/CMakeLists.txt">mathlib</a></div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-title">cmake_04_options · 选项、configure_file、构建类型</div>
+      <div class="demo-sub">工程 <code>OptionsDemo</code> 版本 <code>1.2.3</code>；两个开关 <code>ENABLE_DEBUG_OUTPUT</code>、<code>ENABLE_EXPERIMENTAL_FEATURES</code> 默认都是 <code>OFF</code>；<code>config.h.in</code> → <code>build/config.h</code></div>
+      <pre><span class="cmt"># 默认配置（两个开关都关）</span>
+cmake -S . -B build
+cmake --build build
+./build/options_demo
+
+<span class="cmt"># 打开调试输出这个开关</span>
+cmake -S . -B build -DENABLE_DEBUG_OUTPUT=ON
+cmake --build build
+./build/options_demo        <span class="cmt"># 会多出 [DEBUG] 计算 ... 那些行</span>
+
+<span class="cmt"># 换构建类型</span>
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release</pre>
+      <h4>该看到的配置输出（本项目自己的 message）</h4>
+      <pre>-- 构建类型：<span class="var">Debug</span>
+-- 调试输出：<span class="var">OFF</span>
+-- 实验功能：<span class="var">OFF</span>
+-- Configuring done
+-- Generating done</pre>
+      <p>把 <code>-DENABLE_DEBUG_OUTPUT=ON</code> 加上后，同样三行变成
+        <code>-- 调试输出：ON</code>，且运行程序时会打印 <code>[DEBUG] 计算 3 + 4 = 7</code> 这类行。</p>
+      <h4>程序里该看到什么</h4>
+      <pre>【项目信息】
+  项目名称：OptionsDemo
+  项目版本：1.2.3
+  构建类型：Debug
+  作者：老师傅和徒弟</pre>
+      <p>这四行来自 <code>config.h.in</code> 被 <code>configure_file()</code> 替换的结果——
+        <code>@PROJECT_NAME@</code>、<code>@PROJECT_VERSION@</code>、<code>@CMAKE_BUILD_TYPE@</code>、<code>@AUTHOR_NAME@</code>。
+        生成的文件在 <code>build/config.h</code>，<strong>打开它亲眼看一次比读十遍说明有用</strong>。</p>
+      <div class="callout">
+        <strong>#cmakedefine 的行为要记住：</strong>变量为真 → 生成 <code>#define ENABLE_DEBUG_OUTPUT</code>；
+        为假 → 生成 <code>/* #undef ENABLE_DEBUG_OUTPUT */</code>，于是 C++ 里 <code>#ifdef</code> 不成立。
+        开关没生效，第一件事是去看 <code>build/config.h</code> 里到底是 <code>#define</code> 还是 <code>#undef</code>。
+      </div>
+      <div class="demo-links"><a href="cmake_04_options/index.html">示例首页</a><a href="cmake_04_options/tutorial.md">教程</a><a href="cmake_04_options/config.h.in">config.h.in</a></div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-title">cmake_05_modern · 现代 CMake 的目标风格</div>
+      <div class="demo-sub">最低版本升到 <code>3.15</code>；库带 <code>include/</code>、<code>src/</code> 分层；别名目标 <code>mathlib::mathlib</code>；app 目标 <code>stats_app</code></div>
+      <pre>cmake -S . -B build
+cmake --build build
+./build/app/stats_app</pre>
+      <h4>和 cmake_03 的三处关键差别</h4>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th scope="col">cmake_03 写法</th><th scope="col">cmake_05 写法</th><th scope="col">为什么要换</th></tr></thead>
+        <tbody>
+          <tr><td><code>target_link_libraries(app PRIVATE mathlib)</code></td><td><code>... PRIVATE mathlib::mathlib</code></td><td>带 <code>::</code> 的名字<strong>一定是目标</strong>，不会误链接到同名库文件；拼错立刻报错而不是静默失败</td></tr>
+          <tr><td>全局 <code>set(CMAKE_CXX_STANDARD 17)</code></td><td><code>target_compile_features(mathlib PUBLIC cxx_std_17)</code></td><td>标准要求跟着目标走，用 <code>PUBLIC</code> 后链接者自动继承 C++17</td></tr>
+          <tr><td><code>include_directories(...)</code></td><td><code>target_include_directories(mathlib PUBLIC $&lt;BUILD_INTERFACE:...&gt; INTERFACE $&lt;INSTALL_INTERFACE:include&gt;)</code></td><td>区分"我自己编译时"和"别人安装后使用时"两套路径，装出去的库才不会指回源码目录</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <h4>该看到什么</h4>
+      <pre>[ 50%] Linking CXX static library libmathlib.a
+[ 50%] Built target mathlib
+[100%] Linking CXX executable stats_app.exe
+[100%] Built target stats_app</pre>
+      <p>另外这一课里有 <code>install(EXPORT ...)</code> 和 <code>find_package(mathlib CONFIG ...)</code> 的演示：
+        它展示的是"<strong>如何让别人用 find_package 找到你的库</strong>"。装一遍最直观：</p>
+      <pre>cmake --install build --prefix ../_install
+<span class="cmt"># 然后去看 _install/lib/cmake/ 下面生成了什么文件</span></pre>
+      <div class="demo-links"><a href="cmake_05_modern/index.html">示例首页</a><a href="cmake_05_modern/tutorial.md">教程</a><a href="cmake_05_modern/mathlib/CMakeLists.txt">mathlib 的写法</a></div>
+    </div>
+
+    <div class="demo">
+      <div class="demo-title">cmake_06_full_project · 一个能交付的项目长什么样</div>
+      <div class="demo-sub">工程 <code>MyProject</code> 版本 <code>2.1.0</code>；三个开关 <code>BUILD_TESTS=ON</code> / <code>BUILD_SHARED_LIBS=OFF</code> / <code>WARNINGS_AS_ERRORS=OFF</code>；目标 <code>myproject_app</code>、库 <code>mathutils</code>、测试 <code>test_calculator</code></div>
+      <pre>cmake -S . -B build
+cmake --build build
+ctest --test-dir build --output-on-failure
+cmake --install build --prefix ../out</pre>
+      <h4>该看到的配置输出（本项目自己打印的配置清单）</h4>
+      <pre>-- ===== 项目配置 =====
+-- 项目名称：MyProject
+-- 项目版本：2.1.0
+-- 构建类型：Debug
+-- 构建测试：ON
+-- 共享库：OFF
+-- 警告当错误：OFF
+-- ====================
+-- 没有指定构建类型，默认使用 Debug
+-- 已启用单元测试
+-- Configuring done
+-- Generating done</pre>
+      <h4>ctest 该看到什么</h4>
+      <pre>Test project <span class="var">.../cmake_06_full_project/build</span>
+    Start 1: CalculatorTest
+1/1 Test #1: CalculatorTest ...................   Passed    <span class="var">0.01</span> sec
+
+<span class="ok">100% tests passed, 0 tests failed out of 1</span>
+
+Total Test time (real) =   <span class="var">0.02</span> sec</pre>
+      <h4>install 该看到什么</h4>
+      <pre>-- Install configuration: "Debug"
+-- Installing: <span class="var">../out</span>/bin/myproject_app.exe
+-- Installing: ../out/lib/libmathutils.a
+-- Installing: ../out/include/...
+-- Installing: ../out/lib/cmake/myproject/myproject-config.cmake
+-- Installing: ../out/lib/cmake/myproject/myproject-config-version.cmake
+-- Installing: ../out/lib/cmake/myproject/myproject-targets.cmake</pre>
+      <p>安装后目录形状就是 <code>bin/</code> + <code>lib/</code> + <code>include/</code> + <code>lib/cmake/myproject/</code>，
+        最后那个目录里的 <code>*-config.cmake</code> 就是别人 <code>find_package(myproject CONFIG)</code> 能成功的凭据。</p>
+      <h4>这一课值得单独试的三次开关</h4>
+      <div class="tbl-wrap">
+      <table>
+        <thead><tr><th scope="col">命令</th><th scope="col">该看到的变化</th></tr></thead>
+        <tbody>
+          <tr><td><code>cmake -S . -B build -DBUILD_SHARED_LIBS=ON</code></td><td>配置里 <code>-- 共享库：ON</code>；产物从 <code>libmathutils.a</code> 变成 <code>libmathutils.dll</code> + 导入库</td></tr>
+          <tr><td><code>cmake -S . -B build -DBUILD_TESTS=OFF</code></td><td>没有 <code>-- 已启用单元测试</code> 这行；<code>ctest</code> 会报 <code>No tests were found</code></td></tr>
+          <tr><td><code>cmake -S . -B build -DWARNINGS_AS_ERRORS=ON</code></td><td><code>cmake/CompilerWarnings.cmake</code> 里的 <code>-Wshadow -Wconversion -Wold-style-cast</code> 等警告升级为错误，构建可能直接失败——这正是它的教学目的</td></tr>
+        </tbody>
+      </table>
+      </div>
+      <div class="demo-links"><a href="cmake_06_full_project/index.html">示例首页</a><a href="cmake_06_full_project/tutorial.md">教程</a><a href="cmake_06_full_project/CMakeLists.txt">根 CMakeLists</a><a href="cmake_06_full_project/tests/CMakeLists.txt">tests</a></div>
+    </div>
+  </div>
+
+  <div class="section" id="visibility">
+    <h2>四、PRIVATE / PUBLIC / INTERFACE 一张表</h2>
+    <p>这三个词只回答一个问题：<strong>我用的这个东西，要不要传染给链接我的人？</strong></p>
+    <div class="tbl-wrap">
+    <table>
+      <thead>
+        <tr><th scope="col">关键字</th><th scope="col">我自己编译时用</th><th scope="col">链接我的人用</th><th scope="col">典型场景</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><code>PRIVATE</code></td><td>✅</td><td>❌</td><td>实现细节：内部依赖的库、只给自己用的头文件目录</td></tr>
+        <tr><td><code>PUBLIC</code></td><td>✅</td><td>✅</td><td>出现在公开头文件里的东西：<code>mathlib</code> 的 include 路径、<code>cxx_std_17</code></td></tr>
+        <tr><td><code>INTERFACE</code></td><td>❌</td><td>✅</td><td>纯头文件库（header-only）、只给使用者的编译选项</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <p>拿本仓库的例子对照：<code>mathlib/CMakeLists.txt</code> 里写</p>
+    <pre>target_include_directories(mathlib PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(math_app        PRIVATE mathlib)</pre>
+    <p>第一行的 <code>PUBLIC</code> 意思是"这个头文件目录是我的公开接口的一部分"，
+      所以第二行 <code>math_app</code> 即使没有自己写 <code>include_directories</code>，
+      也能 <code>#include "math_functions.h"</code>——路径是跟着 <code>mathlib</code> 传染过来的。
+      把 <code>PUBLIC</code> 改成 <code>PRIVATE</code> 再构建一次，你会立刻在
+      <code>math_app</code> 那一步看到 <code>fatal error: math_functions.h: No such file or directory</code>。
+      <strong>这一改一报，比背下表管用。</strong></p>
+    <div class="callout">
+      全局命令 <code>include_directories()</code> / <code>link_libraries()</code> /
+      <code>add_definitions()</code> 会污染整个目录树，现代 CMake 一律改用
+      <code>target_*</code> 形式。本仓库根 <code>CMakeLists.txt</code> 里刻意没有全局 include 路径，
+      就是这个原因。
+    </div>
+  </div>
+
+  <div class="section" id="errors">
+    <h2>五、报错对照表</h2>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th scope="col">报错原文（关键片段）</th><th scope="col">真实原因</th><th scope="col">怎么修</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>No CMAKE_CXX_COMPILER could be found</code> / <code>No C compiler</code></td>
+          <td>PATH 里找不到编译器，或 VS 工作负载没装 C++</td>
+          <td>MSYS2：把 <code>C:\msys64\ucrt64\bin</code> 加进 PATH；VS：安装"使用 C++ 的桌面开发"；再 <code>cmake -S . -B build --fresh</code></td>
+        </tr>
+        <tr>
+          <td><code>Error: generator : MinGW Makefiles<br>Does not match the one used to ... </code></td>
+          <td><code>build/</code> 里存着别的生成器留下的缓存</td>
+          <td>删掉 <code>build/</code> 重来，或 <code>--fresh</code>。缓存与生成器绑定，不能中途换</td>
+        </tr>
+        <tr>
+          <td><code>The source directory ... does not appear to contain any CMakeLists.txt</code></td>
+          <td><code>-S</code> 指错目录（比如指到了 <code>build_systems/</code> 而不是某个 <code>cmake_0x/</code>）</td>
+          <td>到含 <code>CMakeLists.txt</code> 的那一层再敲；六个示例各自独立，不能在 <code>build_systems/</code> 顶层配置</td>
+        </tr>
+        <tr>
+          <td><code>undefined reference to `xxx`</code>（MSYS2/Linux）<br><code>unresolved external symbol</code>（MSVC）</td>
+          <td>源文件没进 <code>add_executable</code>，或依赖的库没 <code>target_link_libraries</code></td>
+          <td>把实现所在的 <code>.cpp</code> 加进目标源文件列表；库目标加进 <code>target_link_libraries</code>。这是 cmake_02/03 最常见的坑</td>
+        </tr>
+        <tr>
+          <td><code>fatal error: xxx.h: No such file or directory</code></td>
+          <td>缺 <code>target_include_directories</code>，或者库那边写成了 <code>PRIVATE</code></td>
+          <td>见上一节：公开头文件所在目录要用 <code>PUBLIC</code></td>
+        </tr>
+        <tr>
+          <td><code>CMake Error: ... requires CMake &lt;version&gt; or higher</code></td>
+          <td>本机 CMake 低于 <code>cmake_minimum_required</code>（cmake_05/06 要求 3.15）</td>
+          <td>升级 CMake；<code>cmake --version</code> 先看一眼</td>
+        </tr>
+        <tr>
+          <td><code>Could NOT find Boost (missing: ...)</code> 或本仓库根构建时 Boost 示例被跳过</td>
+          <td>没装 Boost，或 <code>find_package(Boost ...)</code> 找不到；根 <code>CMakeLists.txt</code> 用的是 <code>QUIET COMPONENTS</code>，找不到就<strong>静默跳过</strong>那些示例</td>
+          <td>装 Boost 或加 <code>-DBOOST_ROOT=...</code>；想知道到底找到没有，用 <code>cmake -LH | grep -i boost</code></td>
+        </tr>
+        <tr>
+          <td><code>ctest</code> 报 <code>No tests were found!!</code></td>
+          <td>根 <code>CMakeLists.txt</code> 里没有 <code>enable_testing()</code>，或它写在 <code>add_subdirectory(tests)</code> 之后；也可能是 <code>-DBUILD_TESTS=OFF</code></td>
+          <td><code>enable_testing()</code> 必须在根、且在 <code>add_subdirectory(tests)</code> <strong>之前</strong>（cmake_06 就是这么写的）</td>
+        </tr>
+        <tr>
+          <td><code>cannot find -lboost_thread</code>（本仓库 Boost 示例）</td>
+          <td>MSYS2 的库名带 <code>-mt</code> 后缀</td>
+          <td>手动编译时用 <code>-lboost_thread-mt</code>；用 CMake 时交给 <code>find_package(Boost COMPONENTS thread)</code> 处理</td>
+        </tr>
+        <tr>
+          <td>改了 <code>CMakeLists.txt</code> 但行为没变</td>
+          <td>缓存里还留着旧值，尤其 <code>-D</code> 传过的变量</td>
+          <td><code>cmake -LH</code> 看当前值；<code>--fresh</code> 或删 <code>build/</code> 强制重来</td>
+        </tr>
+        <tr>
+          <td>Windows 运行 exe 报"找不到 <code>libstdc-6.dll</code>"</td>
+          <td>exe 依赖 MSYS2 的运行时 DLL，而它不在 PATH</td>
+          <td>把 <code>C:\msys64\ucrt64\bin</code> 加进 PATH 再运行（这是环境 PATH 问题，不是代码问题）</td>
+        </tr>
+        <tr>
+          <td><code>install</code> 报权限错误</td>
+          <td>默认前缀是 <code>C:/Program Files</code></td>
+          <td>永远用 <code>--prefix</code> 指到项目内目录，例如 <code>cmake --install build --prefix ../out</code></td>
+        </tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <div class="section" id="check">
+    <h2>六、自查清单</h2>
+    <p>每个示例跑通后，不看资料答一遍。答不上来的，回到对应小节重看。</p>
+    <div class="tbl-wrap">
+    <table>
+      <thead><tr><th scope="col">示例</th><th scope="col">你应该能回答</th></tr></thead>
+      <tbody>
+        <tr><td>01</td><td><code>cmake -S . -B build</code> 生成的 <code>CMakeCache.txt</code> 是干什么的？为什么不要往源码目录里配置？</td></tr>
+        <tr><td>02</td><td>三行 <code>Building CXX object</code> 对应三个 <code>.cpp</code>，那 <code>.h</code> 为什么不出现在 <code>add_executable</code> 里？</td></tr>
+        <tr><td>03</td><td>静态库和动态库的产物分别是什么扩展名？<code>add_subdirectory</code> 起什么作用？</td></tr>
+        <tr><td>04</td><td><code>-DENABLE_DEBUG_OUTPUT=ON</code> 之后，去哪个文件确认它真的生效了？<code>#cmakedefine</code> 生成了什么？</td></tr>
+        <tr><td>05</td><td><code>mathlib</code> 和 <code>mathlib::mathlib</code> 有什么区别？<code>target_compile_features(... cxx_std_17)</code> 为什么用 <code>PUBLIC</code>？</td></tr>
+        <tr><td>06</td><td><code>ctest</code> 靠哪两行配置才能找到 <code>CalculatorTest</code>？<code>install(EXPORT ...)</code> 装出去的文件凭什么让别人 <code>find_package</code> 成功？</td></tr>
+      </tbody>
+    </table>
+    </div>
+    <h3>学完六个示例之后的下一步</h3>
+    <ul>
+      <li>把 <code>projects/todo_cli/</code> 用 CMake 完整构建一遍——它是本仓库里唯一一个"多目录 + 库 + 可执行文件"的真实项目；</li>
+      <li>回头改：把 <code>cmake_06</code> 的 <code>BUILD_SHARED_LIBS</code> 打开，观察产物和链接方式的变化；</li>
+      <li>再往 Makefile 那条线看 <a href="makefile_05_library/index.html">makefile_05_library</a>，
+        对照"手写规则"和"让 CMake 生成规则"的差别，配合
+        <a href="../visuals/linking.html">🎬 图解库链接</a> 理解静态/动态链接到底发生了什么。</li>
+    </ul>
+  </div>
+
+  <div class="master-section">
+    <h2>👴 老师傅的话</h2>
+    <p>徒弟，CMake 这东西，刚上手会觉得它啰嗦：<code>target_</code> 开头的一串命令，写个 hello world 要七八行。</p>
+    <p>但你换个角度想——CMake 不是"构建工具"，它是<strong>描述工具</strong>。你写的不是"先编译这个再编译那个"，
+      而是"这个可执行文件依赖那个库，那个库的公开接口包含这些头文件"。依赖关系一描述清楚，
+      谁先谁后、并行几个、要不要重编，CMake 自己算。这就是为什么它能跨平台，而手写的 Makefile 不能。</p>
+    <p>师傅给你三条规矩，照着做少踩九成坑：</p>
+    <ul>
+      <li><strong>永远 out-of-source</strong>：<code>-S . -B build</code>，别在源码目录里配置。想重来就删 <code>build/</code>，源码永远干净。</li>
+      <li><strong>能用 <code>target_*</code> 就不用全局命令</strong>：<code>include_directories</code>、<code>link_libraries</code>、<code>add_definitions</code> 这些全局货，写的时候爽，项目一大就是灾难。</li>
+      <li><strong>链接别人家库，一律写 <code>名字::名字</code></strong>：<code>Boost::filesystem</code>、<code>mathlib::mathlib</code>。带 <code>::</code> 的拼错了当场报错，不带的可能悄悄链到别的东西上。</li>
+    </ul>
+    <p>最后一句：<strong>别背命令，去改一行看反应。</strong>把 <code>PUBLIC</code> 改成 <code>PRIVATE</code>，
+      把 <code>enable_testing()</code> 挪个位置，把 <code>option(...)</code> 的默认值翻过来——
+      看它报什么错、少生成什么文件。CMake 的手感是这么来的，看文档看不出来。</p>
+  </div>
+
+  <div class="section" style="text-align:center;">
+    <p style="margin:0;">
+      <a href="index.html">← 返回构建系统模块</a> ·
+      <a href="../学习路线图.html">总路线图</a> ·
+      <a href="../visuals/linking.html">🎬 图解库链接</a> ·
+      <a href="../visuals/index.html">图解专区</a>
+    </p>
+  </div>
+</div>
+</body>
+</html>

@@ -40,9 +40,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)   # 必须支持 C++17，不支持就报错
 set(CMAKE_CXX_EXTENSIONS OFF)         # 禁用 GNU 扩展，用纯标准 C++
 
-# 所有可执行文件和动态库统一放到 build/bin/ 下。
-# 这样 Windows 下动态库和 exe 在同一目录，运行时能找到 DLL。
+# 可执行文件（以及 Windows 上的 DLL）统一放到 build/bin/ 下。
+# 这样 exe 和它依赖的动态库在同一目录，运行时找得到 DLL。
+# 注意分类：CMAKE_RUNTIME_OUTPUT_DIRECTORY 只管 RUNTIME 产物（exe + Windows DLL）；
+# Linux/macOS 的 .so/.dylib 属于 LIBRARY 产物，静态库 .a/.lib 属于 ARCHIVE 产物，
+# 想统一目录得各自设一遍。
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)   # 共享库 .so / .dylib
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)   # 静态库 .a / 导入库 .lib
 
 # 构建目录的位置——其实不用设，外部构建的时候自然在 build 里
 # 这里只是提一下有这些变量
@@ -140,8 +145,12 @@ add_executable(myproject_app
     src/app/app.cpp
 )
 
-# 起个别名，跟命名空间风格一致
-add_executable(myproject::app ALIAS myproject_app)
+# 起个别名，跟命名空间风格一致。
+# 注意：给【可执行】目标起 ALIAS 需要 CMake 3.19+（库目标的 ALIAS 早就支持了），
+# 而本文件开头的最低版本是 3.15，所以这里要按版本判断一下。
+if(NOT CMAKE_VERSION VERSION_LESS 3.19)
+    add_executable(myproject::app ALIAS myproject_app)
+endif()
 
 # 头文件路径
 target_include_directories(myproject_app

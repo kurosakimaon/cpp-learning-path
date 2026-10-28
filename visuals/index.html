@@ -15,9 +15,55 @@
   <header class="page-head">
     <div class="kicker">VISUAL NOTES</div>
     <h1>📚 C++ 图解专区</h1>
-    <p>把最容易讲不清的机制拆成分步示意图：每一步只加一个变化，配一段代码对照。点击卡片进入，左右方向键翻页，地址栏会记录当前步骤；也可以点「自动播放」让页面自己往下走。</p>
+    <p>把最容易讲不清的机制拆成分步示意图：每一步只加一个变化，配一段代码对照。点击卡片进入，左右方向键翻页，地址栏会记录当前步骤；也可以点「自动播放」让页面自己往下走。数据结构部分另有六组图解，和交互沙盘配合使用。</p>
   </header>
 
+  <h2 class="hub-section">数据结构与算法</h2>
+  <div class="hub-grid">
+    <a class="hub-card" href="linked_list.html">
+      <div class="hub-icon">🧷</div>
+      <h2>链表：指针怎么把节点串起来？</h2>
+      <p>节点与 head、头插尾插、删除时找前驱、三指针反转，以及链表为什么缓存不友好。</p>
+      <span class="hub-tag">数据结构 · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="dynamic_array.html">
+      <div class="hub-icon">📏</div>
+      <h2>动态数组：push_back 为什么会搬家？</h2>
+      <p>size 与 capacity、扩容时搬家、摊还 O(1)、迭代器失效，以及 reserve 和 resize 的区别。</p>
+      <span class="hub-tag">数据结构 · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="stack_queue.html">
+      <div class="hub-icon">🥞</div>
+      <h2>栈与队列：后进先出和先进先出怎么实现？</h2>
+      <p>调用栈、队列的 head/tail、循环队列取模、deque 分段存储，以及适配器怎么选。</p>
+      <span class="hub-tag">数据结构 · 6 步</span>
+    </a>
+
+    <a class="hub-card" href="tree.html">
+      <div class="hub-icon">🌳</div>
+      <h2>二叉搜索树：查找为什么能减半？</h2>
+      <p>BST 不变式、查找插入删除（后继节点）、中序遍历、退化成链表和旋转。</p>
+      <span class="hub-tag">数据结构 · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="hash_table.html">
+      <div class="hub-icon">🗃️</div>
+      <h2>哈希表：平均 O(1) 是怎么做到的？</h2>
+      <p>哈希函数与取模、链地址法、装填因子、rehash，以及开放寻址和墓碑标记。</p>
+      <span class="hub-tag">数据结构 · 6 步</span>
+    </a>
+
+    <a class="hub-card" href="heap.html">
+      <div class="hub-icon">⛰️</div>
+      <h2>堆与优先队列：最大值怎么总在顶上？</h2>
+      <p>数组表示完全二叉树、sift-up / sift-down、O(n) 建堆、堆排序和 priority_queue。</p>
+      <span class="hub-tag">数据结构 · 6 步</span>
+    </a>
+  </div>
+
+  <h2 class="hub-section">语言、内存与系统</h2>
   <div class="hub-grid">
     <a class="hub-card" href="move_semantics.html">
       <div class="hub-icon">🧩</div>
@@ -31,6 +77,20 @@
       <h2>栈、堆与 RAII：谁负责释放？</h2>
       <p>从栈帧和堆对象讲起，经过泄漏、悬空指针、异常展开，最后落到 unique_ptr 和 shared_ptr。</p>
       <span class="hub-tag">内存管理 · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="smart_ptr.html">
+      <div class="hub-icon">🔑</div>
+      <h2>智能指针：谁拥有这个对象？</h2>
+      <p>unique_ptr 独占与移动、shared_ptr 的控制块和引用计数、make_shared、weak_ptr 与循环引用。</p>
+      <span class="hub-tag">内存管理 · 7 步</span>
+    </a>
+
+    <a class="hub-card" href="exceptions.html">
+      <div class="hub-icon">💥</div>
+      <h2>异常与栈展开：throw 之后谁负责收尾？</h2>
+      <p>throw 跳转、栈展开析构、catch 匹配与切片、rethrow、noexcept，以及强异常安全的写法。</p>
+      <span class="hub-tag">异常处理 · 8 步</span>
     </a>
 
     <a class="hub-card" href="vtable.html">
@@ -54,6 +114,13 @@
       <span class="hub-tag">并发编程 · 7 步</span>
     </a>
 
+    <a class="hub-card" href="memory_order.html">
+      <div class="hub-icon">🌀</div>
+      <h2>内存序：两个线程，谁先看到谁？</h2>
+      <p>内存重排、happens-before、relaxed、发布订阅、seq_cst，以及 x86 与 ARM 的差异。</p>
+      <span class="hub-tag">并发编程 · 8 步</span>
+    </a>
+
     <a class="hub-card" href="ipc.html">
       <div class="hub-icon">🔀</div>
       <h2>进程间通信：两个进程怎么共享数据？</h2>
@@ -71,6 +138,7 @@
 
   <p class="page-foot">
     全部图解都是本地静态页面，不依赖网络，直接用浏览器打开即可。
+    数据结构六页讲机制，<a href="../algorithms/data_structures_visualizer.html">交互沙盘</a>负责动手操作，两者配合使用。
     对应代码与教程链接在各页底部。
   </p>
 </div>

@@ -9,7 +9,7 @@
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #2c3e50 0%, #4ca1af 100%);
+    background: linear-gradient(135deg, #2c3e50 0%, #397883 100%);
     min-height: 100vh;
     padding: 30px 20px;
     color: #333;
@@ -18,7 +18,7 @@
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.2);
+    background: rgba(15, 23, 42, 0.55);
     color: white;
     text-decoration: none;
     border-radius: 8px;
@@ -29,7 +29,7 @@
   .back-btn:hover { background: rgba(255,255,255,0.3); }
   .header { text-align: center; color: white; margin-bottom: 30px; }
   .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.3); }
-  .header p { font-size: 16px; opacity: 0.9; }
+  .header p { font-size: 16px;  }
 
   .intro-section {
     background: rgba(255,255,255,0.95);
@@ -101,7 +101,7 @@
     border-radius: 4px;
     font-size: 13px;
     font-family: 'Consolas', 'Monaco', monospace;
-    color: #e74c3c;
+    color: #bd3e31;
   }
   pre code { background: none; padding: 0; color: #ecf0f1; }
 
@@ -122,6 +122,7 @@
   }
   .tab:hover { background: #d5dbdb; }
   .tab.active { background: #2c3e50; color: white; }
+  .tab:focus-visible { outline: 3px solid #e67e22; outline-offset: 2px; }
 
   .tab-content { display: none; }
   .tab-content.active { display: block; }
@@ -135,13 +136,13 @@
   }
   .flow-step {
     padding: 12px 18px;
-    background: linear-gradient(135deg, #667eea, #764ba2);
+    background: linear-gradient(135deg, #586dca, #764ba2);
     color: white;
     border-radius: 8px;
     font-weight: 600;
     font-size: 14px;
   }
-  .flow-arrow { font-size: 20px; color: #999; }
+  .flow-arrow { font-size: 20px; color: #757575; }
 
   .warning-box {
     background: #fff3cd;
@@ -186,7 +187,7 @@
   .cheat-item .cmd {
     font-family: 'Consolas', monospace;
     font-weight: 700;
-    color: #e74c3c;
+    color: #bd3e31;
     font-size: 14px;
     margin-bottom: 6px;
   }
@@ -209,7 +210,7 @@
     border-left: 3px solid #e74c3c;
   }
   .bug-card h4 { color: #c0392b; margin-bottom: 6px; font-size: 15px; }
-  .bug-card p { font-size: 12px; color: #7f8c8d; line-height: 1.5; margin: 0; }
+  .bug-card p { font-size: 12px; color: #667071; line-height: 1.5; margin: 0; }
   .bug-card .tool-tag {
     display: inline-block;
     margin-top: 6px;
@@ -244,10 +245,10 @@
       你就能<strong>又快又准地干掉各种奇葩 bug</strong>。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #2c3e50, #4ca1af); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(44, 62, 80, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(44, 62, 80, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #2c3e50, #3b7d88); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(44, 62, 80, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(44, 62, 80, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(44, 62, 80, 0.3)';">
         📖 学习指南
       </a>
-      <span style="color: #777; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: #6d6d6d; font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
@@ -297,15 +298,15 @@
   <div class="card">
     <h2>🛠️ 调试工具大全</h2>
 
-    <div class="tabs">
-      <div class="tab active" data-tab="print">printf 调试</div>
-      <div class="tab" data-tab="gdb">GDB 调试器</div>
-      <div class="tab" data-tab="vs">Visual Studio</div>
-      <div class="tab" data-tab="sanitizers">Sanitizers</div>
-      <div class="tab" data-tab="profiling">性能分析</div>
+    <div class="tabs" role="tablist" aria-label="调试工具分类">
+      <div class="tab active" role="tab" id="tabbtn-print" aria-selected="true" aria-controls="tab-print" tabindex="0" data-tab="print">printf 调试</div>
+      <div class="tab" role="tab" id="tabbtn-gdb" aria-selected="false" aria-controls="tab-gdb" tabindex="-1" data-tab="gdb">GDB 调试器</div>
+      <div class="tab" role="tab" id="tabbtn-vs" aria-selected="false" aria-controls="tab-vs" tabindex="-1" data-tab="vs">Visual Studio</div>
+      <div class="tab" role="tab" id="tabbtn-sanitizers" aria-selected="false" aria-controls="tab-sanitizers" tabindex="-1" data-tab="sanitizers">Sanitizers</div>
+      <div class="tab" role="tab" id="tabbtn-profiling" aria-selected="false" aria-controls="tab-profiling" tabindex="-1" data-tab="profiling">性能分析</div>
     </div>
 
-    <div class="tab-content active" id="tab-print">
+    <div class="tab-content active" id="tab-print" role="tabpanel" aria-labelledby="tabbtn-print">
       <p>最古老但永远有效的方法。不需要任何工具，任何环境都能用。</p>
       <h3>什么时候用</h3>
       <ul>
@@ -328,7 +329,7 @@
       </ul>
     </div>
 
-    <div class="tab-content" id="tab-gdb">
+    <div class="tab-content" id="tab-gdb" role="tabpanel" aria-labelledby="tabbtn-gdb">
       <p>GDB 是 Linux 下最强大的命令行调试器。虽然是命令行，但功能极其强大。</p>
       <h3>常用命令速查</h3>
       <div class="cheat-grid">
@@ -388,7 +389,7 @@
       </div>
     </div>
 
-    <div class="tab-content" id="tab-vs">
+    <div class="tab-content" id="tab-vs" role="tabpanel" aria-labelledby="tabbtn-vs">
       <p>Windows 下用 Visual Studio 的图形化调试器，对新手友好得多。</p>
       <h3>常用操作</h3>
       <ul>
@@ -415,7 +416,7 @@
       </div>
     </div>
 
-    <div class="tab-content" id="tab-sanitizers">
+    <div class="tab-content" id="tab-sanitizers" role="tabpanel" aria-labelledby="tabbtn-sanitizers">
       <p>Sanitizers 是 Google 开发的一套动态检测工具，编译时插桩，运行时检测各种 bug。<strong>强烈建议开发阶段默认开启！</strong></p>
 
       <h3>四大 Sanitizer</h3>
@@ -457,7 +458,7 @@ g++ -g -O1 -fsanitize=thread main.cpp -o app
       </div>
     </div>
 
-    <div class="tab-content" id="tab-profiling">
+    <div class="tab-content" id="tab-profiling" role="tabpanel" aria-labelledby="tabbtn-profiling">
       <p>程序慢了怎么办？猜是没用的，得测。性能分析工具帮你找到真正的瓶颈。</p>
 
       <h3>常用性能分析工具</h3>
@@ -471,7 +472,7 @@ g++ -g -O1 -fsanitize=thread main.cpp -o app
           <p>Visual Studio 自带。CPU 使用率、内存分配、GPU 分析，图形化界面很友好。</p>
         </div>
         <div class="tool-item">
-          <h4>📊 valgrind --callgrind</h4>
+          <h4>📊 valgrind --tool=callgrind</h4>
           <p>精确的函数调用次数和耗时。比较慢（20-50倍），但数据很准。</p>
         </div>
         <div class="tool-item">
@@ -545,8 +546,8 @@ g++ -g -O1 -fsanitize=thread main.cpp -o app
       </div>
       <div class="bug-card">
         <h4>除零错误</h4>
-        <p>整数除零是 UB，浮点除零是无穷</p>
-        <span class="tool-tag">UBSAN</span>
+        <p>整数和浮点除零在标准里都是 UB；IEEE 实现通常给 ±inf/NaN，但别依赖</p>
+        <span class="tool-tag">UBSAN 只查整数</span>
       </div>
       <div class="bug-card">
         <h4>空指针解引用</h4>
@@ -594,17 +595,17 @@ g++ -g -O1 -fsanitize=thread main.cpp -o app
       <div class="tool-item">
         <h4>01 · printf 调试大法</h4>
         <p>日志分级、条件编译、断言、二分法调试。最基础但永远有效。</p>
-        <a href="01_print_debugging.cpp" style="color: #4ca1af; font-size: 13px; font-weight: 600;">查看源码 →</a>
+        <a href="01_print_debugging.cpp" style="color: #397883; font-size: 13px; font-weight: 600;">查看源码 →</a>
       </div>
       <div class="tool-item">
         <h4>02 · 常见 Bug 大全</h4>
         <p>10 个 C++ 经典 bug，每个都有错误代码、问题分析、修复方法。</p>
-        <a href="02_common_bugs.cpp" style="color: #4ca1af; font-size: 13px; font-weight: 600;">查看源码 →</a>
+        <a href="02_common_bugs.cpp" style="color: #397883; font-size: 13px; font-weight: 600;">查看源码 →</a>
       </div>
       <div class="tool-item">
         <h4>03 · Sanitizers 实战</h4>
         <p>ASAN / UBSAN / TSAN 演示代码，编译开 sanitizer 就能看到效果。</p>
-        <a href="03_sanitizers_demo.cpp" style="color: #4ca1af; font-size: 13px; font-weight: 600;">查看源码 →</a>
+        <a href="03_sanitizers_demo.cpp" style="color: #397883; font-size: 13px; font-weight: 600;">查看源码 →</a>
       </div>
     </div>
   </div>
@@ -627,14 +628,34 @@ g++ -g -O1 -fsanitize=thread main.cpp -o app
 </div>
 
 <script>
-document.querySelectorAll('.tab').forEach(tab => {
-  tab.addEventListener('click', () => {
-    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-    tab.classList.add('active');
-    document.getElementById('tab-' + tab.dataset.tab).classList.add('active');
+(function () {
+  var tabs = Array.prototype.slice.call(document.querySelectorAll('.tab'));
+
+  function select(tab, focus) {
+    tabs.forEach(function (t) {
+      var on = t === tab;
+      t.classList.toggle('active', on);
+      t.setAttribute('aria-selected', on ? 'true' : 'false');
+      t.tabIndex = on ? 0 : -1;
+    });
+    document.querySelectorAll('.tab-content').forEach(function (c) {
+      c.classList.toggle('active', c.id === 'tab-' + tab.dataset.tab);
+    });
+    if (focus) tab.focus();
+  }
+
+  tabs.forEach(function (tab) {
+    tab.addEventListener('click', function () { select(tab); });
+    tab.addEventListener('keydown', function (e) {
+      var i = tabs.indexOf(tab), next = null;
+      if (e.key === 'ArrowRight') next = tabs[(i + 1) % tabs.length];
+      else if (e.key === 'ArrowLeft') next = tabs[(i - 1 + tabs.length) % tabs.length];
+      else if (e.key === 'Home') next = tabs[0];
+      else if (e.key === 'End') next = tabs[tabs.length - 1];
+      if (next) { e.preventDefault(); select(next, true); }
+    });
   });
-});
+})();
 </script>
 </body>
 </html>

@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>栈与队列：LIFO、FIFO 和循环缓冲区 - C++ 图解</title>
+<link rel="stylesheet" href="visual.css">
+</head>
+<body>
+<div class="container">
+  <div class="top-links">
+    <a class="back-btn" href="index.html">← 图解专区</a>
+    <a class="top-link" href="../学习路线图.html">总路线图</a>
+    <a class="top-link" href="../algorithms/index.html">算法模块</a>
+  </div>
+
+  <header class="page-head">
+    <div class="kicker">图解专区 · 数据结构</div>
+    <h1>🥞 栈与队列：LIFO、FIFO 和循环缓冲区</h1>
+    <p>栈和队列本身不难，难的是循环队列的“空/满怎么分”、调用栈为什么能递归、以及 <code>std::stack</code> 为什么没有迭代器。这一页从叠盘子讲到环形缓冲区。</p>
+  </header>
+
+  <div class="viz-shell">
+    <div class="stage" id="stage" aria-live="polite"></div>
+    <aside class="side">
+      <div class="step-index" id="counter">1 / 6</div>
+      <h2 id="stepTitle"></h2>
+      <p class="caption" id="caption" aria-live="polite"></p>
+      <div class="code-wrap">
+        <div class="code-label">代码对照</div>
+        <pre class="code"><code id="code"></code></pre>
+      </div>
+    </aside>
+  </div>
+
+  <div class="controls">
+    <button class="btn btn-ghost" id="prevBtn" type="button">← 上一步</button>
+    <button class="btn btn-primary" id="nextBtn" type="button">下一步 →</button>
+    <div class="progress"><i id="progressBar"></i></div>
+    <span class="counter" id="stepCountLabel"></span>
+    <button class="btn btn-ghost" id="resetBtn" type="button">重置</button>
+  </div>
+
+  <div class="step-nav" id="steps"></div>
+
+  <p class="page-foot">
+    对应源码：<a href="../algorithms/data_structures.cpp">algorithms/data_structures.cpp</a> ·
+    交互沙盘：<a href="../algorithms/data_structures_visualizer.html">数据结构可视化</a> ·
+    相关教程：<a href="../algorithms/tutorial.md">algorithms/tutorial.md</a> ·
+    <code>std::stack</code> / <code>std::queue</code> 是容器适配器，默认底层容器是 <code>std::deque</code>。
+  </p>
+</div>
+
+<script>
+window.STEPS = [
+  {
+    nav: '栈 LIFO',
+    title: '1. 栈：后进先出，只在一端操作',
+    caption: '栈像一摞盘子：<code>push</code> 放在最上面，<code>pop</code> 只能拿走最上面，<code>top</code> 只看不拿。最后放进去的最先出来，这就是 LIFO。因为只在栈顶操作，push/pop 都是 O(1)。',
+    code: 'std::stack<int> s;\ns.push(1);\ns.push(2);\ns.push(3);\nint x = s.top();  // 3\ns.pop();          // 弹出 3；pop() 不返回值\nif (!s.empty()) s.top();',
+    highlight: [1, 2, 3, 4, 5, 6],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="栈只能在同一端压入和弹出，后进先出">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-title">同一个口进出：后进先出（LIFO）</text>
+
+  <path d="M230 80 V300 M470 80 V300" stroke="#334155" stroke-width="3"/>
+  <path d="M230 300 H470" stroke="#334155" stroke-width="3"/>
+
+  <rect x="245" y="238" width="210" height="50" rx="6" class="svg-box"/>
+  <text x="350" y="269" text-anchor="middle" class="svg-mono">1</text>
+  <rect x="245" y="188" width="210" height="50" rx="6" class="svg-box"/>
+  <text x="350" y="219" text-anchor="middle" class="svg-mono">2</text>
+  <rect x="245" y="138" width="210" height="50" rx="6" class="svg-box-accent svg-pulse"/>
+  <text x="350" y="169" text-anchor="middle" class="svg-mono" style="font-weight:700">3</text>
+
+  <text x="500" y="166" class="svg-good-text">top → 3</text>
+  <line x1="498" y1="162" x2="460" y2="162" class="svg-arrow-accent" marker-end="url(#ah)"/>
+
+  <rect x="245" y="72" width="210" height="46" rx="6" class="svg-box-ghost"/>
+  <text x="350" y="101" text-anchor="middle" class="svg-small">push(4) 会放在这里</text>
+  <line x1="350" y1="118" x2="350" y2="132" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="480" y="100" class="svg-small">只能从栈顶进</text>
+
+  <path d="M245 163 C200 163 190 110 190 82" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+  <text x="96" y="60" class="svg-bad-text">pop() 只能拿走 3</text>
+
+  <text x="30" y="340" class="svg-small">最后压入的 3 在最上面，所以最先被弹出；1 被压在底下，最后才能出来。</text>
+  <text x="30" y="368" class="svg-small">std::stack 是容器适配器：默认用 deque 存，只暴露 push / pop / top / empty / size。</text>
+  <text x="30" y="396" class="svg-small">pop() 返回 void，想取值要先 top()；对空栈 top()/pop() 是未定义行为。</text>
+</svg>`
+  },
+  {
+    nav: '调用栈',
+    title: '2. 函数调用也是压栈：一帧一层',
+    caption: '每次函数调用都会压入一个<strong>栈帧</strong>，里面放参数、局部变量和返回地址。函数返回时弹栈，局部对象按构造的逆序析构，RAII 就是靠这个保证清理。递归太深会压入太多帧，最终<strong>栈溢出</strong>。',
+    code: 'int dfs(int depth) {\n    int local = depth;          // 每帧独立\n    if (depth == 0) return 0;\n    return 1 + dfs(depth - 1);\n}\n\nint main() { return dfs(3); }',
+    highlight: [1, 3, 6],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="函数调用时栈帧逐层压入，返回时逐层弹出">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">调用栈：每调用一次，就压一帧</text>
+
+  <rect x="150" y="62" width="380" height="72" rx="9" class="svg-box-accent svg-pulse"/>
+  <text x="168" y="88" class="svg-mono">dfs(1)</text>
+  <text x="168" y="112" class="svg-small">参数 depth=1 · 局部变量 local=1 · 返回地址</text>
+
+  <rect x="150" y="140" width="380" height="72" rx="9" class="svg-box"/>
+  <text x="168" y="166" class="svg-mono">dfs(2)</text>
+  <text x="168" y="190" class="svg-small">参数 depth=2 · 局部变量 local=2 · 返回地址</text>
+
+  <rect x="150" y="218" width="380" height="72" rx="9" class="svg-box"/>
+  <text x="168" y="244" class="svg-mono">dfs(3)</text>
+  <text x="168" y="268" class="svg-small">参数 depth=3 · 局部变量 local=3 · 返回地址</text>
+
+  <rect x="150" y="296" width="380" height="72" rx="9" class="svg-box-good"/>
+  <text x="168" y="322" class="svg-mono">main()</text>
+  <text x="168" y="346" class="svg-small">栈底：进程启动后最早的一帧</text>
+
+  <line x1="580" y1="332" x2="580" y2="78" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="592" y="204" class="svg-small">调用：新帧</text>
+  <text x="592" y="224" class="svg-small">压在上方</text>
+
+  <path d="M118 80 C80 80 80 350 146 332" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="36" y="210" class="svg-good-text" transform="rotate(-90 36 210)">返回：逐层弹出</text>
+
+  <text x="30" y="398" class="svg-small">局部变量在各自帧里，互不干扰；返回后帧失效，指向它的指针就是悬空指针。</text>
+  <text x="30" y="422" class="svg-bad-text">递归深度过大 → 栈空间耗尽 → 栈溢出（stack overflow）。</text>
+</svg>`
+  },
+  {
+    nav: '队列 FIFO',
+    title: '3. 队列：先进先出，两头各管一件事',
+    caption: '队列像排队：从<strong>队尾</strong>入队，从<strong>队头</strong>出队，先进先出（FIFO）。<code>push</code> 和 <code>pop</code> 都是 O(1)，但只能看队头和队尾，不能像数组那样随便访问中间元素。',
+    code: 'std::queue<int> q;\nq.push(10);\nq.push(20);\nq.push(30);\nint first = q.front();  // 10\nq.pop();                // 弹出 10\nint last = q.back();    // 30',
+    highlight: [1, 2, 3, 4, 5, 6],
+    stage: `
+<svg viewBox="0 0 760 420" role="img" aria-label="队列从队尾入队，从队头出队，先进先出">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+    <marker id="ahr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ef4444"/></marker>
+    <marker id="aho" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker>
+  </defs>
+  <text x="30" y="34" class="svg-title">先进先出（FIFO）：从尾巴进，从头出</text>
+
+  <text x="66" y="112" class="svg-bad-text">出队</text>
+  <line x1="168" y1="128" x2="114" y2="128" class="svg-arrow-bad" marker-end="url(#ahr)"/>
+  <text x="620" y="112" class="svg-good-text">入队</text>
+  <line x1="700" y1="128" x2="654" y2="128" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+
+  <rect x="170" y="150" width="120" height="60" rx="7" class="svg-box-accent svg-pulse"/>
+  <text x="230" y="187" text-anchor="middle" class="svg-mono">10</text>
+  <rect x="290" y="150" width="120" height="60" rx="7" class="svg-box"/>
+  <text x="350" y="187" text-anchor="middle" class="svg-mono">20</text>
+  <rect x="410" y="150" width="120" height="60" rx="7" class="svg-box"/>
+  <text x="470" y="187" text-anchor="middle" class="svg-mono">30</text>
+  <rect x="530" y="150" width="120" height="60" rx="7" class="svg-box-ghost"/>
+  <text x="590" y="187" text-anchor="middle" class="svg-small">下一个位置</text>
+
+  <text x="170" y="240" class="svg-good-text">front / head</text>
+  <line x1="230" y1="246" x2="230" y2="214" class="svg-arrow-accent" marker-end="url(#ah)"/>
+  <text x="410" y="240" class="svg-good-text">back = 30</text>
+  <line x1="470" y1="246" x2="470" y2="214" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="530" y="266" class="svg-small">tail 是下一个可写位置</text>
+  <line x1="590" y1="252" x2="590" y2="214" class="svg-arrow" style="stroke:#d97706" marker-end="url(#aho)"/>
+
+  <text x="170" y="290" class="svg-small">只能从队头读 front()，或从队尾读 back()</text>
+  <text x="170" y="316" class="svg-small">中间元素不能直接访问；std::queue 不提供迭代器</text>
+
+  <rect x="30" y="344" width="700" height="56" rx="10" class="svg-box-good"/>
+  <text x="48" y="368" class="svg-text">BFS、任务队列、生产者-消费者缓冲区，本质上都是“先到先处理”。</text>
+  <text x="48" y="388" class="svg-small">pop() 同样返回 void：先 front() 取值，再 pop() 移除。</text>
+</svg>`
+  },
+  {
+    nav: '循环队列',
+    title: '4. 循环队列：数组空间重复利用',
+    caption: '用普通数组做队列，出队后前面的空间会浪费。循环队列让 <code>tail</code> 走到末尾后回到 0，形成一个环。麻烦在于：<code>head == tail</code> 既可能是空，也可能是满。最简单的办法是<strong>额外维护 size</strong>；或者故意留一个空槽，最多存 N-1 个。',
+    code: 'struct Ring {  int buf[8];  // 固定 8 槽\n    size_t head = 0, tail = 0, size = 0;\n    bool push(int x) {\n        if (size == 8) return false;   // 满\n        buf[tail] = x;  ++size;\n        tail = (tail + 1) % 8;   // 取模回绕\n        return true;\n    } };  // pop 对称：head 也取模',
+    highlight: [1, 3, 4, 5, 6],
+    ms: 9000,
+    stage: `
+<svg viewBox="0 0 760 440" role="img" aria-label="循环队列用 head 和 tail 取模，尾部绕回开头">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+    <marker id="aho" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#d97706"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">容量 8 的环形缓冲区：已经绕回开头</text>
+
+  <g>
+    <rect x="60" y="118" width="62" height="60" rx="7" class="svg-box-good"/>
+    <rect x="122" y="118" width="62" height="60" rx="7" class="svg-box-good"/>
+    <rect x="184" y="118" width="62" height="60" rx="7" class="svg-box-ghost"/>
+    <rect x="246" y="118" width="62" height="60" rx="7" class="svg-box-ghost"/>
+    <rect x="308" y="118" width="62" height="60" rx="7" class="svg-box-ghost"/>
+    <rect x="370" y="118" width="62" height="60" rx="7" class="svg-box-ghost"/>
+    <rect x="432" y="118" width="62" height="60" rx="7" class="svg-box-good"/>
+    <rect x="494" y="118" width="62" height="60" rx="7" class="svg-box-good"/>
+    <text x="91" y="154" text-anchor="middle" class="svg-mono">70</text>
+    <text x="153" y="154" text-anchor="middle" class="svg-mono">80</text>
+    <text x="215" y="154" text-anchor="middle" class="svg-small">空</text>
+    <text x="277" y="154" text-anchor="middle" class="svg-small">空</text>
+    <text x="339" y="154" text-anchor="middle" class="svg-small">空</text>
+    <text x="401" y="154" text-anchor="middle" class="svg-small">空</text>
+    <text x="463" y="154" text-anchor="middle" class="svg-mono">50</text>
+    <text x="525" y="154" text-anchor="middle" class="svg-mono">60</text>
+    <text x="91" y="200" text-anchor="middle" class="svg-small">[0]</text>
+    <text x="153" y="200" text-anchor="middle" class="svg-small">[1]</text>
+    <text x="215" y="200" text-anchor="middle" class="svg-small">[2]</text>
+    <text x="277" y="200" text-anchor="middle" class="svg-small">[3]</text>
+    <text x="339" y="200" text-anchor="middle" class="svg-small">[4]</text>
+    <text x="401" y="200" text-anchor="middle" class="svg-small">[5]</text>
+    <text x="463" y="200" text-anchor="middle" class="svg-small">[6]</text>
+    <text x="525" y="200" text-anchor="middle" class="svg-small">[7]</text>
+  </g>
+
+  <text x="432" y="104" class="svg-good-text">head = 6</text>
+  <line x1="463" y1="108" x2="463" y2="114" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="184" y="104" class="svg-good-text" style="fill:#b45309">tail = 2</text>
+  <line x1="215" y1="108" x2="215" y2="114" class="svg-arrow" style="stroke:#d97706" marker-end="url(#aho)"/>
+
+  <path d="M525 184 C590 210 130 260 92 184" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
+  <text x="300" y="266" text-anchor="middle" class="svg-small">tail 到 8 后取模回到 0：空间循环使用</text>
+
+  <text x="30" y="312" class="svg-text">当前队列顺序：50 → 60 → 70 → 80（从 head 6 开始绕一圈到 tail 前）</text>
+  <text x="30" y="340" class="svg-small">用 size 记录元素个数：size == 0 为空，size == 8 为满；head / tail 只负责位置</text>
+  <text x="30" y="366" class="svg-small">另一种做法：始终留一个空槽，head == tail 表示空，(tail+1)%8 == head 表示满</text>
+
+  <rect x="30" y="388" width="700" height="42" rx="9" class="svg-box-bad"/>
+  <text x="48" y="414" class="svg-bad-text">只存 head 和 tail、不存 size、也不留空槽：空和满无法区分，这是经典 bug。</text>
+</svg>`
+  },
+  {
+    nav: 'deque',
+    title: '5. deque：两头都能 O(1) 进出的分段数组',
+    caption: '<code>std::deque</code>（double-ended queue）不是一整块连续内存，而是一组分段块加一张中控表。两端插入删除都是 O(1) 摊还，随机访问也是 O(1)。<code>std::stack</code> 和 <code>std::queue</code> 默认就拿它当底层容器。',
+    code: 'std::deque<int> d = {3, 4};\nd.push_front(2);  // 2, 3, 4\nd.push_back(5);   // 2, 3, 4, 5\nd[2];             // 4，随机访问 O(1)\n// 两端插入：O(1) 摊还；中间插入：O(n)',
+    highlight: [1, 2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="deque 由多个分段块组成，两端都能高效插入">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+    <marker id="ahg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">deque = 分段块 + 中控表（map）</text>
+
+  <rect x="40" y="76" width="670" height="58" rx="9" class="svg-box-accent"/>
+  <text x="58" y="101" class="svg-text">中控表：一串指向各块的指针</text>
+  <g>
+    <rect x="170" y="90" width="74" height="30" rx="5" class="svg-field"/>
+    <rect x="258" y="90" width="74" height="30" rx="5" class="svg-field"/>
+    <rect x="346" y="90" width="74" height="30" rx="5" class="svg-field"/>
+    <rect x="434" y="90" width="74" height="30" rx="5" class="svg-field"/>
+    <rect x="522" y="90" width="74" height="30" rx="5" class="svg-field"/>
+    <rect x="610" y="90" width="74" height="30" rx="5" class="svg-field"/>
+  </g>
+
+  <g>
+    <rect x="130" y="196" width="120" height="64" rx="7" class="svg-box-ghost"/>
+    <rect x="270" y="196" width="120" height="64" rx="7" class="svg-box"/>
+    <rect x="410" y="196" width="120" height="64" rx="7" class="svg-box"/>
+    <rect x="550" y="196" width="120" height="64" rx="7" class="svg-box-ghost"/>
+    <text x="190" y="234" text-anchor="middle" class="svg-small">空块</text>
+    <text x="330" y="228" text-anchor="middle" class="svg-mono">2</text>
+    <text x="330" y="248" text-anchor="middle" class="svg-mono">3</text>
+    <text x="470" y="228" text-anchor="middle" class="svg-mono">4</text>
+    <text x="470" y="248" text-anchor="middle" class="svg-mono">5</text>
+    <text x="610" y="234" text-anchor="middle" class="svg-small">空块</text>
+  </g>
+
+  <line x1="207" y1="120" x2="188" y2="190" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="295" y1="120" x2="320" y2="190" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="471" y1="120" x2="470" y2="190" class="svg-arrow" marker-end="url(#ah)"/>
+  <line x1="647" y1="120" x2="620" y2="190" class="svg-arrow" marker-end="url(#ah)"/>
+
+  <path d="M270 258 C240 300 200 300 160 258" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="120" y="322" class="svg-good-text">push_front</text>
+  <path d="M550 258 C580 300 620 300 660 258" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <text x="606" y="322" class="svg-good-text">push_back</text>
+
+  <text x="30" y="290" class="svg-text">两端插入只影响边上的块：O(1) 摊还</text>
+  <text x="30" y="360" class="svg-text">随机访问 d[i]：先算在第几块，再算块内偏移，O(1)</text>
+  <text x="30" y="386" class="svg-small">中间插入仍然要搬元素，O(n)；空间有中控表开销，通常比 vector 略大。</text>
+  <text x="30" y="410" class="svg-small">两端 push 不会让已有元素的引用/指针失效，但迭代器可能全部失效。</text>
+</svg>`
+  },
+  {
+    nav: '怎么选',
+    title: '6. 按访问顺序选结构',
+    caption: '看你要“从哪端拿”：只从一端拿 → 栈；先进先出 → 队列；两端都要 → deque；每次都要最大/最小 → 优先队列（底层是堆）。<code>stack/queue/priority_queue</code> 都是<strong>容器适配器</strong>，它们只暴露受限接口，不提供迭代器。',
+    code: 'std::stack<int> st;          // LIFO，默认 deque\nstd::queue<int> q;           // FIFO，默认 deque\nstd::deque<int> dq;          // 两端进出\nstd::priority_queue<int> pq;   // 大顶堆\n// 适配器没有迭代器：不能 range-for 遍历',
+    highlight: [0, 1, 2, 3, 4],
+    stage: `
+<svg viewBox="0 0 760 430" role="img" aria-label="栈、队列、deque 和优先队列的访问规则与典型用途">
+  <defs>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#4f46e5"/></marker>
+  </defs>
+  <text x="30" y="32" class="svg-title">先问“从哪端拿”，再选容器</text>
+
+  <rect x="24" y="52" width="712" height="42" rx="8" class="svg-box-accent"/>
+  <text x="42" y="79" class="svg-text" style="font-weight:700">结构</text>
+  <text x="200" y="79" class="svg-text" style="font-weight:700">规则 / 复杂度</text>
+  <text x="470" y="79" class="svg-text" style="font-weight:700">典型用途</text>
+
+  <rect x="24" y="94" width="712" height="66" rx="8" class="svg-field"/>
+  <text x="42" y="122" class="svg-mono">stack</text>
+  <text x="42" y="144" class="svg-small">后进先出</text>
+  <text x="200" y="122" class="svg-text">只在一端 push / pop，O(1)</text>
+  <text x="200" y="144" class="svg-small">无迭代器，不能遍历</text>
+  <text x="470" y="122" class="svg-text">括号匹配、撤销、DFS</text>
+  <text x="470" y="144" class="svg-small">表达式求值、函数调用栈</text>
+
+  <rect x="24" y="160" width="712" height="66" rx="8" class="svg-field"/>
+  <text x="42" y="188" class="svg-mono">queue</text>
+  <text x="42" y="210" class="svg-small">先进先出</text>
+  <text x="200" y="188" class="svg-text">尾进头出，O(1)</text>
+  <text x="200" y="210" class="svg-small">只能看 front / back</text>
+  <text x="470" y="188" class="svg-text">BFS、任务池、消息缓冲</text>
+  <text x="470" y="210" class="svg-small">生产者-消费者</text>
+
+  <rect x="24" y="226" width="712" height="66" rx="8" class="svg-field"/>
+  <text x="42" y="254" class="svg-mono">deque</text>
+  <text x="42" y="276" class="svg-small">双端队列</text>
+  <text x="200" y="254" class="svg-text">两端 push / pop，O(1) 摊还</text>
+  <text x="200" y="276" class="svg-small">随机访问 O(1)，中间插入 O(n)</text>
+  <text x="470" y="254" class="svg-text">滑动窗口、双端调度</text>
+  <text x="470" y="276" class="svg-small">stack / queue 的默认底层</text>
+
+  <rect x="24" y="292" width="712" height="66" rx="8" class="svg-field"/>
+  <text x="42" y="320" class="svg-mono">priority_queue</text>
+  <text x="42" y="342" class="svg-small">按优先级出</text>
+  <text x="200" y="320" class="svg-text">push / pop O(log n)，top O(1)</text>
+  <text x="200" y="342" class="svg-small">默认大顶堆，可自定义比较器</text>
+  <text x="470" y="320" class="svg-text">Dijkstra、Top-K、定时任务</text>
+  <text x="470" y="342" class="svg-small">底层是堆，见「堆」图解页</text>
+
+  <rect x="24" y="374" width="712" height="42" rx="9" class="svg-box-good"/>
+  <text x="42" y="400" class="svg-text">默认复杂度和底层容器都能换，但先选对“访问规则”，再谈优化。</text>
+</svg>`
+  }
+];
+
+document.getElementById('stepCountLabel').textContent = '共 ' + window.STEPS.length + ' 步';
+</script>
+<script src="visual.js"></script>
+</body>
+</html>

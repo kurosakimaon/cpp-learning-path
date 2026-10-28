@@ -17,6 +17,13 @@
 是真真切切能提升你代码质量的内功。
 学好了，代码写得又快又好，bug 还少。
 
+> **先说清分工**：本模块管**纵向深潜**——每个特性一个文件，
+> 讲透写法、原理和坑。至于"哪个版本加了什么、为什么要加"
+> 这类**横向脉络**，在隔壁
+> [📜 版本演进模块](../cpp_evolution/index.html)，两边不重复。
+> 第一次接触现代 C++，建议先去那边花半小时建立地图；
+> 只想查某个特性怎么用，直接按第四节的 ①→⑧ 学就行。
+
 ## 二、学习目标
 
 学完本模块，你要能做到：
@@ -31,41 +38,42 @@
 
 ## 三、文件列表与学习重点
 
-咱一共 8 个文件，个个都是干货：
+咱一共 8 个文件，个个都是干货。
+编号就是建议的学习顺序（和模块首页卡片上的徽标一致）：
 
 ```text
-  type_deduction.cpp          ← 类型推导（auto/decltype）
+  ① move_semantics_advanced.cpp ← 移动语义深入（重中之重！）
+    重点：右值引用、移动构造/赋值、std::move、
+          移动语义的性能优化、完美转发
+
+  ② type_deduction.cpp          ← 类型推导（auto/decltype）
     重点：auto 的推导规则、decltype 的用法、返回值推导
 
-  structured_binding.cpp      ← 结构化绑定
+  ③ structured_binding.cpp      ← 结构化绑定
     重点：解包 tuple/pair/结构体/数组，遍历 map 的正确姿势
 
-  if_constexpr.cpp            ← if constexpr 编译期分支
+  ④ if_constexpr.cpp            ← if constexpr 编译期分支
     重点：和普通 if 的区别、模板元编程中的应用
 
-  fold_expressions.cpp        ← 折叠表达式
+  ⑤ fold_expressions.cpp        ← 折叠表达式
     重点：可变参数模板的展开、左右折叠的区别
 
-  optional_variant_any.cpp    ← 三个实用类型
+  ⑥ optional_variant_any.cpp    ← 三个实用类型
     重点：optional 表示"可能没有值"、variant 类型安全的联合、
           any 任意类型的容器
 
-  parallel_algorithms.cpp     ← 并行算法
-    重点：execution policy、哪些算法支持并行
-
-  string_view_filesystem.cpp  ← 字符串视图与文件系统
+  ⑦ string_view_filesystem.cpp  ← 字符串视图与文件系统
     重点：string_view 避免拷贝、filesystem 库操作文件目录
 
-  move_semantics_advanced.cpp ← 移动语义深入（重中之重！）
-    重点：右值引用、移动构造/赋值、std::move、
-          移动语义的性能优化、完美转发
+  ⑧ parallel_algorithms.cpp     ← 并行算法
+    重点：execution policy、哪些算法支持并行
 ```
 
 ## 四、学习顺序建议
 
 师傅给你排个优先级：
 
-### 重中之重：移动语义（move_semantics_advanced.cpp）
+### 第 ① 步 · 重中之重：移动语义（move_semantics_advanced.cpp）
 
 移动语义是 C++11 以来最重要的特性，没有之一。
 它直接关系到性能。`vector` 为什么那么快？
@@ -83,20 +91,20 @@
 
 > 🎬 一步一步看清所有权怎么转移：[移动语义图解](../visuals/move_semantics.html)。
 
-### 基础语法糖（type_deduction → structured_binding）
+### 第 ②③ 步 · 基础语法糖（type_deduction → structured_binding）
 
 这俩是日常写代码用得最多的。
 `auto` 让你少写好多类型名，
 结构化绑定让你解包数据更优雅。
 这俩先学会，写代码立刻就不一样了。
 
-### 模板利器（if_constexpr → fold_expressions）
+### 第 ④⑤ 步 · 模板利器（if_constexpr → fold_expressions）
 
 这俩是模板元编程的好帮手。
 如果你平时写模板不多，可以先放一放，
 但一定要知道有这东西，用得到的时候别想不起来。
 
-### 实用工具（optional_variant_any → string_view_filesystem）
+### 第 ⑥⑦ 步 · 实用工具（optional_variant_any → string_view_filesystem）
 
 这些都是非常实用的工具类。
 `optional` 用来表示"可能失败"的返回值，
@@ -105,7 +113,7 @@
 `filesystem` 用来操作文件目录。
 都是日常开发经常用到的。
 
-### 了解即可（parallel_algorithms）
+### 第 ⑧ 步 · 了解即可（parallel_algorithms）
 
 并行算法是个好东西，但实际项目中用得不多。
 知道有这么回事，需要的时候能想起来就行。

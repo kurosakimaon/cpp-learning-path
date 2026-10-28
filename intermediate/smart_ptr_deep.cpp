@@ -37,7 +37,7 @@ using namespace std;
 //   - shared_ptr：共享所有权，引用计数
 //   - weak_ptr：配合shared_ptr，不增加引用计数
 //
-// C++98里的 auto_ptr 已经被废弃了，别用！
+// C++11 弃用、C++17 已移除 auto_ptr，别用！
 // ============================================================
 
 void whySmartPtr()

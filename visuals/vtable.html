@@ -55,8 +55,8 @@ window.STEPS = [
     nav: '静态绑定',
     title: '1. 非虚函数：编译期就定死了',
     caption: '普通成员函数是<strong>静态绑定</strong>：调用哪个版本由指针或引用的<strong>静态类型</strong>决定，编译器在编译期就把地址写死。对象真实类型是 <code>Derived</code> 也没用。',
-    code: 'struct Base {\n  void hello() const { std::cout << "Base"; }\n};\nstruct Derived : Base {\n  void hello() const { std::cout << "Derived"; }\n};\n\nBase* p = new Derived;\np->hello();   // 输出 Base：按 Base* 静态绑定',
-    highlight: [8],
+    code: 'struct Base {\n  void hello() const { std::cout << "Base"; }\n};\nstruct Derived : Base {\n  void hello() const { std::cout << "Derived"; }\n};\nBase* p = new Derived;\np->hello();   // 输出 Base：静态绑定',
+    highlight: [7],
     stage: `
 <svg viewBox="0 0 760 430" role="img" aria-label="非虚函数按指针的静态类型静态绑定">
   <defs>
@@ -100,8 +100,8 @@ window.STEPS = [
     nav: 'vptr 与 vtable',
     title: '2. 多态对象里藏着一个 vptr',
     caption: '含虚函数的类，编译器通常会为每个对象放一个隐藏指针 <code>vptr</code>（一般在对象起始处），指向该类的<strong>虚函数表 vtable</strong>。vtable 里按固定顺序存放着各个虚函数的地址，同一类的所有对象共享同一张表。',
-    code: 'class Shape {\npublic:\n  virtual double area() const { return 0; }\n  virtual double perimeter() const { return 0; }\n  virtual ~Shape() = default;\nprivate:\n  int color_;\n};\n// 对象布局（示意）：[ vptr ][ color_ ]',
-    highlight: [2, 3, 8],
+    code: 'class Shape {\npublic:\n  virtual double area() const { return 0; }\n  virtual double perimeter() const { return 0; }\n  virtual ~Shape() = default;\nprivate:\n  int color_;   // 普通成员\n};',
+    highlight: [2, 3, 6],
     stage: `
 <svg viewBox="0 0 760 450" role="img" aria-label="多态对象里的 vptr 指向所属类的 vtable">
   <defs>
@@ -272,8 +272,8 @@ window.STEPS = [
     nav: '虚析构',
     title: '6. 基类析构必须是 virtual',
     caption: '通过基类指针 <code>delete</code> 派生类对象时，如果基类析构不是虚函数，只会执行基类析构，派生类的资源没人释放，属于未定义行为。基类有虚函数时，就应该同时给它一个虚析构函数。',
-    code: 'struct Base {\n  virtual ~Base() = default;   // ✓\n};\nstruct Derived : Base {\n  ~Derived() override { /* 释放派生类资源 */ }\n};\n\nBase* p = new Derived;\ndelete p;   // 先 ~Derived，再 ~Base',
-    highlight: [1, 7, 8],
+    code: 'struct Base {\n  virtual ~Base() = default;   // ✓\n};\nstruct Derived : Base {\n  ~Derived() override { /* 释放派生类资源 */ }\n};\nBase* p = new Derived;\ndelete p;   // 先 ~Derived，再 ~Base',
+    highlight: [1, 6, 7],
     stage: `
 <svg viewBox="0 0 760 450" role="img" aria-label="虚析构保证通过基类指针删除时先析构派生类">
   <defs>

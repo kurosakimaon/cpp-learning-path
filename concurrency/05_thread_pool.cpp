@@ -576,7 +576,8 @@ int main() {
     cout << "   比如 Intel TBB 的 task_arena，或者自己封装一个。" << endl;
     cout << "   咱们写的这个是学习用的，生产环境还要考虑很多边界情况。" << endl;
     cout << "" << endl;
-    cout << "5. C++20 有了 std::jthread，还有 std::execution 的并行算法，" << endl;
+    cout << "5. C++20 有 std::jthread；并行算法（执行策略）是 C++17 的 <execution>，" << endl;
+    cout << "   而 std::execution（senders/receivers）要到 C++26 才进标准。" << endl;
     cout << "   但线程池的思想是通用的，底层原理万变不离其宗。" << endl;
 
     // ============================================================

@@ -93,7 +93,7 @@ void printVec(const vector<int>& vec, const string& name = "vector")
 // 二、排序类算法
 // ============================================================
 // sort：快速排序变种（introsort），平均O(n log n)，不稳定
-// stable_sort：归并排序，O(n log n)，稳定（相同元素相对顺序不变）
+// stable_sort：稳定排序（实现多用归并）；有额外内存 O(n log n)，内存不足时 O(n log² n)
 // partial_sort：部分排序，前k个有序，O(n log k)
 // nth_element：第n小的元素就位，左边都不大于它，右边都不小于它
 //               （重复元素可能分布在两侧，不保证严格大小关系）
