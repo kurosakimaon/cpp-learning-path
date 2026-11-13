@@ -10,6 +10,12 @@
 
 ---
 
+## 🌐 在线浏览
+
+**[https://kurosakimaon.github.io/cpp-learning-path/](https://kurosakimaon.github.io/cpp-learning-path/)**
+
+从在线入口可以直达[学习路线图](https://kurosakimaon.github.io/cpp-learning-path/%E5%AD%A6%E4%B9%A0%E8%B7%AF%E7%BA%BF%E5%9B%BE.html)、各阶段模块页和[图解专区](https://kurosakimaon.github.io/cpp-learning-path/visuals/index.html)。示例代码要本机编译，线上看的是路线图、模块导读与动画。
+
 ## 📖 这是什么
 
 这是一套**循序渐进**的 C++ 学习代码库。不是零散的代码片段，而是一条完整的成长路线：
