@@ -4,36 +4,37 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>C++ 工程师修炼路线图 — 从入门到资深</title>
 <style>
   /* ACTIVE_PALETTE_TOKENS */
   :root {
-    --bg: #0f172a;
-    --bg2: #1e293b;
-    --surface: #1e293b;
-    --surface-2: #334155;
-    --ink: #f1f5f9;
-    --ink-muted: #94a3b8;
-    --ink-dim: #8fa0b8;
-    --rule: #334155;
-    --accent: #38bdf8;
-    --accent-2: #818cf8;
-    --success: #4ade80;
-    --warning: #fbbf24;
-    --danger: #f87171;
-    --page-surface: #0f172a;
-    --page-surface-muted: #1e293b;
-    --page-ink: #f1f5f9;
-    --page-ink-muted: #94a3b8;
-    --page-rule: #334155;
-    --page-accent: #38bdf8;
-    --page-accent-2: #818cf8;
-    --chart-1: #38bdf8;
-    --chart-2: #818cf8;
-    --chart-3: #4ade80;
-    --chart-4: #fbbf24;
-    --chart-5: #f87171;
-    --chart-6: #f472b6;
+    --bg: var(--lh-bg-d-b2b);
+    --bg2: var(--lh-bg-d-b2c);
+    --surface: var(--lh-bg-d-b2c);
+    --surface-2: var(--lh-bg-d-b3e);
+    --ink: var(--lh-ink-d-n9c);
+    --ink-muted: var(--lh-ink-d-b6b);
+    --ink-dim: var(--lh-ink-d-b6b);
+    --rule: var(--lh-line-d-b3b);
+    --accent: var(--lh-acc-d-cb7b);
+    --accent-2: var(--lh-acc-d-b6b);
+    --success: var(--lh-acc-d-g7b);
+    --warning: var(--lh-acc-d-o7b);
+    --danger: var(--lh-acc-d-r6b);
+    --page-surface: var(--lh-bg-d-b2b);
+    --page-surface-muted: var(--lh-ink-d-b2c);
+    --page-ink: var(--lh-ink-d-n9c);
+    --page-ink-muted: var(--lh-ink-d-b6b);
+    --page-rule: var(--lh-line-d-b3b);
+    --page-accent: var(--lh-acc-d-cb7b);
+    --page-accent-2: var(--lh-acc-d-b6b);
+    --chart-1: var(--lh-ink-d-cb7c);
+    --chart-2: var(--lh-ink-d-b6c);
+    --chart-3: var(--lh-ink-d-g7b);
+    --chart-4: var(--lh-ink-d-o7c);
+    --chart-5: var(--lh-ink-d-r6b);
+    --chart-6: var(--lh-ink-d-rb6b);
   }
 
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -48,7 +49,7 @@
   }
 
   /* 深色底上，没显式配色的链接不能沿用浏览器默认蓝（几乎看不清） */
-  a { color: var(--accent); }
+  a { color: var(--lh-ink-d-cb7c); }
 
   .container {
     max-width: 1100px;
@@ -60,7 +61,7 @@
   .hero {
     text-align: center;
     padding: 60px 20px 50px;
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%);
+    background: linear-gradient(135deg, var(--lh-bg-d-b2c) 0%, var(--lh-bg-d-b2b) 50%, var(--lh-bg-d-pb2b) 100%);
     border-bottom: 1px solid var(--rule);
     position: relative;
     overflow: hidden;
@@ -72,15 +73,15 @@
     left: -50%;
     width: 200%;
     height: 200%;
-    background: radial-gradient(circle at 30% 50%, rgba(56,189,248,0.08) 0%, transparent 50%),
-                radial-gradient(circle at 70% 50%, rgba(129,140,248,0.08) 0%, transparent 50%);
+    background: radial-gradient(circle at 30% 50%, var(--lh-bg-d-cb7-a8b) 0%, transparent 50%),
+                radial-gradient(circle at 70% 50%, var(--lh-bg-d-b6-a8c) 0%, transparent 50%);
     pointer-events: none;
   }
   .hero h1 {
     font-size: 2.4rem;
     font-weight: 700;
     margin-bottom: 12px;
-    background: linear-gradient(135deg, #38bdf8, #818cf8);
+    background: linear-gradient(135deg, var(--lh-bg-d-cb7b), var(--lh-bg-d-b6c));
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -107,7 +108,7 @@
     font-size: 0.95rem;
   }
   .hero .meta-item strong {
-    color: var(--accent);
+    color: var(--lh-ink-d-cb7c);
     font-size: 1.2rem;
   }
 
@@ -119,13 +120,13 @@
     font-size: 1.6rem;
     margin-bottom: 24px;
     padding-bottom: 12px;
-    border-bottom: 2px solid var(--accent);
+    border-bottom: 2px solid var(--lh-line-d-cb7b);
     display: inline-block;
   }
   h3 {
     font-size: 1.2rem;
     margin: 24px 0 12px;
-    color: var(--accent);
+    color: var(--lh-ink-d-cb7c);
   }
 
   /* ====== 路线图时间线 ====== */
@@ -140,7 +141,7 @@
     top: 0;
     bottom: 0;
     width: 3px;
-    background: linear-gradient(180deg, #38bdf8, #818cf8, #4ade80, #fbbf24, #f87171, #f472b6);
+    background: linear-gradient(180deg, var(--lh-bg-d-cb7b), var(--lh-bg-d-b6c), var(--lh-bg-d-g7b), var(--lh-bg-d-o7d), var(--lh-bg-d-r6e), var(--lh-bg-d-rb6c));
     border-radius: 2px;
   }
 
@@ -156,7 +157,7 @@
   }
   .stage:hover {
     transform: translateX(4px);
-    border-color: var(--accent);
+    border-color: var(--lh-line-d-cb7b);
   }
 
   .stage-badge {
@@ -171,15 +172,15 @@
     justify-content: center;
     font-weight: 700;
     font-size: 1.1rem;
-    color: #fff;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    color: var(--lh-ink-d-n9b);
+    box-shadow: 0 4px 12px var(--lh-shd-d-n1-a30b);
   }
-  .stage.s1 .stage-badge { background: #0a7bae; }
-  .stage.s2 .stage-badge { background: #6063ea; }
-  .stage.s3 .stage-badge { background: #17853f; }
-  .stage.s4 .stage-badge { background: #a06707; }
-  .stage.s5 .stage-badge { background: #d33c3c; }
-  .stage.s6 .stage-badge { background: #c93d82; }
+  .stage.s1 .stage-badge { background: var(--lh-bg-d-cb5b); }
+  .stage.s2 .stage-badge { background: var(--lh-bgh-d-pb5b); }
+  .stage.s3 .stage-badge { background: var(--lh-bg-d-g5c); }
+  .stage.s4 .stage-badge { background: var(--lh-bg-d-o5c); }
+  .stage.s5 .stage-badge { background: var(--lh-bg-d-r5g); }
+  .stage.s6 .stage-badge { background: var(--lh-bg-d-rb5b); }
 
   .stage-title {
     font-size: 1.3rem;
@@ -193,8 +194,8 @@
     font-size: 0.75rem;
     padding: 2px 10px;
     border-radius: 999px;
-    background: rgba(56,189,248,0.15);
-    color: var(--accent);
+    background: var(--lh-bg-d-cb7-a15b);
+    color: var(--lh-ink-d-cb7c);
     font-weight: 500;
   }
   .stage-duration {
@@ -224,7 +225,7 @@
     transition: border-color 0.2s;
   }
   .topic-tag:hover {
-    border-color: var(--accent);
+    border-color: var(--lh-line-d-cb7b);
   }
 
   .stage-files {
@@ -240,7 +241,7 @@
     font-family: "SF Mono", Consolas, monospace;
     font-size: 0.8rem;
     margin: 0 2px;
-    color: var(--accent-2);
+    color: var(--lh-ink-d-b6c);
   }
 
   /* ====== 核心能力卡片 ====== */
@@ -259,7 +260,7 @@
     transition: border-color 0.2s, transform 0.2s;
   }
   .skill-card:hover {
-    border-color: var(--accent);
+    border-color: var(--lh-line-d-cb7b);
     transform: translateY(-2px);
   }
   .skill-icon {
@@ -277,7 +278,7 @@
 
   /* ====== 学习建议 ====== */
   .tips {
-    background: linear-gradient(135deg, rgba(56,189,248,0.08), rgba(129,140,248,0.08));
+    background: linear-gradient(135deg, var(--lh-bg-d-cb7-a8b), var(--lh-bg-d-b6-a8c));
     border: 1px solid var(--rule);
     border-radius: 12px;
     padding: 24px 28px;
@@ -285,7 +286,7 @@
   }
   .tips h3 {
     margin-top: 0;
-    color: var(--accent);
+    color: var(--lh-ink-d-cb7c);
   }
   .tips ol {
     padding-left: 20px;
@@ -309,13 +310,13 @@
     background: var(--surface);
     border-radius: 10px;
     padding: 16px 18px;
-    box-shadow: 0 2px 10px rgba(0,0,0,0.35);
-    border-left: 4px solid var(--accent);
+    box-shadow: 0 2px 10px var(--lh-shd-d-n1-a35b);
+    border-left: 4px solid var(--lh-line-d-cb7b);
     transition: transform 0.2s, box-shadow 0.2s;
   }
   .book-card:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+    box-shadow: 0 6px 20px var(--lh-shd-d-n1-a50b);
   }
   .book-level {
     display: inline-block;
@@ -323,8 +324,8 @@
     font-weight: 700;
     padding: 2px 10px;
     border-radius: 20px;
-    background: rgba(74,222,128,0.16);
-    color: var(--success);
+    background: var(--lh-bg-d-g7-a16b);
+    color: var(--lh-ink-d-g7b);
     margin-bottom: 8px;
   }
   .book-title {
@@ -340,19 +341,19 @@
   }
   .book-desc {
     font-size: 13px;
-    color: #cbd5e1;
+    color: var(--lh-ink-d-cb8b);
     line-height: 1.6;
   }
   .resource-tip {
     margin-top: 20px;
-    background: rgba(251,191,36,0.10);
-    border-left: 4px solid var(--warning);
+    background: var(--lh-bg-d-o7-a10b);
+    border-left: 4px solid var(--lh-line-d-o7c);
     padding: 14px 20px;
     border-radius: 0 8px 8px 0;
   }
-  .resource-tip strong { color: var(--warning); display: block; margin-bottom: 8px; }
+  .resource-tip strong { color: var(--lh-ink-d-o7c); display: block; margin-bottom: 8px; }
   .resource-tip ul { padding-left: 22px; color: var(--ink-muted); line-height: 2; font-size: 14px; }
-  .resource-tip li strong { color: var(--warning); display: inline; }
+  .resource-tip li strong { color: var(--lh-ink-d-o7c); display: inline; }
 
   /* ====== 文件索引表 ====== */
   .table-scroll {
@@ -375,10 +376,10 @@
   th {
     background: var(--surface-2);
     font-weight: 600;
-    color: var(--accent);
+    color: var(--lh-ink-d-cb7c);
   }
   tr:hover {
-    background: rgba(56,189,248,0.05);
+    background: var(--lh-bg-d-cb7-a5b);
   }
   td code {
     background: var(--bg);
@@ -386,7 +387,7 @@
     border-radius: 4px;
     font-family: "SF Mono", Consolas, monospace;
     font-size: 0.8rem;
-    color: var(--accent-2);
+    color: var(--lh-ink-d-b6c);
   }
   .level-badge {
     display: inline-block;
@@ -395,10 +396,10 @@
     font-size: 0.75rem;
     font-weight: 500;
   }
-  .lv-beginner { background: rgba(14,165,233,0.2); color: #38bdf8; }
-  .lv-intermediate { background: rgba(34,197,94,0.2); color: #4ade80; }
-  .lv-advanced { background: rgba(245,158,11,0.2); color: #fbbf24; }
-  .lv-expert { background: rgba(239,68,68,0.2); color: #f87171; }
+  .lv-beginner { background: var(--lh-bg-d-cb6-a20b); color: var(--lh-ink-d-cb7c); }
+  .lv-intermediate { background: var(--lh-bg-d-g7-a20b); color: var(--lh-ink-d-g7b); }
+  .lv-advanced { background: var(--lh-bg-d-o7-a20b); color: var(--lh-ink-d-o7c); }
+  .lv-expert { background: var(--lh-bg-d-r5-a20b); color: var(--lh-ink-d-r6b); }
 
   /* ====== 底部 ====== */
   footer {
@@ -424,6 +425,9 @@
     .stage-topics { grid-template-columns: repeat(2, 1fr); }
   }
 </style>
+
+<link rel="stylesheet" href="assets/theme.css">
+<script src="assets/theme.js" defer></script>
 </head>
 <body>
 
@@ -432,9 +436,9 @@
   <p class="subtitle">从零基础到资深开发工程师 · 六大阶段 · 扎实筑基 · 深入浅出</p>
   <div class="meta">
     <div class="meta-item"><strong>6</strong> 个阶段</div>
-    <div class="meta-item"><strong>55</strong> 个代码 Demo<br><span style="font-size:12px;color:#a8b3c4">含Boost共68个</span></div>
+    <div class="meta-item"><strong>55</strong> 个代码 Demo<br><span style="font-size:12px;color:var(--lh-ink-d-b7c)">含Boost共68个</span></div>
     <div class="meta-item"><strong>11</strong> 个构建示例</div>
-    <div class="meta-item"><strong>20</strong> 个可视化页面<br><span style="font-size:12px;color:#a8b3c4">18 个分步图解 + 2 个算法演示</span></div>
+    <div class="meta-item"><strong>20</strong> 个可视化页面<br><span style="font-size:12px;color:var(--lh-ink-d-b7c)">18 个分步图解 + 2 个算法演示</span></div>
   </div>
 </div>
 
@@ -651,126 +655,126 @@
     <div class="skill-icon">🧷</div>
     <div class="skill-title">链表：指针怎么把节点串起来？</div>
     <div class="skill-desc">节点与 head、头插尾插、删除时找前驱、三指针反转，以及链表为什么缓存不友好。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-tg6-a12b); color: var(--lh-ink-d-tg7b); font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/dynamic_array.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">📏</div>
     <div class="skill-title">动态数组：push_back 为什么会搬家？</div>
     <div class="skill-desc">size 与 capacity、扩容时搬家、摊还 O(1)、迭代器失效，以及 reserve 和 resize 的区别。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-tg6-a12b); color: var(--lh-ink-d-tg7b); font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/stack_queue.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🥞</div>
     <div class="skill-title">栈与队列：后进先出和先进先出怎么实现？</div>
     <div class="skill-desc">调用栈、队列的 head/tail、循环队列取模、deque 分段存储，以及适配器怎么选。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-tg6-a12b); color: var(--lh-ink-d-tg7b); font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/tree.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🌳</div>
     <div class="skill-title">二叉搜索树：查找为什么能减半？</div>
     <div class="skill-desc">BST 不变式、查找插入删除（后继节点）、中序遍历、退化成链表和旋转。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-tg6-a12b); color: var(--lh-ink-d-tg7b); font-size: 0.78rem; font-weight: 600;">数据结构 · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/hash_table.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🗃️</div>
     <div class="skill-title">哈希表：平均 O(1) 是怎么做到的？</div>
     <div class="skill-desc">哈希函数与取模、链地址法、装填因子、rehash，以及开放寻址和墓碑标记。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-tg6-a12b); color: var(--lh-ink-d-tg7b); font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/heap.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">⛰️</div>
     <div class="skill-title">堆与优先队列：最大值怎么总在顶上？</div>
     <div class="skill-desc">数组表示完全二叉树、sift-up / sift-down、O(n) 建堆、堆排序和 priority_queue。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(16,185,129,0.12); color: #34d399; font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-tg6-a12b); color: var(--lh-ink-d-tg7b); font-size: 0.78rem; font-weight: 600;">数据结构 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/move_semantics.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🧩</div>
     <div class="skill-title">移动语义：所有权怎么转移？</div>
     <div class="skill-desc">拷贝、std::move、移动构造与移动赋值，以及 noexcept 为什么会影响 vector 扩容。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">现代 C++ · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">现代 C++ · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/memory_model.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🧠</div>
     <div class="skill-title">栈、堆与 RAII：谁负责释放？</div>
     <div class="skill-desc">栈帧与堆对象、内存泄漏、悬空指针、异常展开，最后落到 unique_ptr 和 shared_ptr。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/smart_ptr.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🔑</div>
     <div class="skill-title">智能指针：谁拥有这个对象？</div>
     <div class="skill-desc">unique_ptr 独占与移动、shared_ptr 的控制块和引用计数、make_shared、weak_ptr 与循环引用。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">内存管理 · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/exceptions.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">💥</div>
     <div class="skill-title">异常与栈展开：throw 之后谁负责收尾？</div>
     <div class="skill-desc">throw 跳转、栈展开析构、catch 匹配与切片、rethrow、noexcept，以及强异常安全的写法。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">异常处理 · 8 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">异常处理 · 8 步</div>
   </a>
 
   <a class="skill-card" href="visuals/vtable.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🎭</div>
     <div class="skill-title">虚函数表：p-&gt;speak() 调用了谁？</div>
     <div class="skill-desc">静态绑定、vptr / vtable、动态派发、override 签名检查、对象切片与虚析构。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">面向对象 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">面向对象 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/linking.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🔗</div>
     <div class="skill-title">静态库与动态库：程序怎么找到它？</div>
     <div class="skill-desc">编译与链接、.a 与 .so、-L 与运行期搜索、rpath / $ORIGIN，以及排查工具。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">构建系统 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">构建系统 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/concurrency.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🧵</div>
     <div class="skill-title">并发时序：counter++ 为什么丢更新？</div>
     <div class="skill-desc">线程共享内存、竞态窗口、互斥锁、死锁、条件变量、假唤醒与线程池，按时间线演示。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">并发编程 · 7 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">并发编程 · 7 步</div>
   </a>
 
   <a class="skill-card" href="visuals/memory_order.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🌀</div>
     <div class="skill-title">内存序：两个线程，谁先看到谁？</div>
     <div class="skill-desc">内存重排、happens-before、relaxed、发布订阅、seq_cst，以及 x86 与 ARM 的差异。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">并发编程 · 8 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">并发编程 · 8 步</div>
   </a>
 
   <a class="skill-card" href="visuals/ipc.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🔀</div>
     <div class="skill-title">进程间通信：两个进程怎么共享数据？</div>
     <div class="skill-desc">地址空间隔离、共享内存映射、跨进程锁、消息队列，以及选型和生命周期管理。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">系统编程 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">系统编程 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/asio.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🔌</div>
     <div class="skill-title">Asio 事件循环：一个线程怎么扛住一万连接？</div>
     <div class="skill-desc">io_context 任务队列、同步与异步、完成回调、异步调用链、单线程并发和 strand 串行化。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(56,189,248,0.12); color: #a5b4fc; font-size: 0.78rem; font-weight: 600;">网络编程 · 6 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-cb7-a12b); color: var(--lh-ink-d-b7b); font-size: 0.78rem; font-weight: 600;">网络编程 · 6 步</div>
   </a>
 
   <a class="skill-card" href="visuals/observer.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">👀</div>
     <div class="skill-title">观察者：谁通知谁，按什么顺序通知？</div>
     <div class="skill-desc">注册与注销、推 vs 拉、先改状态再通知、回调里退订的迭代器陷阱、weak_ptr 与线程安全。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(167,139,250,0.12); color: #c4b5fd; font-size: 0.78rem; font-weight: 600;">设计模式 · 8 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-pb6-a12b); color: var(--lh-ink-d-pb7b); font-size: 0.78rem; font-weight: 600;">设计模式 · 8 步</div>
   </a>
 
   <a class="skill-card" href="visuals/visitor.html" style="display: block; text-decoration: none; color: inherit;">
     <div class="skill-icon">🚪</div>
     <div class="skill-title">访问者：一次调用，怎么发生两次分派？</div>
     <div class="skill-desc">accept 与 visit 的两次查表、分派矩阵、加操作与加元素的双向代价、variant + visit。</div>
-    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: rgba(167,139,250,0.12); color: #c4b5fd; font-size: 0.78rem; font-weight: 600;">设计模式 · 8 步</div>
+    <div style="margin-top: 12px; display: inline-block; padding: 3px 10px; border-radius: 999px; background: var(--lh-bg-d-pb6-a12b); color: var(--lh-ink-d-pb7b); font-size: 0.78rem; font-weight: 600;">设计模式 · 8 步</div>
   </a>
 </div>
 
@@ -839,7 +843,7 @@
   </ol>
 </div>
 
-<div class="tips" style="background: linear-gradient(135deg, rgba(74,222,128,0.08), rgba(56,189,248,0.08));">
+<div class="tips" style="background: linear-gradient(135deg, var(--lh-bg-d-g7-a8b), var(--lh-bg-d-cb7-a8b));">
   <h3>✅ 各阶段达标检验</h3>
   <ol>
     <li><strong>筑基期：</strong>能独立写一个学生管理系统（数组+结构体+函数+文件读写）</li>
@@ -873,7 +877,7 @@
   <tbody>
     <tr>
       <td rowspan="10">筑基期 + 进阶期</td>
-      <td rowspan="6"><a href="beginner/index.html" style="color: var(--accent);"><code>beginner/</code></a></td>
+      <td rowspan="6"><a href="beginner/index.html" style="color: var(--lh-ink-d-cb7c);"><code>beginner/</code></a></td>
       <td><a href="beginner/01_basics.cpp" style="color: var(--ink);"><code>01_basics.cpp</code></a></td>
       <td><span class="level-badge lv-beginner">入门</span></td>
       <td>变量、数据类型、运算符、流程控制</td>
@@ -904,7 +908,7 @@
       <td>文件读写、文本/二进制、流操作</td>
     </tr>
     <tr>
-      <td rowspan="4"><a href="beginner/index.html" style="color: var(--accent);"><code>beginner/</code></a><br><a href="intermediate/index.html" style="color: var(--accent);"><code>intermediate/</code></a></td>
+      <td rowspan="4"><a href="beginner/index.html" style="color: var(--lh-ink-d-cb7c);"><code>beginner/</code></a><br><a href="intermediate/index.html" style="color: var(--lh-ink-d-cb7c);"><code>intermediate/</code></a></td>
       <td><a href="beginner/07_class_basics.cpp" style="color: var(--ink);"><code>07_class_basics.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">初级</span></td>
       <td>类与对象、封装、构造/析构</td>
@@ -927,7 +931,7 @@
 
     <tr>
       <td rowspan="7">蜕变期</td>
-      <td rowspan="5"><a href="intermediate/index.html" style="color: var(--accent);"><code>intermediate/</code></a></td>
+      <td rowspan="5"><a href="intermediate/index.html" style="color: var(--lh-ink-d-cb7c);"><code>intermediate/</code></a></td>
       <td><a href="intermediate/memory_model_raii.cpp" style="color: var(--ink);"><code>memory_model_raii.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>内存模型、堆/栈、RAII、智能指针深入</td>
@@ -953,20 +957,20 @@
       <td>编程规范与最佳实践</td>
     </tr>
     <tr>
-      <td rowspan="2"><a href="algorithms/index.html" style="color: var(--accent);"><code>algorithms/</code></a></td>
-      <td><a href="algorithms/sorting_visualizer.html" style="color: var(--accent);">🎮 排序可视化</a><br><a href="algorithms/sorting_algorithms.cpp" style="color: var(--ink);"><code>sorting_algorithms.cpp</code></a></td>
+      <td rowspan="2"><a href="algorithms/index.html" style="color: var(--lh-ink-d-cb7c);"><code>algorithms/</code></a></td>
+      <td><a href="algorithms/sorting_visualizer.html" style="color: var(--lh-ink-d-cb7c);">🎮 排序可视化</a><br><a href="algorithms/sorting_algorithms.cpp" style="color: var(--ink);"><code>sorting_algorithms.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>8种排序算法 + 交互式动画 + 性能对比</td>
     </tr>
     <tr>
-      <td><a href="algorithms/data_structures_visualizer.html" style="color: var(--accent);">🎮 数据结构可视化</a><br><a href="algorithms/index.html#visuals" style="color: var(--accent);">🧭 数据结构分步图解</a><br><a href="algorithms/data_structures.cpp" style="color: var(--ink);"><code>data_structures.cpp</code></a></td>
+      <td><a href="algorithms/data_structures_visualizer.html" style="color: var(--lh-ink-d-cb7c);">🎮 数据结构可视化</a><br><a href="algorithms/index.html#visuals" style="color: var(--lh-ink-d-cb7c);">🧭 数据结构分步图解</a><br><a href="algorithms/data_structures.cpp" style="color: var(--ink);"><code>data_structures.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>7种经典数据结构 + 交互式动画 + 从零实现</td>
     </tr>
 
     <tr>
       <td rowspan="9">内功期</td>
-      <td rowspan="8"><a href="cpp17/index.html" style="color: var(--accent);"><code>cpp17/</code></a><br><span style="font-size:0.78rem;color:var(--ink-dim);">按首页 ①→⑧ 顺序学<br>（先移动语义，最后并行算法）</span></td>
+      <td rowspan="8"><a href="cpp17/index.html" style="color: var(--lh-ink-d-cb7c);"><code>cpp17/</code></a><br><span style="font-size:0.78rem;color:var(--ink-dim);">按首页 ①→⑧ 顺序学<br>（先移动语义，最后并行算法）</span></td>
       <td><a href="cpp17/type_deduction.cpp" style="color: var(--ink);"><code>type_deduction.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">中高级</span></td>
       <td>auto/decltype/CTAD/推导指引</td>
@@ -1007,13 +1011,13 @@
       <td>移动语义深入与完美转发</td>
     </tr>
     <tr>
-      <td><a href="cpp_evolution/index.html" style="color: var(--accent);"><code>cpp_evolution/</code></a></td>
+      <td><a href="cpp_evolution/index.html" style="color: var(--lh-ink-d-cb7c);"><code>cpp_evolution/</code></a></td>
       <td colspan="2">按顺序：<a href="cpp_evolution/evolution_comparison.cpp" style="color: var(--ink);">①演进对比</a> · <a href="cpp_evolution/cpp11_core_features.cpp" style="color: var(--ink);">②cpp11核心</a> · <a href="cpp_evolution/cpp14_features.cpp" style="color: var(--ink);">③cpp14特性</a> · <a href="cpp_evolution/cpp20_overview.cpp" style="color: var(--ink);">④C++20 概览</a></td>
       <td>C++11→14→17→20 版本演进与写法对比（C++20 示例需 C++20 编译器）</td>
     </tr>
     <tr>
       <td rowspan="7">并发编程</td>
-      <td rowspan="7"><a href="concurrency/index.html" style="color: var(--accent);"><code>concurrency/</code></a></td>
+      <td rowspan="7"><a href="concurrency/index.html" style="color: var(--lh-ink-d-cb7c);"><code>concurrency/</code></a></td>
       <td><a href="concurrency/01_threading_basics.cpp" style="color: var(--ink);"><code>01_threading_basics.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">中高级</span></td>
       <td>线程基础、join/detach、参数传递</td>
@@ -1044,14 +1048,14 @@
       <td>future/promise/packaged_task 异步编程</td>
     </tr>
     <tr>
-      <td><a href="concurrency/07_ipc_shared_memory.cpp" style="color: var(--ink);"><code>07_ipc_shared_memory.cpp</code></a> <em style="font-size:11px;color:#888;">(Boost)</em></td>
+      <td><a href="concurrency/07_ipc_shared_memory.cpp" style="color: var(--ink);"><code>07_ipc_shared_memory.cpp</code></a> <em style="font-size:11px;color:var(--lh-ink-d-n6b);">(Boost)</em></td>
       <td><span class="level-badge lv-expert">高级</span></td>
       <td>进程间通信：共享内存、消息队列</td>
     </tr>
 
     <tr>
       <td rowspan="11">化境期</td>
-      <td rowspan="11"><a href="patterns/index.html" style="color: var(--accent);"><code>patterns/</code></a></td>
+      <td rowspan="11"><a href="patterns/index.html" style="color: var(--lh-ink-d-cb7c);"><code>patterns/</code></a></td>
       <td><a href="patterns/singleton.cpp" style="color: var(--ink);"><code>singleton.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>单例模式（5种实现方式对比）</td>
@@ -1109,7 +1113,7 @@
 
     <tr>
       <td rowspan="3">调试专题</td>
-      <td rowspan="3"><a href="debugging/index.html" style="color: var(--accent);"><code>debugging/</code></a></td>
+      <td rowspan="3"><a href="debugging/index.html" style="color: var(--lh-ink-d-cb7c);"><code>debugging/</code></a></td>
       <td><a href="debugging/01_print_debugging.cpp" style="color: var(--ink);"><code>01_print_debugging.cpp</code></a></td>
       <td><span class="level-badge lv-intermediate">中级</span></td>
       <td>printf 调试大法、日志分级、断言、二分法</td>
@@ -1120,35 +1124,35 @@
       <td>10个C++经典bug分析与修复</td>
     </tr>
     <tr>
-      <td><a href="debugging/03_sanitizers_demo.cpp" style="color: var(--ink);"><code>03_sanitizers_demo.cpp</code></a> · <a href="debugging/index.html" style="color: var(--accent);">📖 指南</a></td>
+      <td><a href="debugging/03_sanitizers_demo.cpp" style="color: var(--ink);"><code>03_sanitizers_demo.cpp</code></a> · <a href="debugging/index.html" style="color: var(--lh-ink-d-cb7c);">📖 指南</a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>ASAN/UBSAN/TSAN 内存/并发错误检测</td>
     </tr>
 
     <tr>
       <td rowspan="2">单元测试</td>
-      <td rowspan="2"><a href="testing/index.html" style="color: var(--accent);"><code>testing/</code></a></td>
+      <td rowspan="2"><a href="testing/index.html" style="color: var(--lh-ink-d-cb7c);"><code>testing/</code></a></td>
       <td><a href="testing/01_gtest_basics.cpp" style="color: var(--ink);"><code>01_gtest_basics.cpp</code></a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>Google Test 入门、断言、测试夹具</td>
     </tr>
     <tr>
-      <td><a href="testing/02_gtest_advanced.cpp" style="color: var(--ink);"><code>02_gtest_advanced.cpp</code></a> · <a href="testing/index.html" style="color: var(--accent);">📖 指南</a></td>
+      <td><a href="testing/02_gtest_advanced.cpp" style="color: var(--ink);"><code>02_gtest_advanced.cpp</code></a> · <a href="testing/index.html" style="color: var(--lh-ink-d-cb7c);">📖 指南</a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>参数化测试、死亡测试、Mock概念、TDD入门</td>
     </tr>
 
     <tr>
       <td rowspan="1">异常与错误处理</td>
-      <td rowspan="1"><a href="exceptions/index.html" style="color: var(--accent);"><code>exceptions/</code></a></td>
-      <td><a href="exceptions/exception_basics.cpp" style="color: var(--ink);"><code>exception_basics.cpp</code></a> · <a href="exceptions/index.html" style="color: var(--accent);">📖 指南</a></td>
+      <td rowspan="1"><a href="exceptions/index.html" style="color: var(--lh-ink-d-cb7c);"><code>exceptions/</code></a></td>
+      <td><a href="exceptions/exception_basics.cpp" style="color: var(--ink);"><code>exception_basics.cpp</code></a> · <a href="exceptions/index.html" style="color: var(--lh-ink-d-cb7c);">📖 指南</a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>异常机制、RAII与异常安全、noexcept、错误码vs异常</td>
     </tr>
 
     <tr>
       <td rowspan="3">构建系统</td>
-      <td rowspan="3"><a href="build_systems/index.html" style="color: var(--accent);"><code>build_systems/</code></a></td>
+      <td rowspan="3"><a href="build_systems/index.html" style="color: var(--lh-ink-d-cb7c);"><code>build_systems/</code></a></td>
       <td><strong>Makefile</strong>：<a href="build_systems/makefile_01_basic/index.html" style="color: var(--ink);">01基础</a> · <a href="build_systems/makefile_02_variables/index.html" style="color: var(--ink);">02变量</a> · <a href="build_systems/makefile_03_patterns/index.html" style="color: var(--ink);">03模式</a> · <a href="build_systems/makefile_04_project/index.html" style="color: var(--ink);">04项目</a> · <a href="build_systems/makefile_05_library/index.html" style="color: var(--ink);">05库</a></td>
       <td><span class="level-badge lv-advanced">高级</span></td>
       <td>5个渐进式 Makefile 学习示例（静态库/动态库/链接）</td>
@@ -1166,7 +1170,7 @@
 
     <tr>
       <td rowspan="15">大师期</td>
-      <td rowspan="13"><a href="boost/index.html" style="color: var(--accent);"><code>boost/</code></a></td>
+      <td rowspan="13"><a href="boost/index.html" style="color: var(--lh-ink-d-cb7c);"><code>boost/</code></a></td>
       <td><a href="boost/smart_ptr.cpp" style="color: var(--ink);"><code>smart_ptr.cpp</code></a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>智能指针深入（scoped/intrusive/循环引用）</td>
@@ -1232,13 +1236,13 @@
       <td>字符串算法与通用算法补充</td>
     </tr>
     <tr>
-      <td rowspan="2"><a href="performance/index.html" style="color: var(--accent);"><code>performance/</code></a></td>
+      <td rowspan="2"><a href="performance/index.html" style="color: var(--lh-ink-d-cb7c);"><code>performance/</code></a></td>
       <td><a href="performance/01_cache_optimization.cpp" style="color: var(--ink);"><code>01_cache_optimization.cpp</code></a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>CPU缓存原理、局部性、对齐、AOS vs SOA</td>
     </tr>
     <tr>
-      <td><a href="performance/02_common_pitfalls.cpp" style="color: var(--ink);"><code>02_common_pitfalls.cpp</code></a> · <a href="performance/index.html" style="color: var(--accent);">📖 指南</a></td>
+      <td><a href="performance/02_common_pitfalls.cpp" style="color: var(--ink);"><code>02_common_pitfalls.cpp</code></a> · <a href="performance/index.html" style="color: var(--lh-ink-d-cb7c);">📖 指南</a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>6个常见性能陷阱与优化技巧</td>
     </tr>
@@ -1259,8 +1263,8 @@
   <tbody>
     <tr>
       <td rowspan="1">实战项目</td>
-      <td rowspan="1"><a href="projects/todo_cli/index.html" style="color: var(--accent);"><code>projects/todo_cli/</code></a></td>
-      <td><a href="projects/todo_cli/index.html" style="color: var(--ink);">🏗️ Todo CLI 待办管理系统</a> · <a href="projects/todo_cli/tutorial.md" style="color: var(--accent);">📖 指南</a></td>
+      <td rowspan="1"><a href="projects/todo_cli/index.html" style="color: var(--lh-ink-d-cb7c);"><code>projects/todo_cli/</code></a></td>
+      <td><a href="projects/todo_cli/index.html" style="color: var(--ink);">🏗️ Todo CLI 待办管理系统</a> · <a href="projects/todo_cli/tutorial.md" style="color: var(--lh-ink-d-cb7c);">📖 指南</a></td>
       <td><span class="level-badge lv-expert">资深</span></td>
       <td>综合项目：命令模式+工厂+策略+RAII+文件持久化，把知识串起来</td>
     </tr>
@@ -1375,7 +1379,7 @@
   <br>
   <h3>第二步：从第一个文件开始</h3>
   <ol>
-    <li>打开 <a href="beginner/01_basics.cpp" style="color: var(--accent);"><code>beginner/01_basics.cpp</code></a>，逐行阅读注释</li>
+    <li>打开 <a href="beginner/01_basics.cpp" style="color: var(--lh-ink-d-cb7c);"><code>beginner/01_basics.cpp</code></a>，逐行阅读注释</li>
     <li>编译运行，观察输出</li>
     <li>修改代码，验证自己的猜想</li>
     <li>完成每章末尾的练习</li>
@@ -1383,7 +1387,7 @@
   </ol>
   <br>
   <h3>编译运行示例</h3>
-  <pre style="background: var(--bg); padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 0.85rem; color: var(--accent-2);">
+  <pre style="background: var(--bg); padding: 12px; border-radius: 6px; overflow-x: auto; font-family: Consolas, monospace; font-size: 0.85rem; color: var(--lh-ink-d-b6c);">
 # 单个文件编译（GCC）
 g++ -std=c++17 -Wall beginner/01_basics.cpp -o 01_basics
 ./01_basics

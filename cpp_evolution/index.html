@@ -3,23 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>版本演进 · C++11→14→17→20 - C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #00c9ff 0%, #92fe9d 100%);
+    background: linear-gradient(135deg, var(--lh-bgh-l-cb7b) 0%, var(--lh-bg-l-g8b) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #333;
+    color: var(--lh-ink-l-n3b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
 
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.25);
-    color: #005053;
+    background: var(--lh-bg-l-n9-a25b);
+    color: var(--lh-ink-l-tc3b);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
@@ -27,31 +28,31 @@
     font-weight: 500;
     transition: background 0.2s;
   }
-  .back-btn:hover { background: rgba(255,255,255,0.4); }
+  .back-btn:hover { background: var(--lh-bg-l-n9-a40b); }
 
-  .header { text-align: center; color: #005053; margin-bottom: 30px; }
-  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(255,255,255,0.3); }
+  .header { text-align: center; color: var(--lh-ink-l-tc3b); margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px var(--lh-shd-l-n9-a30b); }
   .header p { font-size: 16px;  }
 
   .intro-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-l-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a10b);
   }
   .intro-section h2 {
-    color: #00737f;
+    color: var(--lh-ink-l-tc5b);
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+  .intro-section p { color: var(--lh-ink-l-n4b); line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: #005053;
+    color: var(--lh-ink-l-tc3b);
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
@@ -66,10 +67,10 @@
     margin-bottom: 20px;
   }
   .card {
-    background: white;
+    background: var(--lh-bg-l-n9b);
     border-radius: 16px;
     padding: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a12b);
     transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
@@ -82,15 +83,15 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #00c9ff, #00bcd4);
+    background: linear-gradient(90deg, var(--lh-bg-l-cb7b), var(--lh-bg-l-tc7b));
   }
   .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+    box-shadow: 0 15px 40px var(--lh-shd-l-n1-a18b);
   }
   .card-icon { font-size: 32px; margin-bottom: 10px; }
-  .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
-  .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
+  .card-title { font-size: 17px; font-weight: 700; color: var(--lh-ink-l-n2b); margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: var(--lh-ink-l-n4c); line-height: 1.6; margin-bottom: 14px; }
   .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
 
   .tag {
@@ -99,32 +100,32 @@
     font-size: 11px;
     font-weight: 600;
   }
-  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
-  .tag.elementary { background: #e0f2f1; color: #00695c; }
-  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
-  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #be4300; }
-  .tag.expert { background: #ffebee; color: #c62828; }
-  .tag.introductory { background: #f3e5f5; color: #7b1fa2; }
+  .tag.beginner { background: var(--lh-bg-l-n9c); color: var(--lh-ink-l-lg5b); }
+  .tag.elementary { background: var(--lh-bg-l-n9d); color: var(--lh-ink-l-tc4b); }
+  .tag.intermediate { background: var(--lh-bg-l-cb9b); color: var(--lh-ink-l-cb4b); }
+  .tag.upper-intermediate { background: var(--lh-bg-l-n8b); color: var(--lh-ink-l-p3b); }
+  .tag.advanced { background: var(--lh-bg-l-o9b); color: var(--lh-ink-l-or5b); }
+  .tag.expert { background: var(--lh-bg-l-n9e); color: var(--lh-ink-l-r5b); }
+  .tag.introductory { background: var(--lh-bg-l-n8b); color: var(--lh-ink-l-vp4b); }
 
   .feature-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-l-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a10b);
   }
   .feature-section h2 {
-    color: #00737f;
+    color: var(--lh-ink-l-tc5b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .feature-section li strong { color: #333; }
+  .feature-section p { color: var(--lh-ink-l-n4b); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: var(--lh-ink-l-n4b); line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: var(--lh-ink-l-n3b); }
 
   .timeline {
     display: flex;
@@ -137,65 +138,65 @@
   .timeline-item {
     flex: 1;
     min-width: 200px;
-    background: #f0fdfa;
+    background: var(--lh-bg-l-n9f);
     border-radius: 12px;
     padding: 18px;
-    border-top: 4px solid #00bcd4;
+    border-top: 4px solid var(--lh-line-l-tc7b);
     text-align: center;
   }
   .timeline-item .year {
     font-size: 28px;
     font-weight: 700;
-    color: #00737f;
+    color: var(--lh-ink-l-tc5b);
     margin-bottom: 6px;
   }
   .timeline-item .label {
     font-size: 13px;
-    color: #555;
+    color: var(--lh-ink-l-n4b);
     margin-bottom: 10px;
   }
   .timeline-item .highlights {
     text-align: left;
     font-size: 12px;
-    color: #666;
+    color: var(--lh-ink-l-n4c);
     line-height: 1.8;
   }
   .timeline-item .highlights a {
-    color: #007782;
+    color: var(--lh-ink-l-tc5b);
     text-decoration: none;
-    border-bottom: 1px dashed rgba(0,131,143,0.45);
+    border-bottom: 1px dashed var(--lh-line-l-tc5-a45b);
   }
   .timeline-item .highlights a:hover { border-bottom-style: solid; }
   .timeline-item .deep-link {
     margin-top: 10px;
     padding-top: 9px;
-    border-top: 1px dashed #b2ebf2;
+    border-top: 1px dashed var(--lh-line-l-tc8b);
     text-align: left;
     font-size: 12px;
-    color: #555;
+    color: var(--lh-ink-l-n4b);
     line-height: 1.8;
   }
-  .timeline-item .deep-link a { color: #00695c; font-weight: 700; text-decoration: none; }
+  .timeline-item .deep-link a { color: var(--lh-ink-l-tc4b); font-weight: 700; text-decoration: none; }
   .timeline-item .deep-link a:hover { text-decoration: underline; }
 
   .card-step {
     position: absolute;
     top: 14px;
     right: 14px;
-    background: #e0f7fa;
-    color: #007782;
+    background: var(--lh-bg-l-tc9b);
+    color: var(--lh-ink-l-tc5b);
     font-size: 11px;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 12px;
   }
   .list-note {
-    color: #005053;
+    color: var(--lh-ink-l-tc3b);
     font-size: 13px;
     line-height: 1.8;
     margin: -6px 0 16px;
     padding: 10px 14px;
-    background: rgba(255,255,255,0.78);
+    background: var(--lh-bg-l-n9-a78b);
     border-left: 3px solid currentColor;
     border-radius: 0 10px 10px 0;
   }
@@ -203,23 +204,23 @@
   .list-note a:hover { text-decoration: underline; }
 
   .master-section {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    background: linear-gradient(135deg, var(--lh-bg-l-n9b), var(--lh-bg-l-n8c));
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a10b);
   }
   .master-section h2 {
-    color: #333;
+    color: var(--lh-ink-l-n3b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #00737f; }
+  .master-section p { color: var(--lh-ink-l-n4b); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: var(--lh-ink-l-n4b); line-height: 2; font-size: 14px; }
+  .master-section li strong { color: var(--lh-ink-l-tc5b); }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -230,6 +231,9 @@
     .timeline-item { min-width: 100%; }
   }
 </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -252,21 +256,21 @@
       了解版本演进，不仅能帮你在不同编译器环境下写出兼容的代码，
       更能让你<strong>站在设计者的角度理解 C++ 的发展方向</strong>。
     </p>
-    <p style="margin-top: 10px; background: #f0fdfa; border-left: 4px solid #00bcd4; border-radius: 8px; padding: 12px 16px;">
+    <p style="margin-top: 10px; background: var(--lh-bg-l-n9f); border-left: 4px solid var(--lh-line-l-tc7b); border-radius: 8px; padding: 12px 16px;">
       <strong>本模块和 💜 现代 C++ 特性模块怎么分工？</strong>
       这里负责<strong>横向脉络</strong>——哪个版本加入了什么、为什么要加；
       每个特性<strong>纵向怎么写、有哪些坑</strong>，全部在
-      <a href="../cpp17/index.html" style="color: #00695c; font-weight: 700;">cpp17/ 模块</a>里逐个深潜，本模块不重复讲解。
+      <a href="../cpp17/index.html" style="color: var(--lh-ink-l-tc4b); font-weight: 700;">cpp17/ 模块</a>里逐个深潜，本模块不重复讲解。
       建议先在这里建立地图，再去那边逐个攻透。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #007d9f, #007f90); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(0, 188, 212, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0, 188, 212, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(0, 188, 212, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--lh-bg-l-cb5b), var(--lh-bg-l-tc5b)); color: var(--lh-ink-l-n9b); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px var(--lh-shd-l-tc7-a30b); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(0, 188, 212, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(0, 188, 212, 0.3)';">
         📖 学习指南
       </a>
-      <a href="../cpp17/index.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #00737f; text-decoration: none; border: 2px solid #0097a7; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#0097a7';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#0097a7';">
+      <a href="../cpp17/index.html" style="display: inline-block; padding: 11px 24px; background: var(--lh-bg-l-n9b); color: var(--lh-ink-l-tc5b); text-decoration: none; border: 2px solid var(--lh-line-l-tc6b); border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#0097a7';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#0097a7';">
         💜 现代 C++ 特性深潜
       </a>
-      <span style="color: #707070; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: var(--lh-ink-l-n5b); font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 

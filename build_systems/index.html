@@ -3,54 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>构建系统 · Makefile + CMake - C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+    background: linear-gradient(135deg, var(--lh-bg-d-b2d) 0%, var(--lh-bgh-d-cb3b) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #333;
+    color: var(--lh-ink-d-n3b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
 
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(15, 23, 42, 0.55);
-    color: white;
+    background: var(--lh-bg-d-b2-a55b);
+    color: var(--lh-ink-d-n9b);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 13px;
     transition: background 0.2s;
   }
-  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  .back-btn:hover { background: var(--lh-bg-d-n9-a25b); }
 
-  .header { text-align: center; color: white; margin-bottom: 30px; }
-  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4); }
+  .header { text-align: center; color: var(--lh-ink-d-n9b); margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px var(--lh-shd-d-n1-a40b); }
   .header p { font-size: 16px;  }
 
   .intro-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
   }
   .intro-section h2 {
-    color: #1a237e;
+    color: var(--lh-ink-d-b3c);
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+  .intro-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: white;
+    color: var(--lh-ink-d-n9b);
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
@@ -59,7 +60,7 @@
   }
 
   .section-subtitle {
-    color: #90caf9;
+    color: var(--lh-ink-d-cb7b);
     font-size: 15px;
     margin-top: -10px;
     margin-bottom: 16px;
@@ -73,10 +74,10 @@
     margin-bottom: 24px;
   }
   .card {
-    background: white;
+    background: var(--lh-bg-d-n9b);
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
     transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
@@ -89,24 +90,24 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #1a237e, #243B55);
+    background: linear-gradient(90deg, var(--lh-bg-d-b3c), var(--lh-bg-d-cb3b));
   }
-  .card.makefile::before { background: linear-gradient(90deg, #455a64, #78909c); }
-  .card.cmake::before { background: linear-gradient(90deg, #1a237e, #3949ab); }
-  .card.guide { background: linear-gradient(160deg, #fff8e1, #ffffff 55%); }
-  .card.guide::before { background: linear-gradient(90deg, #ff8f00, #ffb300); }
+  .card.makefile::before { background: linear-gradient(90deg, var(--lh-bg-d-cb4b), var(--lh-bg-d-cb6d)); }
+  .card.cmake::before { background: linear-gradient(90deg, var(--lh-bg-d-b3c), var(--lh-bg-d-b4b)); }
+  .card.guide { background: linear-gradient(160deg, var(--lh-bg-d-o9b), var(--lh-bg-d-n9b) 55%); }
+  .card.guide::before { background: linear-gradient(90deg, var(--lh-bg-d-or7d), var(--lh-bg-d-o7b)); }
   .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+    box-shadow: 0 15px 40px var(--lh-shd-d-n1-a30b);
   }
   .card-icon { font-size: 28px; margin-bottom: 8px; }
-  .card-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 6px; }
-  .card-desc { font-size: 12.5px; color: #666; line-height: 1.6; margin-bottom: 12px; }
+  .card-title { font-size: 16px; font-weight: 700; color: var(--lh-ink-d-n2b); margin-bottom: 6px; }
+  .card-desc { font-size: 12.5px; color: var(--lh-ink-d-n4d); line-height: 1.6; margin-bottom: 12px; }
   .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
   .card-folder {
     display: inline-block;
     font-size: 11px;
-    color: #6f6f6f;
+    color: var(--lh-ink-d-n5b);
     font-family: Consolas, Monaco, monospace;
     margin-bottom: 8px;
   }
@@ -117,12 +118,12 @@
     font-size: 11px;
     font-weight: 600;
   }
-  .tag.beginner { background: #e8f5e9; color: #235e26; }
-  .tag.elementary { background: #e0f2f1; color: #00695c; }
-  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
-  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #be4300; }
-  .tag.expert { background: #ffebee; color: #c62828; }
+  .tag.beginner { background: var(--lh-bg-d-n9h); color: var(--lh-ink-d-lg4b); }
+  .tag.elementary { background: var(--lh-bg-d-n9j); color: var(--lh-ink-d-tc4b); }
+  .tag.intermediate { background: var(--lh-bg-d-cb9b); color: var(--lh-ink-d-cb4b); }
+  .tag.upper-intermediate { background: var(--lh-bg-d-n8d); color: var(--lh-ink-d-p3b); }
+  .tag.advanced { background: var(--lh-bg-d-o9b); color: var(--lh-ink-d-or5b); }
+  .tag.expert { background: var(--lh-bg-d-n9i); color: var(--lh-ink-d-r5d); }
 
   .tool-compare {
     display: grid;
@@ -136,100 +137,100 @@
     text-align: center;
   }
   .tool-box.makefile {
-    background: linear-gradient(135deg, #eceff1, #cfd8dc);
+    background: linear-gradient(135deg, var(--lh-bg-d-n9c), var(--lh-bg-d-n8f));
   }
   .tool-box.cmake {
-    background: linear-gradient(135deg, #e8eaf6, #c5cae9);
+    background: linear-gradient(135deg, var(--lh-bg-d-n8b), var(--lh-bg-d-b8c));
   }
   .tool-box .icon { font-size: 40px; margin-bottom: 10px; }
-  .tool-box h3 { font-size: 20px; margin-bottom: 8px; color: #37474f; }
-  .tool-box.cmake h3 { color: #1a237e; }
-  .tool-box p { font-size: 13px; color: #555; line-height: 1.6; }
+  .tool-box h3 { font-size: 20px; margin-bottom: 8px; color: var(--lh-ink-d-cb3b); }
+  .tool-box.cmake h3 { color: var(--lh-ink-d-b3c); }
+  .tool-box p { font-size: 13px; color: var(--lh-ink-d-n4c); line-height: 1.6; }
   .tool-box .pros {
     text-align: left;
     margin-top: 10px;
     font-size: 12.5px;
-    color: #555;
+    color: var(--lh-ink-d-n4c);
     line-height: 1.8;
   }
-  .tool-box .pros strong { color: #235e26; }
+  .tool-box .pros strong { color: var(--lh-ink-d-lg4b); }
 
   .feature-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
   }
   .feature-section h2 {
-    color: #1a237e;
+    color: var(--lh-ink-d-b3c);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .feature-section li strong { color: #333; }
+  .feature-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: var(--lh-ink-d-n3b); }
 
   .master-section {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    background: linear-gradient(135deg, var(--lh-bg-d-n9b), var(--lh-bg-d-n8e));
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
   }
   .master-section h2 {
-    color: #333;
+    color: var(--lh-ink-d-n3b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #1a237e; }
+  .master-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .master-section li strong { color: var(--lh-ink-d-b3c); }
 
   /* 编译选项速查表 */
   .cheatsheet-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
   }
-  .cheatsheet-section h2 { color: #1a237e; margin-bottom: 8px; font-size: 22px; }
-  .cheatsheet-section > p { color: #666; margin-bottom: 18px; font-size: 14px; }
+  .cheatsheet-section h2 { color: var(--lh-ink-d-b3c); margin-bottom: 8px; font-size: 22px; }
+  .cheatsheet-section > p { color: var(--lh-ink-d-n4d); margin-bottom: 18px; font-size: 14px; }
   .cheat-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 14px;
   }
   .cheat-card {
-    background: #f8f9fa;
+    background: var(--lh-bg-d-n9b);
     border-radius: 10px;
     padding: 16px;
-    border-top: 3px solid #3f51b5;
+    border-top: 3px solid var(--lh-line-d-b4c);
   }
-  .cheat-card h3 { color: #1a237e; margin-bottom: 10px; font-size: 16px; }
+  .cheat-card h3 { color: var(--lh-ink-d-b3c); margin-bottom: 10px; font-size: 16px; }
   .cheat-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  .cheat-table td { padding: 5px 0; border-bottom: 1px solid #e0e0e0; vertical-align: top; }
-  .cheat-table td:first-child { width: 42%; font-family: 'Consolas', monospace; font-size: 12px; color: #c62828; font-weight: 600; padding-right: 8px; }
-  .cheat-table td:last-child { color: #555; line-height: 1.5; }
+  .cheat-table td { padding: 5px 0; border-bottom: 1px solid var(--lh-line-d-n8d); vertical-align: top; }
+  .cheat-table td:first-child { width: 42%; font-family: 'Consolas', monospace; font-size: 12px; color: var(--lh-ink-d-r5d); font-weight: 600; padding-right: 8px; }
+  .cheat-table td:last-child { color: var(--lh-ink-d-n4c); line-height: 1.5; }
   .cheat-table tr:last-child td { border-bottom: none; }
 
   .tip-box {
-    background: #e8f5e9;
-    border-left: 4px solid #4caf50;
+    background: var(--lh-bg-d-n9h);
+    border-left: 4px solid var(--lh-line-d-lg6b);
     padding: 14px 18px;
     border-radius: 0 8px 8px 0;
     margin-top: 16px;
   }
-  .tip-box strong { color: #235e26; display: block; margin-bottom: 6px; }
-  .tip-box p { color: #1b5e20; margin: 0; line-height: 1.8; font-size: 13px; }
-  .tip-box code { background: rgba(255,255,255,0.7); padding: 1px 5px; border-radius: 3px; color: #c62828; font-size: 12px; }
+  .tip-box strong { color: var(--lh-ink-d-lg4b); display: block; margin-bottom: 6px; }
+  .tip-box p { color: var(--lh-ink-d-g4b); margin: 0; line-height: 1.8; font-size: 13px; }
+  .tip-box code { background: var(--lh-bg-d-n9-a70b); padding: 1px 5px; border-radius: 3px; color: var(--lh-ink-d-r5d); font-size: 12px; }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -239,6 +240,9 @@
     .tool-compare { grid-template-columns: 1fr; }
   }
 </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -262,12 +266,12 @@
       两者都掌握，你才能在各种项目中游刃有余。
     </p>
     <div style="margin-top: 20px;">
-      <a href="cmake_guide.html" style="display: inline-block; padding: 11px 24px; background: #ac6100; color: #fff; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 14px;">🧭 CMake 实操速查</a>
-      <span style="margin-left: 10px; color: #6c6c6c; font-size: 13px;">装好 CMake 后照着敲：命令 + 每一步该看到什么输出</span>
+      <a href="cmake_guide.html" style="display: inline-block; padding: 11px 24px; background: var(--lh-bg-d-o5b); color: var(--lh-ink-d-n9b); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 14px;">🧭 CMake 实操速查</a>
+      <span style="margin-left: 10px; color: var(--lh-ink-d-n5b); font-size: 13px;">装好 CMake 后照着敲：命令 + 每一步该看到什么输出</span>
     </div>
     <div style="margin-top: 14px;">
-      <a href="../visuals/linking.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #3f51b5; text-decoration: none; border: 2px solid #3f51b5; border-radius: 30px; font-weight: 600; font-size: 14px;">🎬 图解库链接</a>
-      <span style="margin-left: 10px; color: #6c6c6c; font-size: 13px;">.a / .so 是怎么被找到的？一页看懂</span>
+      <a href="../visuals/linking.html" style="display: inline-block; padding: 11px 24px; background: var(--lh-bg-d-n9b); color: var(--lh-ink-d-b4e); text-decoration: none; border: 2px solid var(--lh-line-d-b4c); border-radius: 30px; font-weight: 600; font-size: 14px;">🎬 图解库链接</a>
+      <span style="margin-left: 10px; color: var(--lh-ink-d-n5b); font-size: 13px;">.a / .so 是怎么被找到的？一页看懂</span>
     </div>
   </div>
 

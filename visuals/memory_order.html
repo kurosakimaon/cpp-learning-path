@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>内存序：两个线程，谁先看到谁？ - C++ 图解</title>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="../assets/theme.css">
+
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -209,7 +213,7 @@ window.STEPS = [
   <rect x="460" y="296" width="230" height="70" rx="8" class="svg-box-good"/>
   <text x="474" y="322" class="svg-mono" style="font-size:11.5px">use(p->a, p->b)</text>
   <text x="474" y="348" class="svg-small">读到 a = 1, b = 2</text>
-  <path d="M384 326 H456" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M384 326 H456" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
 
   <text x="30" y="426" class="svg-small">指针原子，不等于对象就绪：可见性由 release / acquire 这一对负责。</text>
 </svg>`
@@ -229,16 +233,16 @@ window.STEPS = [
   <text x="80" y="62" class="svg-small">一种可能的全局顺序（谁先不确定，但大家看到的是同一条）</text>
   <line x1="80" y1="116" x2="700" y2="116" class="svg-arrow" marker-end="url(#ah)"/>
   <circle cx="180" cy="116" r="11" fill="#6366f1"/>
-  <text x="176" y="120" style="fill:#fff;font-size:10px">1</text>
+  <text x="176" y="120" style="fill:var(--lh-ink-d-n9b);font-size:10px">1</text>
   <text x="152" y="94" class="svg-mono">x = 1</text>
   <circle cx="330" cy="116" r="11" fill="#6366f1"/>
-  <text x="326" y="120" style="fill:#fff;font-size:10px">2</text>
+  <text x="326" y="120" style="fill:var(--lh-ink-d-n9b);font-size:10px">2</text>
   <text x="302" y="94" class="svg-mono">y = 1</text>
   <circle cx="480" cy="116" r="11" fill="#6366f1"/>
-  <text x="476" y="120" style="fill:#fff;font-size:10px">3</text>
+  <text x="476" y="120" style="fill:var(--lh-ink-d-n9b);font-size:10px">3</text>
   <text x="452" y="94" class="svg-mono">读 x</text>
   <circle cx="620" cy="116" r="11" fill="#6366f1"/>
-  <text x="616" y="120" style="fill:#fff;font-size:10px">4</text>
+  <text x="616" y="120" style="fill:var(--lh-ink-d-n9b);font-size:10px">4</text>
   <text x="592" y="94" class="svg-mono">读 y</text>
 
   <rect x="60" y="164" width="300" height="100" rx="12" class="svg-box-good"/>

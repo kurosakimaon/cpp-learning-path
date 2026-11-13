@@ -3,84 +3,85 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>CMake 实操速查 · 命令与每步预期输出 - 构建系统</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+    background: linear-gradient(135deg, var(--lh-bg-d-b2d) 0%, var(--lh-bg-d-cb3b) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #333;
+    color: var(--lh-ink-d-n3b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
 
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(15, 23, 42, 0.55);
-    color: white;
+    background: var(--lh-bg-d-b2-a55b);
+    color: var(--lh-ink-d-n9b);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 13px;
     transition: background 0.2s;
   }
-  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  .back-btn:hover { background: var(--lh-bg-d-n9-a25b); }
 
-  .header { text-align: center; color: white; margin-bottom: 24px; }
-  .header h1 { font-size: 34px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.4); }
+  .header { text-align: center; color: var(--lh-ink-d-n9b); margin-bottom: 24px; }
+  .header h1 { font-size: 34px; margin-bottom: 10px; text-shadow: 2px 2px 8px var(--lh-shd-d-n1-a40b); }
   .header p { font-size: 15px;  }
 
   .toc {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 16px 22px;
     margin-bottom: 22px;
     display: flex;
     flex-wrap: wrap;
     gap: 10px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
   }
   .toc a {
     padding: 6px 14px;
-    background: #e8eaf6;
-    color: #1a237e;
+    background: var(--lh-bg-d-n8b);
+    color: var(--lh-ink-d-b3c);
     text-decoration: none;
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
   }
-  .toc a:hover { background: #c5cae9; }
+  .toc a:hover { background: var(--lh-bg-d-b8c); }
 
   .section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 26px 30px;
     margin-bottom: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
   }
   .section h2 {
-    color: #1a237e;
+    color: var(--lh-ink-d-b3c);
     font-size: 22px;
     margin-bottom: 14px;
     padding-bottom: 8px;
-    border-bottom: 2px solid #e8eaf6;
+    border-bottom: 2px solid var(--lh-line-d-n8b);
   }
-  .section h3 { color: #283593; font-size: 17px; margin: 20px 0 10px; }
-  .section h4 { color: #333; font-size: 15px; margin: 14px 0 6px; }
-  .section p { color: #555; line-height: 1.85; font-size: 14px; margin-bottom: 10px; }
-  .section ul, .section ol { padding-left: 22px; color: #555; line-height: 1.9; font-size: 14px; margin-bottom: 12px; }
-  .section strong { color: #1a237e; }
-  .section a { color: #3949ab; }
+  .section h3 { color: var(--lh-ink-d-b3e); font-size: 17px; margin: 20px 0 10px; }
+  .section h4 { color: var(--lh-ink-d-n3b); font-size: 15px; margin: 14px 0 6px; }
+  .section p { color: var(--lh-ink-d-n4c); line-height: 1.85; font-size: 14px; margin-bottom: 10px; }
+  .section ul, .section ol { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 1.9; font-size: 14px; margin-bottom: 12px; }
+  .section strong { color: var(--lh-ink-d-b3c); }
+  .section a { color: var(--lh-ink-d-b4d); }
 
   .tbl-wrap { overflow-x: auto; margin: 12px 0 18px; }
   table { width: 100%; border-collapse: collapse; margin: 0; font-size: 13px; }
-  th, td { border: 1px solid #c5cae9; padding: 8px 10px; text-align: left; vertical-align: top; }
-  th { background: #e8eaf6; color: #1a237e; font-weight: 700; }
+  th, td { border: 1px solid var(--lh-line-d-b8b); padding: 8px 10px; text-align: left; vertical-align: top; }
+  th { background: var(--lh-bg-d-n8b); color: var(--lh-ink-d-b3c); font-weight: 700; }
   td code, th code, p code, li code {
-    background: #eceff1;
-    color: #263238;
+    background: var(--lh-bg-d-n9c);
+    color: var(--lh-ink-d-n3d);
     padding: 1px 6px;
     border-radius: 4px;
     font-family: "SF Mono", Consolas, monospace;
@@ -88,8 +89,8 @@
   }
 
   pre {
-    background: #1e293b;
-    color: #e2e8f0;
+    background: var(--lh-bg-d-b2c);
+    color: var(--lh-ink-d-n8b);
     padding: 14px 16px;
     border-radius: 10px;
     overflow-x: auto;
@@ -98,64 +99,64 @@
     line-height: 1.7;
     margin: 10px 0 16px;
   }
-  pre .cmt { color: #94a3b8; }
-  pre .ok  { color: #86efac; }
-  pre .var { color: #fbbf24; }
+  pre .cmt { color: var(--lh-ink-d-b6b); }
+  pre .ok  { color: var(--lh-ink-d-g8b); }
+  pre .var { color: var(--lh-ink-d-o7c); }
 
   .callout {
-    border-left: 4px solid #ef6c00;
-    background: #fff3e0;
+    border-left: 4px solid var(--lh-line-d-or6b);
+    background: var(--lh-bg-d-o9b);
     border-radius: 8px;
     padding: 12px 16px;
     margin: 14px 0;
     font-size: 13.5px;
-    color: #bf4300;
+    color: var(--lh-ink-d-or5b);
     line-height: 1.8;
   }
-  .callout strong { color: #bf360c; }
+  .callout strong { color: var(--lh-ink-d-or5c); }
   .tip {
-    border-left: 4px solid #2e7d32;
-    background: #e8f5e9;
+    border-left: 4px solid var(--lh-line-d-lg5b);
+    background: var(--lh-bg-d-n9h);
     border-radius: 8px;
     padding: 12px 16px;
     margin: 14px 0;
     font-size: 13.5px;
-    color: #1b5e20;
+    color: var(--lh-ink-d-g4b);
     line-height: 1.8;
   }
 
   .demo {
-    border: 1px solid #c5cae9;
+    border: 1px solid var(--lh-line-d-b8b);
     border-radius: 12px;
     padding: 18px 20px;
     margin: 18px 0;
-    background: #fafafa;
+    background: var(--lh-bg-d-n9b);
   }
-  .demo-title { font-size: 17px; font-weight: 700; color: #1a237e; margin-bottom: 4px; }
-  .demo-sub { font-size: 13px; color: #666; margin-bottom: 12px; }
+  .demo-title { font-size: 17px; font-weight: 700; color: var(--lh-ink-d-b3c); margin-bottom: 4px; }
+  .demo-sub { font-size: 13px; color: var(--lh-ink-d-n4d); margin-bottom: 12px; }
   .demo-links { margin-top: 10px; font-size: 13px; }
   .demo-links a {
     display: inline-block;
     margin-right: 8px;
     padding: 4px 12px;
-    background: #e8eaf6;
-    color: #1a237e;
+    background: var(--lh-bg-d-n8b);
+    color: var(--lh-ink-d-b3c);
     border-radius: 14px;
     text-decoration: none;
   }
-  .demo-links a:hover { background: #c5cae9; }
+  .demo-links a:hover { background: var(--lh-bg-d-b8c); }
 
   .master-section {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    background: linear-gradient(135deg, var(--lh-bg-d-n9b), var(--lh-bg-d-n8e));
     border-radius: 16px;
     padding: 26px 30px;
     margin-bottom: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a20b);
   }
-  .master-section h2 { color: #333; font-size: 22px; margin-bottom: 14px; }
-  .master-section p { color: #555; line-height: 1.85; font-size: 14px; margin-bottom: 10px; }
-  .master-section ul { padding-left: 22px; color: #555; line-height: 1.95; font-size: 14px; }
-  .master-section li strong { color: #1a237e; }
+  .master-section h2 { color: var(--lh-ink-d-n3b); font-size: 22px; margin-bottom: 14px; }
+  .master-section p { color: var(--lh-ink-d-n4c); line-height: 1.85; font-size: 14px; margin-bottom: 10px; }
+  .master-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 1.95; font-size: 14px; }
+  .master-section li strong { color: var(--lh-ink-d-b3c); }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -165,6 +166,9 @@
     th, td { padding: 6px; }
   }
 </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">

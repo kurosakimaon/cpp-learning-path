@@ -4,26 +4,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>数据结构与算法 - C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #0c3483 0%, #637089 50%, #556fa4 100%);
+    background: linear-gradient(135deg, var(--lh-bgh-d-b3b) 0%, var(--lh-bg-d-b5c) 50%, var(--lh-bgh-d-b5b) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #333;
+    color: var(--lh-ink-d-n3b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
   .header {
     text-align: center;
-    color: white;
+    color: var(--lh-ink-d-n9b);
     margin-bottom: 30px;
   }
   .header h1 {
     font-size: 36px;
     margin-bottom: 10px;
-    text-shadow: 2px 2px 8px rgba(0,0,0,0.3);
+    text-shadow: 2px 2px 8px var(--lh-shd-d-n1-a30b);
   }
   .header p {
     font-size: 16px;
@@ -32,35 +33,35 @@
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(15, 23, 42, 0.55);
-    color: white;
+    background: var(--lh-bg-d-b2-a55b);
+    color: var(--lh-ink-d-n9b);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 13px;
     transition: background 0.2s;
   }
-  .back-btn:hover { background: rgba(255,255,255,0.3); }
+  .back-btn:hover { background: var(--lh-bg-d-n9-a30b); }
 
   .intro-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a10b);
   }
   .intro-section h2 {
-    color: #1a237e;
+    color: var(--lh-ink-d-b3c);
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; margin-bottom: 10px; }
+  .intro-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; font-size: 14px; margin-bottom: 10px; }
 
   .section-title {
-    color: white;
+    color: var(--lh-ink-d-n9b);
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
@@ -76,10 +77,10 @@
     margin-bottom: 20px;
   }
   .card {
-    background: white;
+    background: var(--lh-bg-d-n9b);
     border-radius: 16px;
     padding: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a12b);
     transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
@@ -92,17 +93,17 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #667eea, #764ba2);
+    background: linear-gradient(90deg, var(--lh-bg-d-b5d), var(--lh-bg-d-p4b));
   }
   .card:hover {
     transform: translateY(-6px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+    box-shadow: 0 15px 40px var(--lh-shd-d-n1-a18b);
   }
-  .card.green::before { background: linear-gradient(90deg, #11998e, #38ef7d); }
-  .card.orange::before { background: linear-gradient(90deg, #f093fb, #f5576c); }
-  .card.blue::before { background: linear-gradient(90deg, #4facfe, #00f2fe); }
-  .card.purple::before { background: linear-gradient(90deg, #a18cd1, #fbc2eb); }
-  .card.yellow::before { background: linear-gradient(90deg, #f6d365, #fda085); }
+  .card.green::before { background: linear-gradient(90deg, var(--lh-bg-d-tc6b), var(--lh-bg-d-g8b)); }
+  .card.orange::before { background: linear-gradient(90deg, var(--lh-bg-d-vp7b), var(--lh-bg-d-r6b)); }
+  .card.blue::before { background: linear-gradient(90deg, var(--lh-bg-d-cb6c), var(--lh-bg-d-tc8b)); }
+  .card.purple::before { background: linear-gradient(90deg, var(--lh-bg-d-pb6b), var(--lh-bg-d-pk8b)); }
+  .card.yellow::before { background: linear-gradient(90deg, var(--lh-bg-d-o8b), var(--lh-bg-d-or7b)); }
 
   .card-icon {
     font-size: 40px;
@@ -111,12 +112,12 @@
   .card-title {
     font-size: 20px;
     font-weight: 700;
-    color: #222;
+    color: var(--lh-ink-d-n2b);
     margin-bottom: 8px;
   }
   .card-desc {
     font-size: 13px;
-    color: #666;
+    color: var(--lh-ink-d-n4d);
     line-height: 1.6;
     margin-bottom: 14px;
   }
@@ -129,20 +130,20 @@
     position: absolute;
     top: 14px;
     right: 14px;
-    background: #f0f2ff;
-    color: #5265bc;
+    background: var(--lh-bg-d-n9d);
+    color: var(--lh-ink-d-b5c);
     font-size: 11px;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 12px;
   }
   .list-note {
-    color: #0c3483;
+    color: var(--lh-ink-d-b3d);
     font-size: 13px;
     line-height: 1.8;
     margin: -6px 0 16px;
     padding: 10px 14px;
-    background: rgba(255,255,255,0.78);
+    background: var(--lh-bg-d-n9-a78b);
     border-left: 3px solid currentColor;
     border-radius: 0 10px 10px 0;
   }
@@ -153,71 +154,71 @@
     border-radius: 12px;
     font-size: 11px;
     font-weight: 600;
-    background: #f0f2ff;
-    color: #5265bc;
+    background: var(--lh-bg-d-n9d);
+    color: var(--lh-ink-d-b5c);
   }
-  .tag.green { background: #e8f5e9; color: #2e7d32; }
-  .tag.orange { background: #fff3e0; color: #bf4300; }
-  .tag.red { background: #ffebee; color: #c62828; }
+  .tag.green { background: var(--lh-bg-d-n9h); color: var(--lh-ink-d-lg5b); }
+  .tag.orange { background: var(--lh-bg-d-o9b); color: var(--lh-ink-d-or5b); }
+  .tag.red { background: var(--lh-bg-d-n9i); color: var(--lh-ink-d-r5d); }
 
   .feature-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 30px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a10b);
   }
   .feature-section h2 {
-    color: #222;
+    color: var(--lh-ink-d-n2b);
     margin-bottom: 16px;
     font-size: 22px;
   }
   .feature-section p {
-    color: #555;
+    color: var(--lh-ink-d-n4c);
     line-height: 1.8;
     margin-bottom: 12px;
     font-size: 14px;
   }
   .feature-section ul {
     padding-left: 20px;
-    color: #555;
+    color: var(--lh-ink-d-n4c);
     line-height: 2;
     font-size: 14px;
   }
-  .feature-section li strong { color: #333; }
+  .feature-section li strong { color: var(--lh-ink-d-n3b); }
 
   .compare-table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 16px;
     font-size: 13px;
-    background: white;
+    background: var(--lh-bg-d-n9b);
     border-radius: 8px;
     overflow: hidden;
   }
   .compare-table th {
-    background: linear-gradient(135deg, #586dca, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, var(--lh-bg-d-b5b), var(--lh-bgh-d-p4b));
+    color: var(--lh-ink-d-n9b);
     padding: 12px;
     text-align: left;
     font-weight: 600;
   }
   .compare-table td {
     padding: 10px 12px;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid var(--lh-line-d-n9c);
   }
-  .compare-table tr:hover { background: #f8f9ff; }
+  .compare-table tr:hover { background: var(--lh-bg-d-n9c); }
   .compare-table tr:last-child td { border-bottom: none; }
 
   .learning-path {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 30px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a10b);
   }
   .learning-path h2 {
-    color: #222;
+    color: var(--lh-ink-d-n2b);
     margin-bottom: 20px;
     font-size: 22px;
   }
@@ -236,8 +237,8 @@
     width: 40px;
     height: 40px;
     border-radius: 50%;
-    background: linear-gradient(135deg, #586dca, #764ba2);
-    color: white;
+    background: linear-gradient(135deg, var(--lh-bg-d-b5b), var(--lh-bg-d-p4b));
+    color: var(--lh-ink-d-n9b);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -245,12 +246,12 @@
     flex-shrink: 0;
   }
   .step-content h3 {
-    color: #333;
+    color: var(--lh-ink-d-n3b);
     margin-bottom: 4px;
     font-size: 16px;
   }
   .step-content p {
-    color: #666;
+    color: var(--lh-ink-d-n4d);
     font-size: 13px;
     line-height: 1.6;
   }
@@ -261,18 +262,21 @@
     flex-wrap: wrap;
   }
   .step-content .resources a {
-    color: #5265bc;
+    color: var(--lh-ink-d-b5c);
     font-size: 12px;
     text-decoration: none;
     padding: 2px 8px;
-    background: #f0f2ff;
+    background: var(--lh-bg-d-n9d);
     border-radius: 4px;
     font-weight: 500;
   }
   .step-content .resources a:hover {
-    background: #e0e4ff;
+    background: var(--lh-bg-d-b8b);
   }
 </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -296,10 +300,10 @@
       最后<strong>亲手敲一遍，改一改，测一测</strong>，这样才能真正掌握。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #586dca); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--lh-bg-d-b3b), var(--lh-bg-d-b5b)); color: var(--lh-ink-d-n9b); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px var(--lh-shd-d-b3-a30b); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.3)';">
         📖 学习指南
       </a>
-      <span style="color: #6d6d6d; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: var(--lh-ink-d-n5b); font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
@@ -592,7 +596,7 @@
         </tr>
       </tbody>
     </table>
-    <p style="font-size:12px; color:#6d6d6d; margin-top:8px;">
+    <p style="font-size:12px; color:var(--lh-ink-d-n5b); margin-top:8px;">
       * 平均情况，最坏可能退化。* 均摊复杂度。
     </p>
   </div>

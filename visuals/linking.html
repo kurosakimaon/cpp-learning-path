@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>静态库与动态库：程序怎么找到它？ - C++ 图解</title>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="../assets/theme.css">
+
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -90,7 +94,7 @@ window.STEPS = [
   <rect x="30" y="220" width="700" height="170" rx="12" class="svg-box-bad"/>
   <text x="50" y="250" class="svg-bad-text">链接期最常见的错误</text>
   <rect x="50" y="264" width="660" height="42" rx="7" fill="#0f172a"/>
-  <text x="64" y="291" class="svg-mono" style="fill:#fca5a5" font-family="Consolas, monospace">undefined reference to &#96;add(int, int)&#39;</text>
+  <text x="64" y="291" class="svg-mono" style="fill:var(--lh-ink-d-r7b)" font-family="Consolas, monospace">undefined reference to &#96;add(int, int)&#39;</text>
   <text x="50" y="332" class="svg-text">编译器看到的是头文件里的声明，所以编译能通过；链接器找不到定义，才报错。</text>
   <text x="50" y="358" class="svg-text">排查顺序：有没有把实现所在的 .o / 库加进链接命令？函数名和命名空间是否一致？</text>
   <text x="50" y="380" class="svg-small">用 nm -C 目标文件 | grep add 可以看到符号是已定义（T）还是未定义（U）。</text>
@@ -252,13 +256,13 @@ window.STEPS = [
   <rect x="30" y="252" width="340" height="110" rx="12" class="svg-box-good"/>
   <text x="48" y="280" class="svg-good-text">Shell 里</text>
   <rect x="48" y="292" width="304" height="34" rx="6" fill="#0f172a"/>
-  <text x="60" y="315" class="svg-mono" style="fill:#a5b4fc" font-family="Consolas, monospace">-Wl,-rpath,'$ORIGIN/../lib'</text>
+  <text x="60" y="315" class="svg-mono" style="fill:var(--lh-ink-d-b7b)" font-family="Consolas, monospace">-Wl,-rpath,'$ORIGIN/../lib'</text>
   <text x="48" y="346" class="svg-small">单引号阻止 shell 展开 $ORIGIN</text>
 
   <rect x="390" y="252" width="340" height="110" rx="12" class="svg-box-warn"/>
   <text x="408" y="280" class="svg-bad-text">Makefile 配方里</text>
   <rect x="408" y="292" width="304" height="34" rx="6" fill="#0f172a"/>
-  <text x="420" y="315" class="svg-mono" style="fill:#fcd34d" font-family="Consolas, monospace">-Wl,-rpath,'$$ORIGIN/../lib'</text>
+  <text x="420" y="315" class="svg-mono" style="fill:var(--lh-ink-d-o8c)" font-family="Consolas, monospace">-Wl,-rpath,'$$ORIGIN/../lib'</text>
   <text x="408" y="346" class="svg-small">$ 是 make 的变量语法，必须写两遍</text>
 
   <rect x="30" y="382" width="700" height="64" rx="10" class="svg-box"/>
@@ -275,13 +279,13 @@ window.STEPS = [
     stage: `
 <svg viewBox="0 0 760 450" role="img" aria-label="ldd、readelf 和 nm 排查动态库加载问题">
   <rect x="30" y="36" width="430" height="220" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1.5"/>
-  <text x="48" y="64" class="svg-small" style="fill:#94a3b8">$ ldd app_shared</text>
-  <text x="48" y="90" class="svg-mono" style="fill:#a5b4fc" font-family="Consolas, monospace">libmathutils.so =&gt; ./libmathutils.so</text>
-  <text x="48" y="114" class="svg-mono" style="fill:#cbd5e1" font-family="Consolas, monospace">libstdc++.so.6 =&gt; /lib/x86_64-linux-gnu/...</text>
-  <text x="48" y="146" class="svg-small" style="fill:#94a3b8">$ readelf -d app_shared | grep RPATH</text>
-  <text x="48" y="172" class="svg-mono" style="fill:#a5b4fc" font-family="Consolas, monospace">(RPATH) Library rpath: [$ORIGIN]</text>
-  <text x="48" y="204" class="svg-small" style="fill:#94a3b8">$ nm -C app_shared | grep \' U \'</text>
-  <text x="48" y="230" class="svg-mono" style="fill:#fca5a5" font-family="Consolas, monospace">U add(int, int)   ← 运行期由 .so 补上</text>
+  <text x="48" y="64" class="svg-small" style="fill:var(--lh-ink-d-b6b)">$ ldd app_shared</text>
+  <text x="48" y="90" class="svg-mono" style="fill:var(--lh-ink-d-b7b)" font-family="Consolas, monospace">libmathutils.so =&gt; ./libmathutils.so</text>
+  <text x="48" y="114" class="svg-mono" style="fill:var(--lh-ink-d-cb8b)" font-family="Consolas, monospace">libstdc++.so.6 =&gt; /lib/x86_64-linux-gnu/...</text>
+  <text x="48" y="146" class="svg-small" style="fill:var(--lh-ink-d-b6b)">$ readelf -d app_shared | grep RPATH</text>
+  <text x="48" y="172" class="svg-mono" style="fill:var(--lh-ink-d-b7b)" font-family="Consolas, monospace">(RPATH) Library rpath: [$ORIGIN]</text>
+  <text x="48" y="204" class="svg-small" style="fill:var(--lh-ink-d-b6b)">$ nm -C app_shared | grep \' U \'</text>
+  <text x="48" y="230" class="svg-mono" style="fill:var(--lh-ink-d-r7b)" font-family="Consolas, monospace">U add(int, int)   ← 运行期由 .so 补上</text>
 
   <rect x="480" y="36" width="250" height="220" rx="12" class="svg-box-bad"/>
   <text x="498" y="64" class="svg-bad-text">三种典型报错</text>

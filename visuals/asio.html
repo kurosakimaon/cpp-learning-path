@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>Asio 事件循环：异步为什么不是多线程？ - C++ 图解</title>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="../assets/theme.css">
+
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -189,11 +193,11 @@ window.STEPS = [
 
   <line x1="162" y1="158" x2="196" y2="158" class="svg-arrow-accent" marker-end="url(#ah)"/>
   <line x1="352" y1="158" x2="386" y2="158" class="svg-arrow-accent" marker-end="url(#ah)"/>
-  <line x1="582" y1="158" x2="616" y2="158" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <line x1="582" y1="158" x2="616" y2="158" class="svg-arrow svg-flow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
 
   <text x="30" y="270" class="svg-text">handler 里通常先看 ec：</text>
-  <text x="30" y="296" class="svg-mono" style="fill:#b91c1c">if (ec) { 处理错误或结束; }</text>
-  <text x="30" y="322" class="svg-mono" style="fill:#047857">else { 用 n 字节继续下一步; }</text>
+  <text x="30" y="296" class="svg-mono" style="fill:var(--lh-ink-d-r4b)">if (ec) { 处理错误或结束; }</text>
+  <text x="30" y="322" class="svg-mono" style="fill:var(--lh-ink-d-tg5b)">else { 用 n 字节继续下一步; }</text>
   <text x="30" y="356" class="svg-small">单线程 run() 时，任何时刻只有一个 handler 在跑，队列里的 handler 不会同时执行。</text>
 </svg>`
   },
@@ -227,7 +231,7 @@ window.STEPS = [
   <line x1="370" y1="132" x2="370" y2="156" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
   <line x1="370" y1="234" x2="370" y2="258" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
 
-  <path d="M542 298 H590 V196 H546" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M542 298 H590 V196 H546" class="svg-arrow svg-flow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
   <text x="600" y="250" class="svg-good-text">写完继续读</text>
 
   <text x="40" y="94" class="svg-small">发起后</text>
@@ -348,7 +352,7 @@ window.STEPS = [
   <text x="295" y="331" text-anchor="middle" class="svg-small">handler A</text>
   <rect x="400" y="300" width="150" height="50" rx="6" class="svg-box-good"/>
   <text x="475" y="331" text-anchor="middle" class="svg-small">handler B</text>
-  <line x1="374" y1="325" x2="396" y2="325" class="svg-arrow svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <line x1="374" y1="325" x2="396" y2="325" class="svg-arrow svg-flow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
   <text x="220" y="376" class="svg-small">A 执行完，B 才开始 → 不需要额外的互斥锁</text>
 
   <text x="30" y="412" class="svg-small">strand 不是线程；不同 strand 之间仍然可以并行，所以连接之间互不影响。</text>

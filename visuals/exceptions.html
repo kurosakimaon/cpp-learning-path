@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>异常与栈展开：throw 之后谁负责收尾？ - C++ 图解</title>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="../assets/theme.css">
+
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -74,11 +78,11 @@ window.STEPS = [
   <rect x="30" y="152" width="330" height="96" rx="9" class="svg-box-warn"/>
   <text x="46" y="178" class="svg-text">foo()</text>
   <text x="46" y="202" class="svg-mono" style="font-size:11px">bar();</text>
-  <text x="46" y="226" class="svg-mono" style="font-size:11px;fill:#b91c1c;text-decoration:line-through">log("也不会执行");</text>
+  <text x="46" y="226" class="svg-mono" style="font-size:11px;fill:var(--lh-ink-d-r4b);text-decoration:line-through">log("也不会执行");</text>
 
   <rect x="30" y="264" width="330" height="96" rx="9" class="svg-box-bad"/>
   <text x="46" y="290" class="svg-text">bar()</text>
-  <text x="46" y="314" class="svg-mono" style="font-size:11px;fill:#b91c1c">throw runtime_error("boom")</text>
+  <text x="46" y="314" class="svg-mono" style="font-size:11px;fill:var(--lh-ink-d-r4b)">throw runtime_error("boom")</text>
   <text x="46" y="338" class="svg-small">这条语句执行后，函数不会正常返回</text>
 
   <rect x="470" y="160" width="260" height="120" rx="10" class="svg-box-good"/>
@@ -124,7 +128,7 @@ window.STEPS = [
 
   <rect x="30" y="300" width="320" height="70" rx="9" class="svg-box-bad"/>
   <text x="46" y="326" class="svg-text">bar()</text>
-  <text x="46" y="350" class="svg-mono" style="font-size:11px;fill:#b91c1c">throw</text>
+  <text x="46" y="350" class="svg-mono" style="font-size:11px;fill:var(--lh-ink-d-r4b)">throw</text>
 
   <rect x="410" y="120" width="320" height="190" rx="10" class="svg-box-good"/>
   <text x="428" y="148" class="svg-title">展开时执行的析构</text>
@@ -134,8 +138,8 @@ window.STEPS = [
   <text x="442" y="256" class="svg-mono">② f.~File()         // 关文件</text>
   <text x="428" y="296" class="svg-small">构造顺序 f → lk，析构顺序 lk → f</text>
 
-  <path d="M352 248 C380 248 386 208 424 196" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
-  <path d="M352 192 C380 192 386 236 424 248" class="svg-arrow" style="stroke:#059669;stroke-dasharray:5 4" marker-end="url(#ahg)"/>
+  <path d="M352 248 C380 248 386 208 424 196" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
+  <path d="M352 192 C380 192 386 236 424 248" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c);stroke-dasharray:5 4" marker-end="url(#ahg)"/>
 
   <text x="30" y="400" class="svg-small">每个函数帧都会走一遍；栈展开保证 RAII 对象在异常路径上也会被释放。</text>
   <text x="30" y="424" class="svg-small">析构函数默认 noexcept；展开中再抛异常，程序会 terminate。</text>
@@ -168,7 +172,7 @@ window.STEPS = [
   <text x="346" y="192" class="svg-small">能接住派生对象；引用不会切片</text>
 
   <rect x="330" y="226" width="400" height="66" rx="8" class="svg-box-bad"/>
-  <text x="346" y="252" class="svg-mono" style="font-size:11px;fill:#b91c1c">catch (Base e)   // 按值</text>
+  <text x="346" y="252" class="svg-mono" style="font-size:11px;fill:var(--lh-ink-d-r4b)">catch (Base e)   // 按值</text>
   <text x="346" y="276" class="svg-small">切片：只剩 Base 部分，派生数据丢失</text>
 
   <line x1="254" y1="102" x2="326" y2="91" class="svg-arrow-accent" marker-end="url(#ah)"/>
@@ -208,7 +212,7 @@ window.STEPS = [
   <rect x="370" y="92" width="320" height="100" rx="9" class="svg-box-accent"/>
   <text x="386" y="118" class="svg-text">内层 catch</text>
   <text x="386" y="142" class="svg-mono" style="font-size:11px">log(e.what());</text>
-  <text x="386" y="166" class="svg-mono" style="font-size:11px;fill:#4338ca">throw;   // 不复制</text>
+  <text x="386" y="166" class="svg-mono" style="font-size:11px;fill:var(--lh-ink-d-pb4c)">throw;   // 不复制</text>
 
   <rect x="370" y="258" width="320" height="100" rx="9" class="svg-box-good"/>
   <text x="386" y="284" class="svg-text">外层 catch</text>
@@ -308,10 +312,10 @@ window.STEPS = [
   <text x="300" y="162" class="svg-mono" style="font-size:11px">noexcept?</text>
   <text x="300" y="188" class="svg-small">看这个条件决定</text>
 
-  <path d="M458 142 C470 120 480 118 486 124" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M458 142 C470 120 480 118 486 124" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
   <text x="458" y="112" class="svg-good-text">是：移动</text>
-  <path d="M458 182 C470 208 480 214 486 226" class="svg-arrow" style="stroke:#d97706" marker-end="url(#ahw)"/>
-  <text x="458" y="206" class="svg-small" style="fill:#b45309">否：拷贝</text>
+  <path d="M458 182 C470 208 480 214 486 226" class="svg-arrow" style="stroke:var(--lh-ink-d-or6b)" marker-end="url(#ahw)"/>
+  <text x="458" y="206" class="svg-small" style="fill:var(--lh-ink-d-or5d)">否：拷贝</text>
 
   <text x="30" y="332" class="svg-small">移动是“把旧元素掏空”，中途抛异常没法回滚；拷贝失败时旧元素还在。</text>
   <text x="30" y="356" class="svg-small">所以 move_if_noexcept 的规则是：移动构造 noexcept（或没有拷贝）才移动。</text>
@@ -391,7 +395,7 @@ window.STEPS = [
   <rect x="410" y="104" width="310" height="70" rx="8" class="svg-box-good"/>
   <text x="426" y="132" class="svg-good-text">~File() 会执行</text>
   <text x="426" y="156" class="svg-small">已构造成员按逆序析构</text>
-  <path d="M314 139 C350 134 374 134 406 136" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M314 139 C350 134 374 134 406 136" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
 
   <rect x="410" y="196" width="310" height="70" rx="8" class="svg-box-bad"/>
   <text x="426" y="224" class="svg-bad-text">raw 不会被释放</text>

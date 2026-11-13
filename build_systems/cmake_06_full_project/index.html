@@ -4,69 +4,70 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>06 · 完整项目结构 - 构建系统 · C++ 学习路线</title>
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body {
   font-family: 'Microsoft YaHei', 'PingFang SC', 'Noto Sans SC', sans-serif;
-  background: linear-gradient(135deg, #141E30 0%, #243B55 100%);
+  background: linear-gradient(135deg, var(--lh-bg-d-b2d) 0%, var(--lh-bg-d-cb3b) 100%);
   min-height: 100vh;
   padding: 28px 18px 48px;
-  color: #333;
+  color: var(--lh-ink-d-n3b);
   line-height: 1.85;
 }
 .container { max-width: 960px; margin: 0 auto; }
 .back-btn {
   display: inline-block; padding: 8px 16px;
-  background: rgba(255,255,255,0.15); color: #fff;
+  background: var(--lh-bg-d-n9-a15b); color: var(--lh-ink-d-n9b);
   text-decoration: none; border-radius: 8px; margin-bottom: 18px;
   font-size: 13px; transition: background .2s;
 }
-.back-btn:hover { background: rgba(255,255,255,0.28); }
-.page-header { color: #fff; margin-bottom: 22px; }
-.crumb { font-size: 12.5px; color: #90caf9; letter-spacing: .04em; margin-bottom: 8px; }
-.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,.35); }
+.back-btn:hover { background: var(--lh-bg-d-n9-a28b); }
+.page-header { color: var(--lh-ink-d-n9b); margin-bottom: 22px; }
+.crumb { font-size: 12.5px; color: var(--lh-ink-d-cb7b); letter-spacing: .04em; margin-bottom: 8px; }
+.page-header h1 { font-size: 30px; line-height: 1.35; margin-bottom: 10px; text-shadow: 2px 2px 8px var(--lh-shd-d-n1-a35b); }
 .page-header .desc { font-size: 14.5px;  max-width: 760px; }
 .meta { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
 .tag { padding: 3px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; }
-.tag.beginner { background: #e8f5e9; color: #2e7d32; }
-.tag.elementary { background: #e0f2f1; color: #00695c; }
-.tag.intermediate { background: #e3f2fd; color: #1565c0; }
-.tag.advanced { background: #fff3e0; color: #be4300; }
-.tag.expert { background: #f3e5f5; color: #6a1b9a; }
+.tag.beginner { background: var(--lh-bg-d-n9h); color: var(--lh-ink-d-lg5b); }
+.tag.elementary { background: var(--lh-bg-d-n9j); color: var(--lh-ink-d-tc4b); }
+.tag.intermediate { background: var(--lh-bg-d-cb9b); color: var(--lh-ink-d-cb4b); }
+.tag.advanced { background: var(--lh-bg-d-o9b); color: var(--lh-ink-d-or5b); }
+.tag.expert { background: var(--lh-bg-d-n8d); color: var(--lh-ink-d-p3b); }
 .meta .raw {
-  font-size: 12.5px; color: #bbdefb; text-decoration: none;
-  border-bottom: 1px dashed rgba(187,222,251,.6);
+  font-size: 12.5px; color: var(--lh-ink-d-cb8c); text-decoration: none;
+  border-bottom: 1px dashed var(--lh-line-d-cb8-a60b);
 }
-.meta .raw:hover { color: #fff; }
+.meta .raw:hover { color: var(--lh-ink-d-n9b); }
 .content {
-  background: #fff; border-radius: 18px; padding: 38px 44px 42px;
-  box-shadow: 0 16px 46px rgba(0,0,0,.28);
+  background: var(--lh-bg-d-n9b); border-radius: 18px; padding: 38px 44px 42px;
+  box-shadow: 0 16px 46px var(--lh-shd-d-n1-a28b);
   overflow-wrap: break-word;
 }
 .content > :first-child { margin-top: 0; }
 .content h1 { display: none; }
 .content h2 {
-  font-size: 22px; color: #1a237e; line-height: 1.45;
+  font-size: 22px; color: var(--lh-ink-d-b3c); line-height: 1.45;
   margin: 34px 0 14px; padding-left: 12px;
-  border-left: 5px solid #3949ab;
+  border-left: 5px solid var(--lh-line-d-b4b);
 }
-.content h3 { font-size: 18px; color: #283593; margin: 26px 0 10px; }
-.content h4 { font-size: 16px; color: #37474f; margin: 20px 0 8px; }
-.content p { margin: 10px 0; font-size: 15px; color: #37474f; }
+.content h3 { font-size: 18px; color: var(--lh-ink-d-b3e); margin: 26px 0 10px; }
+.content h4 { font-size: 16px; color: var(--lh-ink-d-cb3b); margin: 20px 0 8px; }
+.content p { margin: 10px 0; font-size: 15px; color: var(--lh-ink-d-cb3b); }
 .content ul, .content ol { margin: 10px 0 14px; padding-left: 26px; }
-.content li { margin: 6px 0; font-size: 15px; color: #37474f; }
+.content li { margin: 6px 0; font-size: 15px; color: var(--lh-ink-d-cb3b); }
 .content li > p { margin: 6px 0; }
-.content strong { color: #1a237e; }
-.content a { color: #1565c0; }
+.content strong { color: var(--lh-ink-d-b3c); }
+.content a { color: var(--lh-ink-d-cb4b); }
 .content code {
   font-family: Consolas, 'Courier New', monospace;
-  background: #eef2ff; color: #c62828;
+  background: var(--lh-bg-d-n9d); color: var(--lh-ink-d-r5d);
   padding: 1px 5px; border-radius: 4px; font-size: 13.5px;
 }
 .content pre {
-  background: #1e293b; color: #e2e8f0;
+  background: var(--lh-bg-d-b2c); color: var(--lh-ink-d-n8b);
   padding: 16px 18px; border-radius: 10px;
   overflow-x: auto; margin: 14px 0 18px;
   line-height: 1.6;
@@ -77,30 +78,30 @@ body {
 }
 .content blockquote {
   margin: 14px 0; padding: 10px 16px;
-  border-left: 4px solid #7986cb; background: #f4f6ff;
-  color: #455a64; border-radius: 0 8px 8px 0;
+  border-left: 4px solid var(--lh-line-d-b6c); background: var(--lh-bg-d-n9c);
+  color: var(--lh-ink-d-cb4c); border-radius: 0 8px 8px 0;
 }
 .content blockquote p { margin: 4px 0; }
 .content table {
   width: 100%; border-collapse: collapse; margin: 16px 0 20px;
   font-size: 14px; display: block; overflow-x: auto;
 }
-.content th, .content td { border: 1px solid #dfe3f0; padding: 8px 12px; text-align: left; vertical-align: top; }
-.content th { background: #eef2ff; color: #1a237e; white-space: nowrap; }
-.content tbody tr:nth-child(even) { background: #fafbff; }
-.content hr { border: 0; border-top: 1px solid #e0e4f0; margin: 26px 0; }
+.content th, .content td { border: 1px solid var(--lh-line-d-n8e); padding: 8px 12px; text-align: left; vertical-align: top; }
+.content th { background: var(--lh-bg-d-n9d); color: var(--lh-ink-d-b3c); white-space: nowrap; }
+.content tbody tr:nth-child(even) { background: var(--lh-bg-d-n9b); }
+.content hr { border: 0; border-top: 1px solid var(--lh-line-d-n8b); margin: 26px 0; }
 .files {
-  background: rgba(255,255,255,.96); border-radius: 16px;
+  background: var(--lh-bg-d-n9-a96b); border-radius: 16px;
   padding: 22px 26px; margin-top: 22px;
-  box-shadow: 0 12px 34px rgba(0,0,0,.22);
+  box-shadow: 0 12px 34px var(--lh-shd-d-n1-a22b);
 }
-.files h2 { font-size: 16px; color: #1a237e; margin-bottom: 10px; }
+.files h2 { font-size: 16px; color: var(--lh-ink-d-b3c); margin-bottom: 10px; }
 .files ul { list-style: none; display: flex; flex-wrap: wrap; gap: 8px 18px; }
 .files li { font-size: 13.5px; }
-.files a { color: #1565c0; text-decoration: none; font-family: Consolas, monospace; }
+.files a { color: var(--lh-ink-d-cb4b); text-decoration: none; font-family: Consolas, monospace; }
 .files a:hover { text-decoration: underline; }
-.files .dir { color: #5e707a; font-family: Consolas, monospace; }
-.files .hint { margin-top: 10px; font-size: 12px; color: #627076; }
+.files .dir { color: var(--lh-ink-d-cb5b); font-family: Consolas, monospace; }
+.files .hint { margin-top: 10px; font-size: 12px; color: var(--lh-ink-d-n5d); }
 @media (max-width: 640px) {
   body { padding: 18px 10px 36px; }
   .page-header h1 { font-size: 23px; }
@@ -108,6 +109,9 @@ body {
   .content h2 { font-size: 19px; }
 }
 </style>
+
+<link rel="stylesheet" href="../../assets/theme.css">
+<script src="../../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">

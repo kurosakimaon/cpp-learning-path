@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>智能指针：所有权、引用计数与循环引用 - C++ 图解</title>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="../assets/theme.css">
+
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -74,14 +78,14 @@ window.STEPS = [
   <line x1="246" y1="111" x2="494" y2="111" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
   <text x="300" y="98" class="svg-small">唯一持有</text>
 
-  <text x="30" y="208" class="svg-mono" style="fill:#4338ca">auto q = std::move(p);</text>
+  <text x="30" y="208" class="svg-mono" style="fill:var(--lh-ink-d-pb4c)">auto q = std::move(p);</text>
   <text x="30" y="232" class="svg-small">拷贝构造被 delete，只能移动</text>
 
   <text x="30" y="272" class="svg-title">移动后：q 接管，p 变空</text>
   <rect x="30" y="290" width="700" height="104" rx="12" class="svg-box-ghost"/>
   <rect x="52" y="310" width="120" height="64" rx="8" class="svg-box"/>
   <text x="66" y="334" class="svg-text">栈 · p</text>
-  <text x="66" y="358" class="svg-mono" style="fill:#b91c1c">nullptr</text>
+  <text x="66" y="358" class="svg-mono" style="fill:var(--lh-ink-d-r4b)">nullptr</text>
   <rect x="196" y="310" width="150" height="64" rx="8" class="svg-box-good"/>
   <text x="212" y="334" class="svg-text">栈 · q</text>
   <text x="212" y="358" class="svg-mono" style="font-size:11px">0x7f2a1000</text>
@@ -230,7 +234,7 @@ window.STEPS = [
   <line x1="534" y1="136" x2="576" y2="198" class="svg-arrow" marker-end="url(#ah)"/>
   <text x="410" y="256" class="svg-bad-text">A 归零 → delete raw</text>
   <text x="410" y="280" class="svg-bad-text">B 归零 → delete raw 第二次</text>
-  <text x="410" y="312" class="svg-mono" style="fill:#b91c1c;font-size:11px">double free</text>
+  <text x="410" y="312" class="svg-mono" style="fill:var(--lh-ink-d-r4b);font-size:11px">double free</text>
 
   <text x="24" y="372" class="svg-small">正确做法：make_shared，或让一个 shared_ptr 从另一个拷贝出来。</text>
   <text x="24" y="396" class="svg-small">用 .get() 得到的裸指针只能观察，不能再拿去建 shared_ptr。</text>
@@ -331,12 +335,12 @@ window.STEPS = [
   <line x1="546" y1="70" x2="414" y2="114" class="svg-cross"/>
   <rect x="410" y="150" width="140" height="110" rx="7" class="svg-box-bad svg-blink"/>
   <text x="424" y="176" class="svg-text">Parent</text>
-  <text x="424" y="202" class="svg-mono" style="fill:#b91c1c">strong = 1</text>
+  <text x="424" y="202" class="svg-mono" style="fill:var(--lh-ink-d-r4b)">strong = 1</text>
   <text x="424" y="228" class="svg-small">被 child 占着</text>
   <text x="424" y="248" class="svg-small">无法析构</text>
   <rect x="590" y="150" width="130" height="110" rx="7" class="svg-box-bad svg-blink"/>
   <text x="604" y="176" class="svg-text">Child</text>
-  <text x="604" y="202" class="svg-mono" style="fill:#b91c1c">strong = 1</text>
+  <text x="604" y="202" class="svg-mono" style="fill:var(--lh-ink-d-r4b)">strong = 1</text>
   <text x="604" y="228" class="svg-small">被 parent 占着</text>
   <text x="604" y="248" class="svg-small">无法析构</text>
   <line x1="554" y1="182" x2="586" y2="182" class="svg-arrow-accent" marker-end="url(#ah)"/>

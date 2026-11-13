@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
     <title>异常与错误处理 - C++ 学习路线图</title>
     <style>
         * {
@@ -13,9 +14,9 @@
 
         body {
             font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+            background: linear-gradient(135deg, var(--lh-bg-l-o9b) 0%, var(--lh-bgh-l-o8b) 100%);
             min-height: 100vh;
-            color: #3e2723;
+            color: var(--lh-ink-l-r2b);
             line-height: 1.6;
         }
 
@@ -31,23 +32,23 @@
             align-items: center;
             gap: 8px;
             padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--lh-bg-l-n9-a90b);
             border: none;
             border-radius: 25px;
-            color: #b23913;
+            color: var(--lh-ink-l-or4b);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(230, 74, 25, 0.15);
+            box-shadow: 0 2px 8px var(--lh-shd-l-or5-a15b);
             margin-bottom: 30px;
         }
 
         .back-btn:hover {
-            background: #cf4317;
-            color: white;
+            background: var(--lh-bgh-l-or5b);
+            color: var(--lh-ink-l-n9b);
             transform: translateX(-3px);
-            box-shadow: 0 4px 12px rgba(230, 74, 25, 0.3);
+            box-shadow: 0 4px 12px var(--lh-shd-l-or5-a30b);
         }
 
         /* 模块标题 */
@@ -64,14 +65,14 @@
         .module-title {
             font-size: 42px;
             font-weight: 700;
-            color: #bf360c;
+            color: var(--lh-ink-l-or5c);
             margin-bottom: 12px;
             letter-spacing: 2px;
         }
 
         .module-subtitle {
             font-size: 18px;
-            color: #b23913;
+            color: var(--lh-ink-l-or4b);
             font-weight: 400;
         }
 
@@ -79,23 +80,23 @@
             max-width: 600px;
             margin: 20px auto 0;
             font-size: 15px;
-            color: #5d4037;
-            background: rgba(255, 255, 255, 0.6);
+            color: var(--lh-ink-l-or3b);
+            background: var(--lh-bg-l-n9-a60b);
             padding: 20px 24px;
             border-radius: 12px;
-            border-left: 4px solid #ff5722;
+            border-left: 4px solid var(--lh-line-l-or6b);
         }
 
         /* 文件卡片 */
         .card {
-            background: white;
+            background: var(--lh-bg-l-n9b);
             border-radius: 16px;
             padding: 32px;
             text-decoration: none;
             color: inherit;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(230, 74, 25, 0.12);
-            border-top: 4px solid #ff5722;
+            box-shadow: 0 4px 16px var(--lh-shd-l-or5-a12b);
+            border-top: 4px solid var(--lh-line-l-or6b);
             position: relative;
             overflow: hidden;
             display: block;
@@ -109,12 +110,12 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #ff5722, #e64a19, #bf360c);
+            background: linear-gradient(90deg, var(--lh-bg-l-or6b), var(--lh-bg-l-or5b), var(--lh-bg-l-or5c));
         }
 
         .card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 12px 28px rgba(230, 74, 25, 0.2);
+            box-shadow: 0 12px 28px var(--lh-shd-l-or5-a20b);
         }
 
         .card-header {
@@ -130,8 +131,8 @@
             justify-content: center;
             width: 44px;
             height: 44px;
-            background: #fff3e0;
-            color: #b23913;
+            background: var(--lh-bg-l-o9b);
+            color: var(--lh-ink-l-or4b);
             border-radius: 50%;
             font-weight: 700;
             font-size: 18px;
@@ -140,12 +141,12 @@
         .card-title {
             font-size: 24px;
             font-weight: 600;
-            color: #bf360c;
+            color: var(--lh-ink-l-or5c);
         }
 
         .card-desc {
             font-size: 15px;
-            color: #6d4c41;
+            color: var(--lh-ink-l-or4c);
             line-height: 1.8;
             margin-bottom: 20px;
         }
@@ -159,8 +160,8 @@
         .tag {
             display: inline-block;
             padding: 5px 12px;
-            background: #fff3e0;
-            color: #b23913;
+            background: var(--lh-bg-l-o9b);
+            color: var(--lh-ink-l-or4b);
             border-radius: 14px;
             font-size: 12px;
             font-weight: 500;
@@ -171,7 +172,7 @@
             bottom: 28px;
             right: 32px;
             font-size: 22px;
-            color: #cf471c;
+            color: var(--lh-ink-l-or5d);
             transition: transform 0.3s ease;
         }
 
@@ -190,19 +191,19 @@
             align-items: center;
             gap: 10px;
             padding: 16px 36px;
-            background: linear-gradient(135deg, #cc461b 0%, #cf4317 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--lh-bg-l-or5d) 0%, var(--lh-bg-l-or5d) 100%);
+            color: var(--lh-ink-l-n9b);
             text-decoration: none;
             border-radius: 30px;
             font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(255, 87, 34, 0.4);
+            box-shadow: 0 6px 20px var(--lh-shd-l-or6-a40b);
         }
 
         .guide-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(255, 87, 34, 0.5);
+            box-shadow: 0 8px 24px var(--lh-shd-l-or6-a50b);
         }
 
         .guide-btn-icon {
@@ -211,17 +212,17 @@
 
         /* 学习建议 */
         .tips-section {
-            background: white;
+            background: var(--lh-bg-l-n9b);
             border-radius: 16px;
             padding: 32px;
             margin-bottom: 50px;
-            box-shadow: 0 4px 16px rgba(230, 74, 25, 0.12);
+            box-shadow: 0 4px 16px var(--lh-shd-l-or5-a12b);
         }
 
         .tips-title {
             font-size: 20px;
             font-weight: 600;
-            color: #bf360c;
+            color: var(--lh-ink-l-or5c);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -240,9 +241,9 @@
         .tips-list li {
             padding: 10px 0 10px 28px;
             position: relative;
-            color: #5d4037;
+            color: var(--lh-ink-l-or3b);
             font-size: 15px;
-            border-bottom: 1px dashed #ffe0b2;
+            border-bottom: 1px dashed var(--lh-line-l-o8b);
         }
 
         .tips-list li:last-child {
@@ -253,17 +254,17 @@
             content: '⚠';
             position: absolute;
             left: 0;
-            color: #ff5722;
+            color: var(--lh-ink-l-or6b);
             font-weight: 700;
         }
 
         /* 老师傅的话 */
         .master-section {
-            background: linear-gradient(135deg, #bf360c 0%, #8d2a0a 100%);
+            background: linear-gradient(135deg, var(--lh-bg-l-or5c) 0%, var(--lh-bg-l-or4b) 100%);
             border-radius: 16px;
             padding: 32px;
-            color: white;
-            box-shadow: 0 6px 24px rgba(191, 54, 12, 0.35);
+            color: var(--lh-ink-l-n9b);
+            box-shadow: 0 6px 24px var(--lh-shd-l-or5-a35b);
         }
 
         .master-title {
@@ -287,7 +288,7 @@
             font-style: italic;
             position: relative;
             padding-left: 16px;
-            border-left: 3px solid rgba(255, 255, 255, 0.4);
+            border-left: 3px solid var(--lh-line-l-n9-a40b);
         }
 
         .master-quote p {
@@ -303,8 +304,8 @@
             text-align: center;
             margin-top: 50px;
             padding-top: 24px;
-            border-top: 1px solid rgba(230, 74, 25, 0.2);
-            color: #b23913;
+            border-top: 1px solid var(--lh-line-l-or5-a20b);
+            color: var(--lh-ink-l-or4b);
             font-size: 13px;
             
         }
@@ -323,6 +324,9 @@
             }
         }
     </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -374,7 +378,7 @@
                 <span class="guide-btn-icon">📖</span>
                 <span>学习指南</span>
             </a>
-            <a href="../visuals/exceptions.html" class="guide-btn" style="margin-left: 14px; background: linear-gradient(135deg, #6063ea 0%, #0a7bae 100%);">
+            <a href="../visuals/exceptions.html" class="guide-btn" style="margin-left: 14px; background: linear-gradient(135deg, var(--lh-bg-l-pb5b) 0%, var(--lh-bg-l-cb5c) 100%);">
                 <span class="guide-btn-icon">🎬</span>
                 <span>图解栈展开</span>
             </a>

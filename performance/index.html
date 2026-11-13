@@ -3,63 +3,64 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>性能优化专题 · 写出高效的 C++ 代码 - C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #0c3483 0%, #637089 100%);
+    background: linear-gradient(135deg, var(--lh-bgh-d-b3b) 0%, var(--lh-bg-d-b5c) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #fff;
+    color: var(--lh-ink-d-n9b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
 
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(15, 23, 42, 0.55);
-    color: #fff;
+    background: var(--lh-bg-d-b2-a55b);
+    color: var(--lh-ink-d-n9b);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 13px;
     font-weight: 500;
     transition: background 0.2s;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid var(--lh-line-d-n9-a20b);
   }
-  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  .back-btn:hover { background: var(--lh-bg-d-n9-a25b); }
 
   .header { text-align: center; margin-bottom: 30px; }
-  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 10px rgba(0,0,0,0.3); }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 10px var(--lh-shd-d-n1-a30b); }
   .header p { font-size: 16px;  }
 
   .intro-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    color: #333;
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a15b);
+    color: var(--lh-ink-d-n3b);
   }
   .intro-section h2 {
-    color: #0c3483;
+    color: var(--lh-ink-d-b3d);
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+  .intro-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: #fff;
+    color: var(--lh-ink-d-n9b);
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
     align-items: center;
     gap: 10px;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 3px var(--lh-shd-d-n1-a20b);
   }
 
   .card-grid {
@@ -69,10 +70,10 @@
     margin-bottom: 20px;
   }
   .card {
-    background: white;
+    background: var(--lh-bg-d-n9b);
     border-radius: 16px;
     padding: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a15b);
     transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
@@ -85,15 +86,15 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #0c3483, #6a8ed1);
+    background: linear-gradient(90deg, var(--lh-bg-d-b3b), var(--lh-bg-d-b6b));
   }
   .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.25);
+    box-shadow: 0 15px 40px var(--lh-shd-d-n1-a25b);
   }
-  .card-icon { font-size: 32px; margin-bottom: 10px; color: #1e293b; }
-  .card-title { font-size: 17px; font-weight: 700; color: #0c3483; margin-bottom: 8px; }
-  .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
+  .card-icon { font-size: 32px; margin-bottom: 10px; color: var(--lh-ink-d-b2c); }
+  .card-title { font-size: 17px; font-weight: 700; color: var(--lh-ink-d-b3d); margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: var(--lh-ink-d-n4d); line-height: 1.6; margin-bottom: 14px; }
   .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
 
   .tag {
@@ -102,36 +103,36 @@
     font-size: 11px;
     font-weight: 600;
   }
-  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
-  .tag.elementary { background: #e0f2f1; color: #00695c; }
-  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
-  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #be4300; }
-  .tag.expert { background: #ffebee; color: #c62828; }
-  .tag.perf { background: #e8eaf6; color: #283593; }
+  .tag.beginner { background: var(--lh-bg-d-n9h); color: var(--lh-ink-d-lg5b); }
+  .tag.elementary { background: var(--lh-bg-d-n9j); color: var(--lh-ink-d-tc4b); }
+  .tag.intermediate { background: var(--lh-bg-d-cb9b); color: var(--lh-ink-d-cb4b); }
+  .tag.upper-intermediate { background: var(--lh-bg-d-n8d); color: var(--lh-ink-d-p3b); }
+  .tag.advanced { background: var(--lh-bg-d-o9b); color: var(--lh-ink-d-or5b); }
+  .tag.expert { background: var(--lh-bg-d-n9i); color: var(--lh-ink-d-r5d); }
+  .tag.perf { background: var(--lh-bg-d-n8b); color: var(--lh-ink-d-b3e); }
 
   .feature-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    color: #333;
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a15b);
+    color: var(--lh-ink-d-n3b);
   }
   .feature-section h2 {
-    color: #0c3483;
+    color: var(--lh-ink-d-b3d);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .feature-section li strong { color: #0c3483; }
+  .feature-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: var(--lh-ink-d-b3d); }
 
   .cache-diagram {
-    background: #f5f7ff;
+    background: var(--lh-bg-d-n9c);
     border-radius: 12px;
     padding: 20px;
     margin: 16px 0;
@@ -149,40 +150,40 @@
     min-width: 100px;
     padding: 16px 10px;
     border-radius: 8px;
-    color: white;
+    color: var(--lh-ink-d-n9b);
   }
-  .cache-level.reg { background: #1a237e; }
-  .cache-level.l1 { background: #283593; }
-  .cache-level.l2 { background: #3949ab; }
-  .cache-level.l3 { background: #5c6bc0; }
-  .cache-level.ram { background: #9fa8da; color: #16225c; }
+  .cache-level.reg { background: var(--lh-bg-d-b3c); }
+  .cache-level.l1 { background: var(--lh-bg-d-b3d); }
+  .cache-level.l2 { background: var(--lh-bg-d-b4b); }
+  .cache-level.l3 { background: var(--lh-bg-d-b5f); }
+  .cache-level.ram { background: var(--lh-bg-d-b7b); color: var(--lh-ink-d-b2d); }
   .cache-level .name { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
   .cache-level .size { font-size: 11px;  }
   .cache-level .speed { font-size: 11px;  margin-top: 4px; }
 
   .master-section {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    background: linear-gradient(135deg, var(--lh-bg-d-n9b), var(--lh-bg-d-n8e));
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    color: #333;
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a15b);
+    color: var(--lh-ink-d-n3b);
   }
   .master-section h2 {
-    color: #333;
+    color: var(--lh-ink-d-n3b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #0c3483; }
+  .master-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .master-section li strong { color: var(--lh-ink-d-b3d); }
 
   .quote-box {
-    background: linear-gradient(135deg, #0c3483, #2a4a9f);
-    color: white;
+    background: linear-gradient(135deg, var(--lh-bg-d-b3b), var(--lh-bg-d-b4c));
+    color: var(--lh-ink-d-n9b);
     padding: 20px 24px;
     border-radius: 12px;
     margin: 16px 0;
@@ -200,6 +201,9 @@
     .card-grid { grid-template-columns: 1fr; }
   }
 </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -222,10 +226,10 @@
       每个都有正反对比和实测数据。学完本模块，你写出来的代码天然就会更快。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0c3483, #2a4a9f); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(12, 52, 131, 0.4); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.5)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.4)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--lh-bg-d-b3b), var(--lh-bg-d-b4c)); color: var(--lh-ink-d-n9b); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px var(--lh-shd-d-b3-a40b); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(12, 52, 131, 0.5)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(12, 52, 131, 0.4)';">
         📖 学习指南
       </a>
-      <span style="color: #6d6d6d; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: var(--lh-ink-d-n5b); font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
@@ -260,7 +264,7 @@
           <div class="speed">~100ns</div>
         </div>
       </div>
-      <p style="margin-top: 14px; font-size: 13px; color: #0c3483;">
+      <p style="margin-top: 14px; font-size: 13px; color: var(--lh-ink-d-b3d);">
         <strong>核心洞察：</strong>CPU 访问内存比访问 L1 缓存慢约 100 倍！
         写出缓存友好的代码，性能可能提升数倍甚至数十倍。
       </p>

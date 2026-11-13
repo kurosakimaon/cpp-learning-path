@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>单链表：指针到底怎么接？ - C++ 图解</title>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="../assets/theme.css">
+
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -155,9 +159,9 @@ window.STEPS = [
   <path d="M116 224 C142 224 146 190 150 166" class="svg-arrow-accent svg-flow" marker-end="url(#ah)"/>
 
   <circle cx="318" cy="112" r="13" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
-  <text x="318" y="117" text-anchor="middle" class="svg-mono" style="font-size:12px;fill:#4338ca">1</text>
+  <text x="318" y="117" text-anchor="middle" class="svg-mono" style="font-size:12px;fill:var(--lh-ink-d-pb4c)">1</text>
   <circle cx="132" cy="184" r="13" fill="#eef2ff" stroke="#6366f1" stroke-width="1.5"/>
-  <text x="132" y="189" text-anchor="middle" class="svg-mono" style="font-size:12px;fill:#4338ca">2</text>
+  <text x="132" y="189" text-anchor="middle" class="svg-mono" style="font-size:12px;fill:var(--lh-ink-d-pb4c)">2</text>
 
   <text x="30" y="300" class="svg-text">① node-&gt;next = head;　先让新节点接住旧链表</text>
   <text x="30" y="328" class="svg-text">② head = node;　　　 再移动入口</text>
@@ -195,9 +199,9 @@ window.STEPS = [
   <line x1="270" y1="135" x2="286" y2="135" class="svg-arrow" marker-end="url(#ah)"/>
   <line x1="420" y1="135" x2="436" y2="135" class="svg-arrow" marker-end="url(#ah)"/>
 
-  <path d="M66 100 C66 72 205 72 205 100" class="svg-arrow svg-flow" style="stroke:#64748b" marker-end="url(#ahd)"/>
-  <path d="M205 100 C205 84 355 84 355 100" class="svg-arrow svg-flow" style="stroke:#64748b" marker-end="url(#ahd)"/>
-  <path d="M355 100 C355 84 505 84 505 100" class="svg-arrow svg-flow" style="stroke:#64748b" marker-end="url(#ahd)"/>
+  <path d="M66 100 C66 72 205 72 205 100" class="svg-arrow svg-flow" style="stroke:var(--lh-ink-d-b5b)" marker-end="url(#ahd)"/>
+  <path d="M205 100 C205 84 355 84 355 100" class="svg-arrow svg-flow" style="stroke:var(--lh-ink-d-b5b)" marker-end="url(#ahd)"/>
+  <path d="M355 100 C355 84 505 84 505 100" class="svg-arrow svg-flow" style="stroke:var(--lh-ink-d-b5b)" marker-end="url(#ahd)"/>
   <text x="260" y="64" class="svg-small">cur 一步步走到尾：走 n 步，O(n)</text>
 
   <rect x="620" y="108" width="110" height="54" rx="8" class="svg-box-accent svg-pulse"/>
@@ -255,7 +259,7 @@ window.STEPS = [
 
   <line x1="260" y1="177" x2="306" y2="177" class="svg-arrow-bad" marker-end="url(#ah)"/>
   <line x1="450" y1="177" x2="496" y2="177" class="svg-arrow" marker-end="url(#ah)"/>
-  <path d="M262 190 C300 262 468 262 500 190" class="svg-arrow-accent svg-flow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M262 190 C300 262 468 262 500 190" class="svg-arrow-accent svg-flow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
   <text x="330" y="286" class="svg-good-text">prev-&gt;next = cur-&gt;next（先跨过）</text>
 
   <text x="30" y="336" class="svg-bad-text">✗ 先 delete cur：cur-&gt;next 已经读不到，后面的节点全丢</text>
@@ -376,7 +380,7 @@ window.STEPS = [
   <text x="630" y="142" class="svg-mono" style="font-size:12px">∅</text>
 
   <line x1="233" y1="98" x2="233" y2="108" class="svg-arrow-accent" marker-end="url(#ah)"/>
-  <line x1="383" y1="98" x2="383" y2="108" class="svg-arrow" style="stroke:#d97706" marker-end="url(#ah)"/>
+  <line x1="383" y1="98" x2="383" y2="108" class="svg-arrow" style="stroke:var(--lh-ink-d-or6b)" marker-end="url(#ah)"/>
 
   <line x1="30" y1="196" x2="730" y2="196" stroke="#e2e8f0" stroke-width="1.5" stroke-dasharray="5 5"/>
 
@@ -394,9 +398,9 @@ window.STEPS = [
   <rect x="470" y="306" width="110" height="50" rx="7" class="svg-box-accent"/>
   <text x="525" y="337" text-anchor="middle" class="svg-mono">3</text>
 
-  <path d="M470 330 C458 318 438 318 424 330" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
-  <path d="M310 330 C298 318 278 318 264 330" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
-  <line x1="150" y1="330" x2="110" y2="330" class="svg-arrow" style="stroke:#059669" marker-end="url(#ahg)"/>
+  <path d="M470 330 C458 318 438 318 424 330" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
+  <path d="M310 330 C298 318 278 318 264 330" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
+  <line x1="150" y1="330" x2="110" y2="330" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c)" marker-end="url(#ahg)"/>
   <text x="88" y="336" class="svg-mono" style="font-size:12px">∅</text>
 
   <line x1="83" y1="292" x2="342" y2="304" class="svg-arrow-bad" marker-end="url(#ahr)"/>

@@ -3,41 +3,42 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>Todo CLI 综合实战项目 · C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #134e5e 0%, #4d7957 100%);
+    background: linear-gradient(135deg, var(--lh-bg-d-cb3d) 0%, var(--lh-bg-d-g5d) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #fff;
+    color: var(--lh-ink-d-n9b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
 
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(15, 23, 42, 0.55);
-    color: #fff;
+    background: var(--lh-bg-d-b2-a55b);
+    color: var(--lh-ink-d-n9b);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 13px;
     font-weight: 500;
     transition: background 0.2s;
-    border: 1px solid rgba(255,255,255,0.2);
+    border: 1px solid var(--lh-line-d-n9-a20b);
   }
-  .back-btn:hover { background: rgba(255,255,255,0.25); }
+  .back-btn:hover { background: var(--lh-bg-d-n9-a25b); }
 
   .header { text-align: center; margin-bottom: 30px; }
-  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 10px rgba(0,0,0,0.3); }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 10px var(--lh-shd-d-n1-a30b); }
   .header p { font-size: 16px;  }
 
   .badge {
     display: inline-block;
-    background: linear-gradient(135deg, #d4af37, #f4e4a6);
-    color: #372d07;
+    background: linear-gradient(135deg, var(--lh-bg-d-o7c), var(--lh-bg-d-o8e));
+    color: var(--lh-ink-d-o3b);
     padding: 4px 14px;
     border-radius: 20px;
     font-size: 12px;
@@ -46,51 +47,51 @@
   }
 
   .intro-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    color: #333;
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a15b);
+    color: var(--lh-ink-d-n3b);
   }
   .intro-section h2 {
-    color: #1b5e20;
+    color: var(--lh-ink-d-g4b);
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+  .intro-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: #fff;
+    color: var(--lh-ink-d-n9b);
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
     align-items: center;
     gap: 10px;
-    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+    text-shadow: 1px 1px 3px var(--lh-shd-d-n1-a20b);
   }
 
   .terminal-box {
-    background: #1a1a2e;
+    background: var(--lh-bg-d-n2e);
     border-radius: 12px;
     padding: 20px;
     margin: 16px 0;
     font-family: 'Consolas', 'Monaco', monospace;
     font-size: 13px;
     line-height: 1.6;
-    color: #e0e0e0;
+    color: var(--lh-ink-d-n8c);
     overflow-x: auto;
   }
-  .terminal-box .prompt { color: #4ade80; }
-  .terminal-box .cmd { color: #fbbf24; }
-  .terminal-box .comment { color: #6b7280; }
-  .terminal-box .highlight { color: #60a5fa; }
+  .terminal-box .prompt { color: var(--lh-ink-d-g7b); }
+  .terminal-box .cmd { color: var(--lh-ink-d-o7c); }
+  .terminal-box .comment { color: var(--lh-ink-d-n5f); }
+  .terminal-box .highlight { color: var(--lh-ink-d-cb6d); }
 
   .arch-diagram {
-    background: #f0fdf4;
+    background: var(--lh-bg-d-n9e);
     border-radius: 12px;
     padding: 24px;
     margin: 16px 0;
@@ -100,7 +101,7 @@
     margin: 8px auto;
     padding: 14px 20px;
     border-radius: 8px;
-    color: white;
+    color: var(--lh-ink-d-n9b);
     font-weight: 600;
     max-width: 500px;
     position: relative;
@@ -113,13 +114,13 @@
     transform: translateX(-50%);
     width: 2px;
     height: 8px;
-    background: #888;
+    background: var(--lh-bg-d-n6c);
   }
   .arch-layer:last-child::after { display: none; }
-  .arch-layer.ui { background: linear-gradient(90deg, #2563eb, #3371d6); }
-  .arch-layer.cmd { background: linear-gradient(90deg, #7c3aed, #8356e7); }
-  .arch-layer.biz { background: linear-gradient(90deg, #04845c, #0b845c); }
-  .arch-layer.data { background: linear-gradient(90deg, #ae6005, #a06707); }
+  .arch-layer.ui { background: linear-gradient(90deg, var(--lh-bg-d-b5e), var(--lh-bg-d-b5g)); }
+  .arch-layer.cmd { background: linear-gradient(90deg, var(--lh-bg-d-p4c), var(--lh-bg-d-pb5b)); }
+  .arch-layer.biz { background: linear-gradient(90deg, var(--lh-bg-d-tg5c), var(--lh-bg-d-tg5c)); }
+  .arch-layer.data { background: linear-gradient(90deg, var(--lh-bg-d-or5d), var(--lh-bg-d-o5c)); }
   .arch-layer .subtitle {
     font-size: 11px;
     font-weight: 400;
@@ -128,24 +129,24 @@
   }
 
   .feature-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    color: #333;
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a15b);
+    color: var(--lh-ink-d-n3b);
   }
   .feature-section h2 {
-    color: #1b5e20;
+    color: var(--lh-ink-d-g4b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .feature-section li strong { color: #1b5e20; }
+  .feature-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: var(--lh-ink-d-g4b); }
 
   .file-grid {
     display: grid;
@@ -154,18 +155,18 @@
     margin: 16px 0;
   }
   .file-item {
-    background: #f0fdf4;
+    background: var(--lh-bg-d-n9e);
     padding: 12px 16px;
     border-radius: 8px;
     font-family: 'Consolas', monospace;
     font-size: 13px;
-    color: #1b5e20;
-    border-left: 4px solid #10b981;
+    color: var(--lh-ink-d-g4b);
+    border-left: 4px solid var(--lh-line-d-tg6b);
   }
   .file-item .desc {
     font-family: 'Microsoft YaHei', sans-serif;
     font-size: 12px;
-    color: #666;
+    color: var(--lh-ink-d-n4d);
     margin-top: 4px;
   }
 
@@ -176,63 +177,63 @@
     margin: 16px 0;
   }
   .pattern-card {
-    background: linear-gradient(135deg, #fffbeb, #fef3c7);
+    background: linear-gradient(135deg, var(--lh-bg-d-n9l), var(--lh-bg-d-o9d));
     border-radius: 12px;
     padding: 16px;
     text-align: center;
-    border: 1px solid #fcd34d;
+    border: 1px solid var(--lh-line-d-o8c);
   }
   .pattern-card .icon { font-size: 28px; margin-bottom: 8px; }
-  .pattern-card .name { font-weight: 700; color: #92400e; font-size: 15px; margin-bottom: 4px; }
-  .pattern-card .desc { font-size: 12px; color: #78350f; line-height: 1.5; }
+  .pattern-card .name { font-weight: 700; color: var(--lh-ink-d-or4d); font-size: 15px; margin-bottom: 4px; }
+  .pattern-card .desc { font-size: 12px; color: var(--lh-ink-d-or3b); line-height: 1.5; }
 
   .master-section {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    background: linear-gradient(135deg, var(--lh-bg-d-n9b), var(--lh-bg-d-n8e));
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
-    color: #333;
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a15b);
+    color: var(--lh-ink-d-n3b);
   }
   .master-section h2 {
-    color: #333;
+    color: var(--lh-ink-d-n3b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #1b5e20; }
+  .master-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .master-section li strong { color: var(--lh-ink-d-g4b); }
 
   .gold-quote {
-    background: linear-gradient(135deg, #134e5e, #0d3d4a);
-    color: #f4e4a6;
+    background: linear-gradient(135deg, var(--lh-bg-d-cb3d), var(--lh-bg-d-cb3e));
+    color: var(--lh-ink-d-o8b);
     padding: 20px 24px;
     border-radius: 12px;
     margin: 16px 0;
     font-size: 15px;
     line-height: 1.8;
     text-align: center;
-    border-left: 4px solid #d4af37;
+    border-left: 4px solid var(--lh-line-d-o7b);
   }
 
   .tutorial-btn {
     display: inline-block;
     padding: 14px 32px;
-    background: linear-gradient(135deg, #d4af37, #b8941f);
-    color: #372d07;
+    background: linear-gradient(135deg, var(--lh-bg-d-o7c), var(--lh-bg-d-o6b));
+    color: var(--lh-ink-d-o3b);
     text-decoration: none;
     border-radius: 30px;
     font-weight: 700;
     font-size: 15px;
-    box-shadow: 0 4px 15px rgba(212, 175, 55, 0.4);
+    box-shadow: 0 4px 15px var(--lh-shd-d-o7-a40b);
     transition: all 0.3s ease;
   }
   .tutorial-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(212, 175, 55, 0.5);
+    box-shadow: 0 6px 20px var(--lh-shd-d-o7-a50b);
   }
 
   @media (max-width: 600px) {
@@ -243,6 +244,9 @@
     .pattern-grid { grid-template-columns: 1fr 1fr; }
   }
 </style>
+
+<link rel="stylesheet" href="../../assets/theme.css">
+<script src="../../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -270,7 +274,7 @@
       <a href="tutorial.md" target="_blank" class="tutorial-btn">
         📖 项目学习指南
       </a>
-      <span style="color: #6d6d6d; font-size: 13px;">老师傅带你拆解整个项目</span>
+      <span style="color: var(--lh-ink-d-n5b); font-size: 13px;">老师傅带你拆解整个项目</span>
     </div>
   </div>
 
@@ -333,7 +337,7 @@
         <div class="subtitle">数据存取、文件 I/O</div>
       </div>
     </div>
-    <p style="margin-top: 12px; font-size: 13px; color: #666;">
+    <p style="margin-top: 12px; font-size: 13px; color: var(--lh-ink-d-n4d);">
       <strong>分层原则：</strong>上层依赖下层，每层只关心自己的职责。
       层与层之间通过接口通信，修改一层不影响其他层。
     </p>

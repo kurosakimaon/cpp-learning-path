@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
     <title>单元测试专题 - C++ 学习路线图</title>
     <style>
         * {
@@ -13,9 +14,9 @@
 
         body {
             font-family: "PingFang SC", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
-            background: linear-gradient(135deg, #e0f2f1 0%, #b2dfdb 100%);
+            background: linear-gradient(135deg, var(--lh-bg-l-n9d) 0%, var(--lh-bg-l-tc8b) 100%);
             min-height: 100vh;
-            color: #263238;
+            color: var(--lh-ink-l-n3c);
             line-height: 1.6;
         }
 
@@ -31,23 +32,23 @@
             align-items: center;
             gap: 8px;
             padding: 10px 20px;
-            background: rgba(255, 255, 255, 0.9);
+            background: var(--lh-bg-l-n9-a90b);
             border: none;
             border-radius: 25px;
-            color: #00695c;
+            color: var(--lh-ink-l-tc4b);
             text-decoration: none;
             font-size: 14px;
             font-weight: 500;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 8px rgba(0, 105, 92, 0.15);
+            box-shadow: 0 2px 8px var(--lh-shd-l-tc4-a15b);
             margin-bottom: 30px;
         }
 
         .back-btn:hover {
-            background: #00695c;
-            color: white;
+            background: var(--lh-bg-l-tc4b);
+            color: var(--lh-ink-l-n9b);
             transform: translateX(-3px);
-            box-shadow: 0 4px 12px rgba(0, 105, 92, 0.3);
+            box-shadow: 0 4px 12px var(--lh-shd-l-tc4-a30b);
         }
 
         /* 模块标题 */
@@ -64,14 +65,14 @@
         .module-title {
             font-size: 42px;
             font-weight: 700;
-            color: #004d40;
+            color: var(--lh-ink-l-tc3c);
             margin-bottom: 12px;
             letter-spacing: 2px;
         }
 
         .module-subtitle {
             font-size: 18px;
-            color: #00665a;
+            color: var(--lh-ink-l-tc4b);
             font-weight: 400;
         }
 
@@ -79,11 +80,11 @@
             max-width: 600px;
             margin: 20px auto 0;
             font-size: 15px;
-            color: #546e7a;
-            background: rgba(255, 255, 255, 0.6);
+            color: var(--lh-ink-l-cb5c);
+            background: var(--lh-bg-l-n9-a60b);
             padding: 20px 24px;
             border-radius: 12px;
-            border-left: 4px solid #26a69a;
+            border-left: 4px solid var(--lh-line-l-tc6c);
         }
 
         /* 文件卡片网格 */
@@ -95,14 +96,14 @@
         }
 
         .card {
-            background: white;
+            background: var(--lh-bg-l-n9b);
             border-radius: 16px;
             padding: 28px;
             text-decoration: none;
             color: inherit;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 16px rgba(0, 105, 92, 0.1);
-            border-top: 4px solid #26a69a;
+            box-shadow: 0 4px 16px var(--lh-shd-l-tc4-a10b);
+            border-top: 4px solid var(--lh-line-l-tc6c);
             position: relative;
             overflow: hidden;
         }
@@ -114,12 +115,12 @@
             left: 0;
             right: 0;
             height: 4px;
-            background: linear-gradient(90deg, #26a69a, #00897b, #00695c);
+            background: linear-gradient(90deg, var(--lh-bg-l-tc6b), var(--lh-bg-l-tc5d), var(--lh-bg-l-tc4b));
         }
 
         .card:hover {
             transform: translateY(-6px);
-            box-shadow: 0 12px 28px rgba(0, 105, 92, 0.2);
+            box-shadow: 0 12px 28px var(--lh-shd-l-tc4-a20b);
         }
 
         .card-number {
@@ -128,8 +129,8 @@
             height: 36px;
             line-height: 36px;
             text-align: center;
-            background: #e0f2f1;
-            color: #00695c;
+            background: var(--lh-bg-l-n9d);
+            color: var(--lh-ink-l-tc4b);
             border-radius: 50%;
             font-weight: 700;
             font-size: 16px;
@@ -139,13 +140,13 @@
         .card-title {
             font-size: 20px;
             font-weight: 600;
-            color: #004d40;
+            color: var(--lh-ink-l-tc3c);
             margin-bottom: 10px;
         }
 
         .card-desc {
             font-size: 14px;
-            color: #627680;
+            color: var(--lh-ink-l-cb5d);
             line-height: 1.7;
             margin-bottom: 16px;
         }
@@ -159,8 +160,8 @@
         .tag {
             display: inline-block;
             padding: 4px 10px;
-            background: #e0f2f1;
-            color: #00695c;
+            background: var(--lh-bg-l-n9d);
+            color: var(--lh-ink-l-tc4b);
             border-radius: 12px;
             font-size: 12px;
             font-weight: 500;
@@ -171,7 +172,7 @@
             bottom: 20px;
             right: 24px;
             font-size: 20px;
-            color: #1e8379;
+            color: var(--lh-ink-l-tc5c);
             transition: transform 0.3s ease;
         }
 
@@ -190,19 +191,19 @@
             align-items: center;
             gap: 10px;
             padding: 16px 36px;
-            background: linear-gradient(135deg, #1e8178 0%, #008275 100%);
-            color: white;
+            background: linear-gradient(135deg, var(--lh-bg-l-tc5e) 0%, var(--lh-bg-l-tc5d) 100%);
+            color: var(--lh-ink-l-n9b);
             text-decoration: none;
             border-radius: 30px;
             font-size: 16px;
             font-weight: 600;
             transition: all 0.3s ease;
-            box-shadow: 0 6px 20px rgba(38, 166, 154, 0.4);
+            box-shadow: 0 6px 20px var(--lh-shd-l-tc6-a40b);
         }
 
         .guide-btn:hover {
             transform: translateY(-2px);
-            box-shadow: 0 8px 24px rgba(38, 166, 154, 0.5);
+            box-shadow: 0 8px 24px var(--lh-shd-l-tc6-a50b);
         }
 
         .guide-btn-icon {
@@ -211,17 +212,17 @@
 
         /* 学习建议 */
         .tips-section {
-            background: white;
+            background: var(--lh-bg-l-n9b);
             border-radius: 16px;
             padding: 32px;
             margin-bottom: 50px;
-            box-shadow: 0 4px 16px rgba(0, 105, 92, 0.1);
+            box-shadow: 0 4px 16px var(--lh-shd-l-tc4-a10b);
         }
 
         .tips-title {
             font-size: 20px;
             font-weight: 600;
-            color: #004d40;
+            color: var(--lh-ink-l-tc3c);
             margin-bottom: 20px;
             display: flex;
             align-items: center;
@@ -240,9 +241,9 @@
         .tips-list li {
             padding: 10px 0 10px 28px;
             position: relative;
-            color: #455a64;
+            color: var(--lh-ink-l-cb4d);
             font-size: 15px;
-            border-bottom: 1px dashed #e0f2f1;
+            border-bottom: 1px dashed var(--lh-line-l-n9b);
         }
 
         .tips-list li:last-child {
@@ -253,17 +254,17 @@
             content: '✓';
             position: absolute;
             left: 0;
-            color: #26a69a;
+            color: var(--lh-ink-l-tc6b);
             font-weight: 700;
         }
 
         /* 老师傅的话 */
         .master-section {
-            background: linear-gradient(135deg, #00695c 0%, #004d40 100%);
+            background: linear-gradient(135deg, var(--lh-bg-l-tc4b) 0%, var(--lh-bg-l-tc3b) 100%);
             border-radius: 16px;
             padding: 32px;
-            color: white;
-            box-shadow: 0 6px 24px rgba(0, 77, 64, 0.3);
+            color: var(--lh-ink-l-n9b);
+            box-shadow: 0 6px 24px var(--lh-shd-l-tc3-a30b);
         }
 
         .master-title {
@@ -287,7 +288,7 @@
             font-style: italic;
             position: relative;
             padding-left: 16px;
-            border-left: 3px solid rgba(255, 255, 255, 0.4);
+            border-left: 3px solid var(--lh-line-l-n9-a40b);
         }
 
         .master-quote p {
@@ -303,8 +304,8 @@
             text-align: center;
             margin-top: 50px;
             padding-top: 24px;
-            border-top: 1px solid rgba(0, 105, 92, 0.2);
-            color: #00665a;
+            border-top: 1px solid var(--lh-line-l-tc4-a20b);
+            color: var(--lh-ink-l-tc4b);
             font-size: 13px;
             
         }
@@ -323,6 +324,9 @@
             }
         }
     </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
     <div class="container">
@@ -377,8 +381,8 @@
             </a>
         </div>
 
-        <p style="background: rgba(255, 193, 7, 0.15); border-left: 4px solid #ffc107; padding: 12px 16px; border-radius: 8px; color: #6d4c00; font-size: 14px; line-height: 1.8;">
-            <strong>提示：</strong>两个示例为了演示断言差异和调试技巧，故意保留了 4 个会失败的用例（每个文件 2 个）。直接运行会看到 failure，这是教学效果，不是代码坏了。跳过方法见 <a href="tutorial.md" style="color: #6c5500;">tutorial.md</a> 的“重要提醒”。
+        <p style="background: var(--lh-bg-l-o8-a15b); border-left: 4px solid var(--lh-line-l-o8c); padding: 12px 16px; border-radius: 8px; color: var(--lh-ink-l-o4b); font-size: 14px; line-height: 1.8;">
+            <strong>提示：</strong>两个示例为了演示断言差异和调试技巧，故意保留了 4 个会失败的用例（每个文件 2 个）。直接运行会看到 failure，这是教学效果，不是代码坏了。跳过方法见 <a href="tutorial.md" style="color: var(--lh-ink-l-o4c);">tutorial.md</a> 的“重要提醒”。
         </p>
 
         <!-- 学习指南按钮 -->

@@ -3,23 +3,24 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>化境期 · 设计模式 - C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #f7971e 0%, #ffd200 100%);
+    background: linear-gradient(135deg, var(--lh-bgh-l-or7b) 0%, var(--lh-bgh-l-o8c) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #333;
+    color: var(--lh-ink-l-n3b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
 
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(255,255,255,0.25);
-    color: #523831;
+    background: var(--lh-bg-l-n9-a25b);
+    color: var(--lh-ink-l-or3c);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
@@ -27,31 +28,31 @@
     font-weight: 500;
     transition: background 0.2s;
   }
-  .back-btn:hover { background: rgba(255,255,255,0.4); }
+  .back-btn:hover { background: var(--lh-bg-l-n9-a40b); }
 
-  .header { text-align: center; color: #523831; margin-bottom: 30px; }
-  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(255,255,255,0.3); }
+  .header { text-align: center; color: var(--lh-ink-l-or3c); margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px var(--lh-shd-l-n9-a30b); }
   .header p { font-size: 16px;  }
 
   .intro-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-l-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a10b);
   }
   .intro-section h2 {
-    color: #b74000;
+    color: var(--lh-ink-l-or5b);
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+  .intro-section p { color: var(--lh-ink-l-n4b); line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: #523831;
+    color: var(--lh-ink-l-or3c);
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
@@ -62,8 +63,8 @@
   .category-label {
     display: inline-block;
     padding: 4px 14px;
-    background: rgba(255,255,255,0.3);
-    color: #523831;
+    background: var(--lh-bg-l-n9-a30b);
+    color: var(--lh-ink-l-or3c);
     border-radius: 20px;
     font-size: 13px;
     font-weight: 600;
@@ -77,10 +78,10 @@
     margin-bottom: 24px;
   }
   .card {
-    background: white;
+    background: var(--lh-bg-l-n9b);
     border-radius: 16px;
     padding: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a10b);
     transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
@@ -93,34 +94,34 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #f7971e, #ffd200);
+    background: linear-gradient(90deg, var(--lh-bg-l-or7b), var(--lh-bg-l-o8b));
   }
   .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.15);
+    box-shadow: 0 15px 40px var(--lh-shd-l-n1-a15b);
   }
   .card-icon { font-size: 28px; margin-bottom: 8px; }
-  .card-title { font-size: 16px; font-weight: 700; color: #222; margin-bottom: 6px; }
-  .card-desc { font-size: 12.5px; color: #666; line-height: 1.6; margin-bottom: 12px; }
+  .card-title { font-size: 16px; font-weight: 700; color: var(--lh-ink-l-n2b); margin-bottom: 6px; }
+  .card-desc { font-size: 12.5px; color: var(--lh-ink-l-n4c); line-height: 1.6; margin-bottom: 12px; }
   .card-meta { display: flex; gap: 6px; flex-wrap: wrap; }
   .card-step {
     position: absolute;
     top: 14px;
     right: 14px;
-    background: #fff8e1;
-    color: #b74000;
+    background: var(--lh-bg-l-o9b);
+    color: var(--lh-ink-l-or5b);
     font-size: 11px;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 12px;
   }
   .list-note {
-    color: #523831;
+    color: var(--lh-ink-l-or3c);
     font-size: 13px;
     line-height: 1.8;
     margin: -6px 0 16px;
     padding: 10px 14px;
-    background: rgba(255,255,255,0.78);
+    background: var(--lh-bg-l-n9-a78b);
     border-left: 3px solid currentColor;
     border-radius: 0 10px 10px 0;
   }
@@ -133,31 +134,31 @@
     font-size: 11px;
     font-weight: 600;
   }
-  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
-  .tag.elementary { background: #e0f2f1; color: #00695c; }
-  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
-  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #b74000; }
-  .tag.expert { background: #ffebee; color: #c62828; }
+  .tag.beginner { background: var(--lh-bg-l-n9c); color: var(--lh-ink-l-lg5b); }
+  .tag.elementary { background: var(--lh-bg-l-n9d); color: var(--lh-ink-l-tc4b); }
+  .tag.intermediate { background: var(--lh-bg-l-cb9b); color: var(--lh-ink-l-cb4b); }
+  .tag.upper-intermediate { background: var(--lh-bg-l-n8b); color: var(--lh-ink-l-p3b); }
+  .tag.advanced { background: var(--lh-bg-l-o9b); color: var(--lh-ink-l-or5b); }
+  .tag.expert { background: var(--lh-bg-l-n9e); color: var(--lh-ink-l-r5b); }
 
   .feature-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-l-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a10b);
   }
   .feature-section h2 {
-    color: #b74000;
+    color: var(--lh-ink-l-or5b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .feature-section li strong { color: #333; }
+  .feature-section p { color: var(--lh-ink-l-n4b); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: var(--lh-ink-l-n4b); line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: var(--lh-ink-l-n3b); }
 
   .pattern-types {
     display: grid;
@@ -166,32 +167,32 @@
     margin: 16px 0;
   }
   .pattern-type {
-    background: #fff8e1;
+    background: var(--lh-bg-l-o9b);
     border-radius: 12px;
     padding: 16px;
-    border-left: 4px solid #f7971e;
+    border-left: 4px solid var(--lh-line-l-or7b);
   }
-  .pattern-type h4 { color: #b74000; margin-bottom: 8px; font-size: 15px; }
-  .pattern-type p { font-size: 13px; color: #666; line-height: 1.6; margin: 0; }
+  .pattern-type h4 { color: var(--lh-ink-l-or5b); margin-bottom: 8px; font-size: 15px; }
+  .pattern-type p { font-size: 13px; color: var(--lh-ink-l-n4c); line-height: 1.6; margin: 0; }
 
   .master-section {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    background: linear-gradient(135deg, var(--lh-bg-l-n9b), var(--lh-bg-l-n8c));
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-l-n1-a10b);
   }
   .master-section h2 {
-    color: #333;
+    color: var(--lh-ink-l-n3b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #b74000; }
+  .master-section p { color: var(--lh-ink-l-n4b); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: var(--lh-ink-l-n4b); line-height: 2; font-size: 14px; }
+  .master-section li strong { color: var(--lh-ink-l-or5b); }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -200,6 +201,9 @@
     .card-grid { grid-template-columns: 1fr; }
   }
 </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -222,16 +226,16 @@
       学设计模式不是为了在面试时背诵，而是为了<strong>面对复杂问题时，能快速找到合适的设计思路</strong>。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #f7971e, #ffd200); color: #523831; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(247, 151, 30, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(247, 151, 30, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(247, 151, 30, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--lh-bgh-l-or7b), var(--lh-bgh-l-o8c)); color: var(--lh-ink-l-or3c); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px var(--lh-shd-l-or7-a30b); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(247, 151, 30, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(247, 151, 30, 0.3)';">
         📖 学习指南
       </a>
-      <a href="../visuals/observer.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #0f766e, #0e7490); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(13, 148, 136, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(13, 148, 136, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(13, 148, 136, 0.28)';">
+      <a href="../visuals/observer.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--lh-bg-l-tc5c), var(--lh-bg-l-cb5d)); color: var(--lh-ink-l-n9b); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px var(--lh-shd-l-tc5-a28b); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(13, 148, 136, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(13, 148, 136, 0.28)';">
         🎬 图解观察者
       </a>
-      <a href="../visuals/visitor.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #7c3aed, #2563eb); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.28); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(124, 58, 237, 0.28)';">
+      <a href="../visuals/visitor.html" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--lh-bg-l-p4b), var(--lh-bg-l-b5b)); color: var(--lh-ink-l-n9b); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px var(--lh-shd-l-p4-a28b); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(124, 58, 237, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(124, 58, 237, 0.28)';">
         🎬 图解访问者
       </a>
-      <span style="color: #707070; font-size: 13px;">老师傅带你学：先看指南，通知顺序绕不清时对照图解</span>
+      <span style="color: var(--lh-ink-l-n5b); font-size: 13px;">老师傅带你学：先看指南，通知顺序绕不清时对照图解</span>
     </div>
   </div>
 
@@ -371,7 +375,7 @@
     </a>
   </div>
 
-  <p class="list-note" style="color: #283593;">
+  <p class="list-note" style="color: var(--lh-ink-l-b3b);">
     行为型里有两处最容易绕，各配了一页分步图解（都是 8 步）：<strong>观察者</strong>回答"谁通知谁、什么时候通知"，
     先看 <strong>第 4 步 通知时序</strong>，再看 <strong>第 5 步 回调里退订</strong>（迭代器失效那段）；
     <strong>访问者</strong>回答"一次调用怎么发生两次分派"，<strong>第 3、4 步</strong> 是关节，看完再读代码就顺了。

@@ -3,8 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>堆与优先队列：数组里长出来的树 - C++ 图解</title>
 <link rel="stylesheet" href="visual.css">
+<link rel="stylesheet" href="../assets/theme.css">
+
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -66,12 +70,12 @@ window.STEPS = [
   </defs>
   <text x="30" y="32" class="svg-title">树和数组是同一组数据的两种画法</text>
 
-  <line x1="380" y1="78" x2="260" y2="168" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="380" y1="78" x2="500" y2="168" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="260" y1="168" x2="190" y2="258" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="260" y1="168" x2="330" y2="258" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="500" y1="168" x2="430" y2="258" class="svg-arrow" style="stroke:#f59e0b"/>
-  <line x1="500" y1="168" x2="570" y2="258" class="svg-arrow" style="stroke:#f59e0b"/>
+  <line x1="380" y1="78" x2="260" y2="168" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="380" y1="78" x2="500" y2="168" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="260" y1="168" x2="190" y2="258" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="260" y1="168" x2="330" y2="258" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="500" y1="168" x2="430" y2="258" class="svg-arrow" style="stroke:var(--lh-ink-d-o7b)"/>
+  <line x1="500" y1="168" x2="570" y2="258" class="svg-arrow" style="stroke:var(--lh-ink-d-o7b)"/>
 
   <circle cx="380" cy="78" r="25" class="svg-box-good"/>
   <text x="380" y="84" text-anchor="middle" class="svg-mono">90</text>
@@ -134,12 +138,12 @@ window.STEPS = [
 <svg viewBox="0 0 760 440" role="img" aria-label="大顶堆只保证每个父节点大于等于孩子，兄弟之间没有顺序要求">
   <text x="30" y="32" class="svg-title">每个父节点都不小于孩子，但兄弟之间随便</text>
 
-  <line x1="380" y1="86" x2="250" y2="180" class="svg-arrow" style="stroke:#059669;stroke-width:2.4"/>
-  <line x1="380" y1="86" x2="510" y2="180" class="svg-arrow" style="stroke:#059669;stroke-width:2.4"/>
-  <line x1="250" y1="180" x2="170" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
-  <line x1="250" y1="180" x2="330" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
-  <line x1="510" y1="180" x2="430" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
-  <line x1="510" y1="180" x2="590" y2="274" class="svg-arrow" style="stroke:#059669;stroke-width:2"/>
+  <line x1="380" y1="86" x2="250" y2="180" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c);stroke-width:2.4"/>
+  <line x1="380" y1="86" x2="510" y2="180" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c);stroke-width:2.4"/>
+  <line x1="250" y1="180" x2="170" y2="274" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c);stroke-width:2"/>
+  <line x1="250" y1="180" x2="330" y2="274" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c);stroke-width:2"/>
+  <line x1="510" y1="180" x2="430" y2="274" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c);stroke-width:2"/>
+  <line x1="510" y1="180" x2="590" y2="274" class="svg-arrow" style="stroke:var(--lh-ink-d-tg5c);stroke-width:2"/>
 
   <circle cx="380" cy="86" r="27" class="svg-box-good"/>
   <text x="380" y="92" text-anchor="middle" class="svg-mono" style="font-weight:700">90</text>
@@ -183,13 +187,13 @@ window.STEPS = [
   </defs>
   <text x="30" y="32" class="svg-title">插入 85：追加到末尾，然后和父节点比</text>
 
-  <line x1="380" y1="72" x2="250" y2="158" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="380" y1="72" x2="510" y2="158" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="250" y1="158" x2="170" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="250" y1="158" x2="330" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="510" y1="158" x2="430" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="510" y1="158" x2="590" y2="244" class="svg-arrow" style="stroke:#cbd5e1"/>
-  <line x1="170" y1="244" x2="130" y2="330" class="svg-arrow" style="stroke:#cbd5e1"/>
+  <line x1="380" y1="72" x2="250" y2="158" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="380" y1="72" x2="510" y2="158" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="250" y1="158" x2="170" y2="244" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="250" y1="158" x2="330" y2="244" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="510" y1="158" x2="430" y2="244" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="510" y1="158" x2="590" y2="244" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
+  <line x1="170" y1="244" x2="130" y2="330" class="svg-arrow" style="stroke:var(--lh-ink-d-cb8b)"/>
 
   <circle cx="380" cy="72" r="25" class="svg-box-good"/>
   <text x="380" y="78" text-anchor="middle" class="svg-mono">90</text>
@@ -410,7 +414,7 @@ window.STEPS = [
     <text x="483" y="111" text-anchor="middle" class="svg-mono">30</text>
   </g>
 
-  <path d="M63 136 C200 160 430 176 483 224" class="svg-arrow" style="stroke:#dc2626" marker-end="url(#ah)"/>
+  <path d="M63 136 C200 160 430 176 483 224" class="svg-arrow" style="stroke:var(--lh-ink-d-r5g)" marker-end="url(#ah)"/>
   <text x="140" y="174" class="svg-small">90 与末尾 30 交换，堆大小减一</text>
 
   <text x="30" y="216" class="svg-small">第 1 轮之后（根 sift-down 后）</text>

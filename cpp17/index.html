@@ -3,54 +3,55 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>(function(){var d=document.documentElement,p="auto",t;try{p=localStorage.getItem("lh-theme")||"auto";}catch(e){}if(p!=="light"&&p!=="dark")p="auto";try{t=p==="auto"?(window.matchMedia&&matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"):p;}catch(e){t="dark";}d.setAttribute("data-theme",t);d.setAttribute("data-theme-pref",p);})();</script>
 <title>内功期 · 现代C++特性 - C++ 学习路线</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
     font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
-    background: linear-gradient(135deg, #8e2de2 0%, #4a00e0 100%);
+    background: linear-gradient(135deg, var(--lh-bgh-d-p4c) 0%, var(--lh-bgh-d-p4d) 100%);
     min-height: 100vh;
     padding: 30px 20px;
-    color: #333;
+    color: var(--lh-ink-d-n3b);
   }
   .container { max-width: 1200px; margin: 0 auto; }
 
   .back-btn {
     display: inline-block;
     padding: 8px 16px;
-    background: rgba(15, 23, 42, 0.55);
-    color: white;
+    background: var(--lh-bg-d-b2-a55b);
+    color: var(--lh-ink-d-n9b);
     text-decoration: none;
     border-radius: 8px;
     margin-bottom: 20px;
     font-size: 13px;
     transition: background 0.2s;
   }
-  .back-btn:hover { background: rgba(255,255,255,0.3); }
+  .back-btn:hover { background: var(--lh-bg-d-n9-a30b); }
 
-  .header { text-align: center; color: white; margin-bottom: 30px; }
-  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px rgba(0,0,0,0.25); }
+  .header { text-align: center; color: var(--lh-ink-d-n9b); margin-bottom: 30px; }
+  .header h1 { font-size: 36px; margin-bottom: 10px; text-shadow: 2px 2px 8px var(--lh-shd-d-n1-a25b); }
   .header p { font-size: 16px;  }
 
   .intro-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 24px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a10b);
   }
   .intro-section h2 {
-    color: #8e2de2;
+    color: var(--lh-ink-d-p4c);
     margin-bottom: 12px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .intro-section p { color: #555; line-height: 1.8; font-size: 14px; }
+  .intro-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; font-size: 14px; }
 
   .section-title {
-    color: white;
+    color: var(--lh-ink-d-n9b);
     font-size: 22px;
     margin: 30px 0 16px;
     display: flex;
@@ -65,10 +66,10 @@
     margin-bottom: 20px;
   }
   .card {
-    background: white;
+    background: var(--lh-bg-d-n9b);
     border-radius: 16px;
     padding: 22px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a12b);
     transition: all 0.3s ease;
     text-decoration: none;
     color: inherit;
@@ -81,34 +82,34 @@
     position: absolute;
     top: 0; left: 0; right: 0;
     height: 4px;
-    background: linear-gradient(90deg, #8e2de2, #4a00e0);
+    background: linear-gradient(90deg, var(--lh-bg-d-p4d), var(--lh-bg-d-p4e));
   }
   .card:hover {
     transform: translateY(-5px);
-    box-shadow: 0 15px 40px rgba(0,0,0,0.18);
+    box-shadow: 0 15px 40px var(--lh-shd-d-n1-a18b);
   }
   .card-icon { font-size: 32px; margin-bottom: 10px; }
-  .card-title { font-size: 17px; font-weight: 700; color: #222; margin-bottom: 8px; }
-  .card-desc { font-size: 13px; color: #666; line-height: 1.6; margin-bottom: 14px; }
+  .card-title { font-size: 17px; font-weight: 700; color: var(--lh-ink-d-n2b); margin-bottom: 8px; }
+  .card-desc { font-size: 13px; color: var(--lh-ink-d-n4d); line-height: 1.6; margin-bottom: 14px; }
   .card-meta { display: flex; gap: 8px; flex-wrap: wrap; }
   .card-step {
     position: absolute;
     top: 14px;
     right: 14px;
-    background: #f3e5f5;
-    color: #6a1b9a;
+    background: var(--lh-bg-d-n8d);
+    color: var(--lh-ink-d-p3b);
     font-size: 11px;
     font-weight: 700;
     padding: 3px 10px;
     border-radius: 12px;
   }
   .list-note {
-    color: #4a148c;
+    color: var(--lh-ink-d-p3c);
     font-size: 13px;
     line-height: 1.8;
     margin: -6px 0 16px;
     padding: 10px 14px;
-    background: rgba(255,255,255,0.78);
+    background: var(--lh-bg-d-n9-a78b);
     border-left: 3px solid currentColor;
     border-radius: 0 10px 10px 0;
   }
@@ -121,50 +122,50 @@
     font-size: 11px;
     font-weight: 600;
   }
-  .tag.beginner { background: #e8f5e9; color: #2e7d32; }
-  .tag.elementary { background: #e0f2f1; color: #00695c; }
-  .tag.intermediate { background: #e3f2fd; color: #1565c0; }
-  .tag.upper-intermediate { background: #f3e5f5; color: #6a1b9a; }
-  .tag.advanced { background: #fff3e0; color: #be4300; }
-  .tag.expert { background: #ffebee; color: #c62828; }
+  .tag.beginner { background: var(--lh-bg-d-n9h); color: var(--lh-ink-d-lg5b); }
+  .tag.elementary { background: var(--lh-bg-d-n9j); color: var(--lh-ink-d-tc4b); }
+  .tag.intermediate { background: var(--lh-bg-d-cb9b); color: var(--lh-ink-d-cb4b); }
+  .tag.upper-intermediate { background: var(--lh-bg-d-n8d); color: var(--lh-ink-d-p3b); }
+  .tag.advanced { background: var(--lh-bg-d-o9b); color: var(--lh-ink-d-or5b); }
+  .tag.expert { background: var(--lh-bg-d-n9i); color: var(--lh-ink-d-r5d); }
 
   .feature-section {
-    background: rgba(255,255,255,0.95);
+    background: var(--lh-bg-d-n9-a95b);
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a10b);
   }
   .feature-section h2 {
-    color: #8e2de2;
+    color: var(--lh-ink-d-p4c);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .feature-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .feature-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .feature-section li strong { color: #333; }
+  .feature-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .feature-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .feature-section li strong { color: var(--lh-ink-d-n3b); }
 
   .master-section {
-    background: linear-gradient(135deg, #fdfbfb, #ebedee);
+    background: linear-gradient(135deg, var(--lh-bg-d-n9b), var(--lh-bg-d-n8e));
     border-radius: 16px;
     padding: 28px 32px;
     margin-bottom: 20px;
-    box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+    box-shadow: 0 8px 30px var(--lh-shd-d-n1-a10b);
   }
   .master-section h2 {
-    color: #333;
+    color: var(--lh-ink-d-n3b);
     margin-bottom: 16px;
     font-size: 22px;
     display: flex;
     align-items: center;
     gap: 10px;
   }
-  .master-section p { color: #555; line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
-  .master-section ul { padding-left: 22px; color: #555; line-height: 2; font-size: 14px; }
-  .master-section li strong { color: #8e2de2; }
+  .master-section p { color: var(--lh-ink-d-n4c); line-height: 1.8; margin-bottom: 12px; font-size: 14px; }
+  .master-section ul { padding-left: 22px; color: var(--lh-ink-d-n4c); line-height: 2; font-size: 14px; }
+  .master-section li strong { color: var(--lh-ink-d-p4c); }
 
   @media (max-width: 600px) {
     body { padding: 20px 12px; }
@@ -173,6 +174,9 @@
     .card-grid { grid-template-columns: 1fr; }
   }
 </style>
+
+<link rel="stylesheet" href="../assets/theme.css">
+<script src="../assets/theme.js" defer></script>
 </head>
 <body>
 <div class="container">
@@ -195,24 +199,24 @@
       这些特性不是炫技用的，它们能让你的代码<strong>更简洁、更安全、更快</strong>。
       学会用现代 C++ 的方式思考，你会发现原来 C++ 也可以写得这么优雅。
     </p>
-    <p style="margin-top: 10px; background: #f6effb; border-left: 4px solid #8e2de2; border-radius: 8px; padding: 12px 16px;">
+    <p style="margin-top: 10px; background: var(--lh-bg-d-n9k); border-left: 4px solid var(--lh-line-d-p4c); border-radius: 8px; padding: 12px 16px;">
       <strong>本模块和 📜 版本演进模块怎么分工？</strong>
       这里负责<strong>纵向深潜</strong>——每个特性一个文件，讲透写法、原理和坑；
       "哪个版本加了什么、为什么要加"这类<strong>横向脉络</strong>在
-      <a href="../cpp_evolution/index.html" style="color: #6a1b9a; font-weight: 700;">cpp_evolution/ 模块</a>，两边内容不重复。
+      <a href="../cpp_evolution/index.html" style="color: var(--lh-ink-d-p3b); font-weight: 700;">cpp_evolution/ 模块</a>，两边内容不重复。
       如果你是第一次接触现代 C++，先去那边建立地图再回来；如果只是想查某个特性怎么用，直接按下面的 ①→⑧ 学。
     </p>
     <div style="margin-top: 22px; display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, #8e2de2, #4a00e0); color: white; text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px rgba(142, 45, 226, 0.3); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(142, 45, 226, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(142, 45, 226, 0.3)';">
+      <a href="tutorial.md" target="_blank" style="display: inline-block; padding: 12px 28px; background: linear-gradient(135deg, var(--lh-bg-d-p4d), var(--lh-bg-d-p4e)); color: var(--lh-ink-d-n9b); text-decoration: none; border-radius: 30px; font-weight: 600; font-size: 15px; box-shadow: 0 4px 15px var(--lh-shd-d-p4-a30b); transition: all 0.3s ease;" onmouseover="this.style.transform='translateY(-2px)';this.style.boxShadow='0 6px 20px rgba(142, 45, 226, 0.4)';" onmouseout="this.style.transform='translateY(0)';this.style.boxShadow='0 4px 15px rgba(142, 45, 226, 0.3)';">
         📖 学习指南
       </a>
-      <a href="../cpp_evolution/index.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #8e2de2; text-decoration: none; border: 2px solid #8e2de2; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#8e2de2';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#8e2de2';">
+      <a href="../cpp_evolution/index.html" style="display: inline-block; padding: 11px 24px; background: var(--lh-bg-d-n9b); color: var(--lh-ink-d-p4c); text-decoration: none; border: 2px solid var(--lh-line-d-p4c); border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#8e2de2';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#8e2de2';">
         📜 先看版本脉络
       </a>
-      <a href="../visuals/move_semantics.html" style="display: inline-block; padding: 11px 24px; background: #fff; color: #8e2de2; text-decoration: none; border: 2px solid #8e2de2; border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#8e2de2';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#8e2de2';">
+      <a href="../visuals/move_semantics.html" style="display: inline-block; padding: 11px 24px; background: var(--lh-bg-d-n9b); color: var(--lh-ink-d-p4c); text-decoration: none; border: 2px solid var(--lh-line-d-p4c); border-radius: 30px; font-weight: 600; font-size: 14px; transition: all 0.3s ease;" onmouseover="this.style.background='#8e2de2';this.style.color='#fff';" onmouseout="this.style.background='#fff';this.style.color='#8e2de2';">
         🎬 图解移动语义
       </a>
-      <span style="color: #6c6c6c; font-size: 13px;">老师傅带你学，先看指南再动手</span>
+      <span style="color: var(--lh-ink-d-n5b); font-size: 13px;">老师傅带你学，先看指南再动手</span>
     </div>
   </div>
 
